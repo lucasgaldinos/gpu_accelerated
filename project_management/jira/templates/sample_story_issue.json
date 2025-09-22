@@ -1,0 +1,23 @@
+{
+	"fields": {
+		"project": {
+			"key": "PT"
+		},
+		"summary": "GPU-Accelerated Nearest Neighbor Algorithm Implementation",
+		"description": "Implement the Nearest Neighbor algorithm for TSP with GPU acceleration support using CuPy and proper protocol-based architecture.\n\n*Academic Context*: TCC research implementation\n*Learning Objective*: Master greedy algorithms and GPU memory patterns\n*Expected Outcome*: 5x+ speedup for problems with n>1000 cities\n\n*Technical Requirements*:\n- Protocol-based DistanceProvider interface\n- Support for NumPy, Numba, and CuPy backends\n- Comprehensive testing and benchmarking\n- Academic documentation with complexity analysis",
+		"issuetype": {
+			"name": "Story"
+		},
+		"customfield_10001": "Implementation",
+		"customfield_10002": "Master greedy algorithm design and GPU memory patterns",
+		"customfield_10003": "Classical TSP",
+		"customfield_10004": "5x speedup for n>1000 cities",
+		"customfield_10005": "Responsible",
+		"customfield_10006": "Intermediate",
+		"customfield_10007": [
+			"Unit Tests",
+			"Performance Benchmarks",
+			"Literature Comparison"
+		]
+	}
+}

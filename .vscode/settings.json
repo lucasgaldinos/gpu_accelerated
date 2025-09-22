@@ -1,0 +1,50 @@
+{
+    "git.ignoreLimitWarning": true,
+    "markdown.styles": [
+        "assets/styles/custom_markdown.css",
+        "assets/styles/custom_classes.css",
+        // "assets/styles/custom_highlight.css"
+    ],
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "\\.ipynb$",
+                "cmd": "${workspaceFolder}/.venv/bin/jupytext --to py:percent ${file}",
+                // "cmd": "jupyter nbconvert --to script ${file}"
+            },
+            {
+                // Run whenever html, css, or js files are saved
+                "match": "\\.(html|css|js)$",
+                "cmd": "echo '${fileBasename}' saved."
+            }
+        ]
+    },
+    "chat.mcp.serverSampling": {
+        "gpu_accelerated/.vscode/mcp.json: markitdown": {
+            "allowedModels": [
+                "copilot/gemini-2.5-pro",
+                "copilot/gpt-5-mini",
+                "copilot/o3-mini"
+            ]
+        }
+    },
+    "markdown.extension.toc.orderedList": false,
+    "markdown.extension.toc.levels": "1..6",
+    "markdown.extension.toc.updateOnSave": true,
+    "markdown.extension.toc.emoji": true,
+    "markdown.extension.toc.plaintext": false,
+    "ruff.interpreter": [
+        "/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.venv/bin/ruff"
+    ],
+    "ruff.lineLength": 100,
+    "chat.instructionsFilesLocations": {
+        ".github/instructions/*": true
+    },
+    "inlineChat.enableV2": true,
+    "chat.edits2.enabled": true,
+    "github.copilot.chat.reviewSelection.instructions": [
+        {
+            "file": ".github/instructions/00_project_overview.instructions.md",
+        }
+    ]
+}
