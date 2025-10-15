@@ -21,3 +21,7 @@ tcc_context/
 *data/
 .github/
 tsplib95_gpu_comparator/
+
+# Large PDF files (use Git LFS if needed)
+*.pdf
+!documentation/academic/**/.gitkeep
