@@ -1,0 +1,114 @@
+---
+query: >-
+  #think create diagrams for:
+
+  1. development workflow
+
+  1. decision tree for choosing algorithms (all algorithms considered), simple
+  xp shared module.
+
+  1. decision tree for choosing algorithms (all algorithms considered), xp, but
+  cp with parallel solutions for other algorithms (list the possibilities of how
+  to parallelize each algorithm based on the proposed algorithms, as well as to
+  the bounds).
+
+  decision tree for choosing algorithms (all algorithms considered), simple xp
+  module + numba  cpu + gpu.
+references:
+  - "File: /documentation/academic/insights"
+  - "File: /TODO.md"
+  - "File: /.github/instructions/QUALITY_ENFORCEMENT.instructions.md"
+  - "File: /.github/instructions/REPOSITORY_STANDARDS.instructions.md"
+  - "File: /.github/instructions/TEACHING_METHODOLOGY.instructions.md"
+  - "File: /.github/copilot-instructions.md"
+  - |-
+    Reference: Here is a list of instruction files that contain rules for modifying or creating new code.
+    These files are important for ensuring that the code is modified or created correctly.
+    Please make sure to follow the rules specified in these files when working with the codebase.
+    If the file is not already available as attachment, use the `read_file` tool to acquire it.
+    Make sure to acquire the instructions before making any changes to the code.
+    | File | Applies To | Description |
+    | ------- | --------- | ----------- |
+    | '/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.github/instructions/JIRA_INTEGRATION.instructions.md' | project_management/**,code/** |  |
+    | '/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.github/instructions/QUALITY_ENFORCEMENT.instructions.md' | ** |  |
+    | '/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.github/instructions/REPOSITORY_STANDARDS.instructions.md' | ** |  |
+    | '/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.github/instructions/TEACHING_METHODOLOGY.instructions.md' | **/*.md,**/KNOWLEDGE_BASE/** | Educational methodology commands for teaching-oriented development |
+generationTime: 2025-09-24T14:11:07.450Z
+config:
+  htmlLabels: true
+  flowchart:
+    curve: basis
+    layout: dagre
+  dagre:
+    rankdir: 'LR'
+    nodesep: 90
+    ranksep: 70
+---
+flowchart TD
+    Start([TCC Project Start]) --> Phase1[Phase 1: Foundation & Environment]
+    
+    Phase1 --> P1_1[Conceptual Foundation<br/>30-45 min]
+    P1_1 --> P1_2[Design & Planning<br/>30-45 min]
+    P1_2 --> P1_3[Implementation<br/>60-90 min]
+    P1_3 --> P1_4[Validation & Reflection<br/>15-30 min]
+    P1_4 --> P1_Complete{Phase 1 Complete?}
+    
+    P1_Complete -->|No| P1_1
+    P1_Complete -->|Yes| Phase2[Phase 2: Core Architecture]
+    
+    Phase2 --> P2_1[Design Patterns & Protocols<br/>Backend Abstraction]
+    P2_1 --> P2_2[Multi-Backend Support<br/>NumPy/Numba/CuPy]
+    P2_2 --> P2_3[Algorithm Factory Pattern<br/>Interface Design]
+    P2_3 --> P2_Complete{Phase 2 Complete?}
+    
+    P2_Complete -->|No| P2_1
+    P2_Complete -->|Yes| Phase3[Phase 3: Algorithm Implementation]
+    
+    Phase3 --> AlgoChoice{Algorithm Selection}
+    AlgoChoice --> BinPacking[Bin Packing Algorithms]
+    AlgoChoice --> TSP[TSP Algorithms]
+    AlgoChoice --> VRP[VRP Algorithms]
+    
+    BinPacking --> BP_Online[Online Heuristics<br/>Next Fit, First Fit, Best Fit]
+    BinPacking --> BP_Offline[Offline Heuristics<br/>FFD, BFD, Harmonic]
+    BinPacking --> BP_Prob[Probabilistic Methods<br/>SIP, Concentration Bounds]
+    
+    TSP --> TSP_Construct[Construction Heuristics<br/>NN, MST, Christofides]
+    TSP --> TSP_Improve[Improvement Heuristics<br/>k-opt, Local Search]
+    TSP --> TSP_Prob[Probabilistic Methods<br/>Region Partitioning]
+    
+    BP_Online --> PerformanceAnalysis[Performance Analysis<br/>Bounds & Validation]
+    BP_Offline --> PerformanceAnalysis
+    BP_Prob --> PerformanceAnalysis
+    TSP_Construct --> PerformanceAnalysis
+    TSP_Improve --> PerformanceAnalysis
+    TSP_Prob --> PerformanceAnalysis
+    
+    PerformanceAnalysis --> Phase4[Phase 4: Database Integration]
+    
+    Phase4 --> DB_Design[<mark>Database Schema Design<br/>Results & Benchmarks</mark>]
+    DB_Design --> DB_Integration[<mark>ORM Integration<br/>Data Persistence</mark>]
+    DB_Integration --> DB_Analysis[<mark>Query Optimization<br/>Performance Metrics</mark>]
+    
+    DB_Analysis --> Phase5[Phase 5: Performance Analysis]
+    
+    Phase5 --> Experiments[Experimental Design<br/>Statistical Validation]
+    Experiments --> Benchmarks[Performance Benchmarking<br/>GPU vs CPU Analysis]
+    Benchmarks --> Results[Results Analysis<br/>Academic Documentation]
+    Results --> Publication[TCC Documentation<br/>Final Presentation]
+    
+    Publication --> Complete([Project Complete])
+    
+    %% Quality Gates
+    P1_4 -.-> QualityCheck1{Quality Gates<br/>80% Coverage<br/>Type Hints<br/>Documentation}
+    P2_3 -.-> QualityCheck2{Architecture Review<br/>Protocol Compliance<br/>Multi-Backend Tests}
+    PerformanceAnalysis -.-> QualityCheck3{Academic Standards<br/>Statistical Validation<br/>Literature Citations}
+    
+    QualityCheck1 -.->|Fail| P1_1
+    QualityCheck2 -.->|Fail| P2_1
+    QualityCheck3 -.->|Fail| TSP_Construct
+    
+    %% Learning Validation
+    P1_Complete -.-> Learning1[Learning Objectives Met<br/>Conceptual Understanding<br/>Implementation Quality]
+    P2_Complete -.-> Learning2[Design Pattern Mastery<br/>Architecture Skills<br/>Interface Design]
+    Results -.-> Learning3[Research Skills<br/>Statistical Analysis<br/>Academic Writing]

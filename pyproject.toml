@@ -5,5 +5,26 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "ipykernel>=6.30.1",
+    "ipympl>=0.9.7",
+    "jupyterlab>=4.4.7",
+    "beautifulsoup4>=4.12.3",
+    "markdownify>=0.11.6",
+    "marimo>=0.16.1",
+    "matplotlib>=3.10.6",
+    "nbformat>=5.10.4",
+    "networkx>=3.4.2",
+    "numpy>=2.2.6",
+    "pandas>=2.3.2",
     "pymupdf4llm>=0.0.27",
+    "ruff>=0.13.1",
+    "routing-data",
 ]
+
+[tool.uv.workspace]
+members = [
+    "data/Routing_data/vrp_database",
+]
+
+[tool.uv.sources]
+routing-data = { git = "https://github.com/lucasgaldinos/Routing_data.git", rev = "main" }
