@@ -29,10 +29,12 @@ class TwoOptGPU:
     - Removes them and reconnects as (i, j) and (i+1, j+1)
     - This reverses the tour segment between i+1 and j
     
-    GPU optimization:
-    - Evaluates multiple potential swaps in parallel
-    - Uses vectorized operations for distance calculations
-    - Minimizes CPU-GPU data transfers
+    Note: This is a simplified implementation for demonstration.
+    A production version would use custom CUDA kernels to evaluate
+    all swaps in parallel, avoiding the CPU-GPU transfer overhead
+    in the current nested loop structure.
+    
+    Implements: ImprovementStrategy protocol
     """
     
     def __init__(self, max_iterations: int = 100):
@@ -75,6 +77,11 @@ class TwoOptGPU:
             
         Returns:
             Improved tour as numpy array
+            
+        Note: The current implementation uses a nested loop with CPU control
+        flow for demonstration. A production implementation would use custom
+        CUDA kernels to evaluate all swap candidates in parallel, eliminating
+        the CPU-GPU transfer overhead.
         """
         # Get GPU distance matrix (will be computed and cached if not already)
         distances_gpu = context.compute_distance_matrix_gpu()
@@ -90,9 +97,17 @@ class TwoOptGPU:
             improved = False
             iteration += 1
             
+            # NOTE: The following nested loop structure is a simplified implementation
+            # for demonstration purposes. It performs CPU-GPU transfers in each iteration
+            # which negates GPU acceleration benefits.
+            # 
+            # Production implementation should use a custom CUDA kernel that:
+            # 1. Evaluates all O(n²) swap candidates in parallel on GPU
+            # 2. Reduces to find the best swap entirely on GPU
+            # 3. Only transfers the best swap indices back to CPU
+            # This would eliminate O(n²) memory transfers and leverage GPU parallelism.
+            
             # Try all possible 2-opt swaps
-            # In a full GPU implementation, this would be parallelized
-            # For now, we use GPU for distance lookups but CPU for control flow
             best_delta = 0
             best_i = -1
             best_j = -1

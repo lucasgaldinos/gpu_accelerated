@@ -137,20 +137,22 @@ class ProblemContext:
         Returns:
             ProblemContext instance
         """
-        # Extract coordinates from TSPLIB problem
-        node_coords = []
-        for i in range(1, len(problem.node_coords) + 1):
-            if i in problem.node_coords:
-                node_coords.append(problem.node_coords[i])
-        
-        coordinates = np.array(node_coords)
+        # Extract coordinates from TSPLIB problem - iterate over dict items for efficiency
+        # Sort by node index to ensure correct order
+        coordinates = np.array([
+            coords for _, coords in sorted(problem.node_coords.items())
+        ])
         
         # Extract demands and capacity if available
         demands = None
         capacity = None
         
         if hasattr(problem, 'demands') and problem.demands:
-            demands = np.array([problem.demands.get(i, 0) for i in range(1, len(node_coords) + 1)])
+            # Extract demands in the same order as coordinates
+            demands = np.array([
+                problem.demands.get(node_id, 0) 
+                for node_id in sorted(problem.node_coords.keys())
+            ])
         
         if hasattr(problem, 'capacity'):
             capacity = problem.capacity
