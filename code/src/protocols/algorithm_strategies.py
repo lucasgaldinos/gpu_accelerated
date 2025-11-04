@@ -262,25 +262,6 @@ class TspImprovementStrategy(Protocol):
             This eliminates redundant transfers.
         """
         ...
-            - Validate tour structure before improving
-            - Preserve depot at start and end
-            - Only return improvements (never worsen)
-            - Support both NumPy and CuPy backends
-            - Document time complexity and iteration limit
-
-        Performance:
-            Typical complexities:
-            - 2-opt: O(n²) per iteration, O(n³) worst case
-            - 3-opt: O(n³) per iteration
-            - Lin-Kernighan: O(n²·⁵) average case
-
-        Example:
-            >>> tour = [0, 5, 3, 7, 2, 0]  # 5 customers
-            >>> improved = strategy.improve_tour(tour, distances, xp=np)
-            >>> cost(improved) <= cost(tour)  # Monotonic improvement
-            True
-        """
-        ...
 
 
 # ==============================================================================

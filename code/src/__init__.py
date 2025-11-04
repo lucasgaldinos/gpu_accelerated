@@ -2,55 +2,23 @@
 GPU-Accelerated TSP/VRP Optimization Framework.
 
 This package provides a modular architecture for solving TSP and VRP problems
-using both CPU and GPU backends.
+using both CPU and GPU backends with ProblemContext-based caching.
 
 Example:
+    >>> from src.loaders import DatabaseLoader
     >>> from src.protocols import ProblemContext
-    >>> from src.algorithms import NearestNeighborCPU
+    >>> from src.algorithms.strategies import NearestNeighborStrategy
+    >>> import numpy as np
     >>> 
-    >>> coords = [[0, 0], [1, 0], [1, 1], [0, 1]]
-    >>> context = ProblemContext(coordinates=coords)
-    >>> solver = NearestNeighborCPU()
-    >>> tour = solver.solve(context)
+    >>> with DatabaseLoader() as loader:
+    ...     problem = loader.load('berlin52')
+    >>> 
+    >>> context = ProblemContext(problem, xp=np)
+    >>> strategy = NearestNeighborStrategy()
+    >>> tour = strategy.build_tour(context, customers=[1, 2, 3])
 """
 
-from .protocols import (
-    ProblemContext,
-    CUPY_AVAILABLE,
-    CPUStrategy,
-    GPUStrategy,
-    ImprovementStrategy,
-    ComposableStrategy,
-)
-
-from .algorithms import (
-    NearestNeighborCPU,
-    RandomInsertionCPU,
-    CheapestInsertionCPU,
-    CompositionalTSPSolver,
-)
-
-__all__ = [
-    # Core
-    'ProblemContext',
-    'CUPY_AVAILABLE',
-    
-    # Protocols
-    'CPUStrategy',
-    'GPUStrategy',
-    'ImprovementStrategy',
-    'ComposableStrategy',
-    
-    # Algorithms
-    'NearestNeighborCPU',
-    'RandomInsertionCPU',
-    'CheapestInsertionCPU',
-    'CompositionalTSPSolver',
-]
-
-# Conditionally export GPU algorithms
-if CUPY_AVAILABLE:
-    from .algorithms import TwoOptGPU
-    __all__.append('TwoOptGPU')
-
+# Core exports - minimal to avoid circular imports
 __version__ = '0.1.0'
+
+__all__ = ['__version__']
