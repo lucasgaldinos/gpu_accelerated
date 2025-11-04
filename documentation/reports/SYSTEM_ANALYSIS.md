@@ -9,9 +9,9 @@
 
 ## 2. GPU Details
 
-- **CUDA Version:** 13.0 (Driver: 580.82.07)
-- **CuPy Version:** 13.4.1 (CUDA runtime: 12.8)
-- **GPU Compute Capability:** GP107M (Pascal)
+- **CUDA Version:** 12.6 (Compiler: nvcc build, Driver: 580.82.07)
+- **CuPy Version:** 13.6.0 (cupy-cuda12x, CUDA runtime: 12.8)
+- **GPU Compute Capability:** GP107M (Pascal, Compute Capability 6.1)
 - **Current GPU Temp:** 50°C
 - **VRAM Usage:** 0 MiB / 4096 MiB (idle)
 
@@ -47,13 +47,6 @@
 - **RAM:** Sufficient for most academic experiments
 - **Storage:** Monitor free space, clean up as needed
 - **Software:** CUDA/CuPy versions are compatible
+- **CuPy Installation:** If CuPy import fails despite being listed in `uv pip list`, clear UV cache with `uv cache clean cupy-cuda12x` and reinstall with `uv remove cupy-cuda12x && uv add cupy-cuda12x`
 
 ---
-
-**Next Steps:**
-
-- Literature review and benchmark selection
-- Database architecture evaluation
-- Technical architecture blueprint
-
-*This report will be updated as further analysis is completed.*

@@ -335,9 +335,11 @@ flowchart LR
 
 ---
 
-### ## 2. Martingale Inequality: Bounding the "Surprise"
+### 2. Martingale Inequality: Bounding the "Surprise"
 
 This concept is used to prove that while the number of bins might fluctuate, it's extremely unlikely to fluctuate *a lot*. It proves the solution **concentrates** around the average.
+
+> [!tip] "We know the average number of bins needed, but how likely is it that a single, random set of items will require a number of bins that is far from that average?".
 
 **The "Fair Game" Analogy:**
 

@@ -63,6 +63,8 @@
     "mermaid.vscode.light": "base",
     "mermaid.vscode.dark": "neo-dark",
     "mermaidChart.aiVendor": "copilot",
+    "github.copilot.chat.claudeSonnet45AlternatePrompt": "You're an expert software architect, you know everything about design patters, engineering and architechting full solutions solutions, with correct selection of system design and design patterns. You know cupy, numpy and always follow the instructions, prioritizing process over speed.",
+    "github.copilot.chat.responsesApiReasoningEffort": "high",
     // "notebook.output.wordWrap": false,
     // "html.format.wrapAttributes": "preserve-aligned",
     // "html.format.wrapLineLength": 0echo "no, I don't
