@@ -1,160 +1,200 @@
 """
-ProblemContext: Centralized data holder for TSP/VRP problem instances.
+ProblemContext: Backend-Specific Problem Data Holder with Distance Matrix Caching.
 
-This class serves as the central data structure that strategies operate on,
-following the "Lego brick" architectural pattern. It holds all problem data
-and computed artifacts (like distance matrices) to avoid redundant computation.
+⚠️ ARCHITECTURAL NOTE ⚠️
+This module is placed in `protocols/` for organizational consistency with other
+strategy protocols, but ProblemContext is NOT a Protocol (PEP 544) interface.
+It is a concrete class that wraps the immutable Problem dataclass and adds
+backend-specific cached computation of distance matrices.
+
+The ProblemContext solves a critical performance anti-pattern identified in
+flaws.md: sequential algorithms calling compute_distance_matrix() repeatedly
+inside Python loops, causing O(n³) complexity instead of O(n²).
+
+Design Philosophy:
+- Single Responsibility: Holds all backend-specific problem data
+- Immutability: Based on frozen Problem dataclass, computed data cached
+- Performance: Distance matrix computed ONCE on target backend
+- Class S vs Class P Separation: Provides helpers for both CPU-only and
+  parallelizable algorithms
+
+Example:
+    >>> from src.data_models.problem import Problem
+    >>> from src.protocols.problem_context import ProblemContext
+    >>> import numpy as np
+    >>> 
+    >>> # Load problem
+    >>> with DatabaseLoader() as loader:
+    ...     problem = loader.load('berlin52')
+    >>> 
+    >>> # Create CPU context (Class S algorithms)
+    >>> cpu_context = ProblemContext(problem, xp=np)
+    >>> cpu_context.distances  # Computed once, cached
+    >>> 
+    >>> # Create GPU context (Class P algorithms)
+    >>> import cupy as cp
+    >>> gpu_context = ProblemContext(problem, xp=cp)
+    >>> gpu_context.distances  # Computed once on GPU, stays in VRAM
+
+References:
+    - flaws.md: Documents the distance matrix recomputation anti-pattern
+    - flaw_analysis.md: Explains Class S (sequential) vs Class P (parallel)
+    - architectural-decisions-and-questions.md: ProblemContext design rationale
 """
 
-from dataclasses import dataclass
-from typing import Optional
 import numpy as np
+from typing import Optional
 
-try:
-    import cupy as cp
-    CUPY_AVAILABLE = True
-except ImportError:
-    cp = None
-    CUPY_AVAILABLE = False
+from ..data_models.problem import Problem
+from ..protocols.backend import BackendModule
+from ..distances.matrix import compute_distance_matrix
 
 
-@dataclass
 class ProblemContext:
     """
-    Centralized problem data holder for routing optimization problems.
-    
-    This class holds all problem-specific data and computed artifacts,
-    allowing strategies to access what they need without redundant computation.
-    
+    Backend-specific problem data holder with cached distance matrix.
+
+    This class wraps the immutable Problem dataclass and precomputes the
+    distance matrix on the specified backend (NumPy or CuPy), caching it
+    to avoid redundant O(n²) computations.
+
+    **Key Performance Fix:**
+    Before ProblemContext, TspConstructionStrategy.build_tour() was called
+    k times (once per route), each time computing the distance matrix:
+        - Total: k × O(m²) redundant work
+        - For GPU: k × (CPU→GPU transfer + compute + GPU→CPU transfer)
+        - Example: eil51 with k=5 routes = 17-82x slowdown
+
+    After ProblemContext:
+        - Distance matrix computed ONCE: O(N²) where N = total nodes
+        - Cached on target backend (CPU or GPU)
+        - All algorithms reuse the same cached matrix
+        - No redundant transfers
+
     Attributes:
-        coordinates: Node coordinates as numpy array (n_nodes, 2)
-        demands: Node demands for VRP (optional)
-        capacity: Vehicle capacity for VRP (optional)
-        distance_matrix_cpu: Precomputed distance matrix on CPU
-        distance_matrix_gpu: Precomputed distance matrix on GPU (if available)
-        n_nodes: Number of nodes in the problem
+        xp: Backend module (NumPy or CuPy)
+        problem: Original immutable Problem instance
+        dimension: Number of nodes (problem.dimension)
+        capacity: Vehicle capacity (CVRP only, None for TSP/ATSP)
+        demands: Customer demands on target backend (xp.ndarray)
+        distances: Cached distance matrix on target backend (xp.ndarray)
+        coordinates: Coordinates on target backend (xp.ndarray or None)
+
+    Example:
+        >>> # Class S (sequential CPU algorithm)
+        >>> context = ProblemContext(problem, xp=np)
+        >>> tour = nearest_neighbor_strategy.construct(context, customers)
+        >>> # No recomputation - uses context.distances
+
+        >>> # Class P (parallel GPU algorithm)
+        >>> context_gpu = ProblemContext(problem, xp=cp)
+        >>> improved_tours = two_opt_gpu.improve_tours(tours, context_gpu)
+        >>> # Distance matrix stays in VRAM, zero transfer overhead
     """
-    
-    coordinates: np.ndarray
-    demands: Optional[np.ndarray] = None
-    capacity: Optional[float] = None
-    distance_matrix_cpu: Optional[np.ndarray] = None
-    distance_matrix_gpu: Optional = None  # CuPy array if available
-    
-    def __post_init__(self):
-        """Validate and initialize the problem context."""
-        if self.coordinates is None or len(self.coordinates) == 0:
-            raise ValueError("Coordinates must be provided and non-empty")
-        
-        # Ensure coordinates is a numpy array
-        if not isinstance(self.coordinates, np.ndarray):
-            self.coordinates = np.asarray(self.coordinates)
-        
-        # Validate shape
-        if self.coordinates.ndim != 2 or self.coordinates.shape[1] != 2:
-            raise ValueError("Coordinates must be a 2D array with shape (n_nodes, 2)")
-        
-        # Validate demands if provided
-        if self.demands is not None:
-            if not isinstance(self.demands, np.ndarray):
-                self.demands = np.asarray(self.demands)
-            if len(self.demands) != len(self.coordinates):
-                raise ValueError("Demands length must match number of nodes")
-    
-    @property
-    def n_nodes(self) -> int:
-        """Return the number of nodes in the problem."""
-        return len(self.coordinates)
-    
-    def compute_distance_matrix_cpu(self, force: bool = False) -> np.ndarray:
+
+    def __init__(self, problem: Problem, xp: BackendModule):
         """
-        Compute or retrieve the distance matrix on CPU.
-        
+        Initialize ProblemContext and precompute distance matrix.
+
         Args:
-            force: If True, recompute even if already cached
-            
-        Returns:
-            Distance matrix as numpy array (n_nodes, n_nodes)
-        """
-        if self.distance_matrix_cpu is None or force:
-            # Compute Euclidean distance matrix
-            coords = self.coordinates
-            diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]
-            self.distance_matrix_cpu = np.sqrt(np.sum(diff ** 2, axis=2))
-        
-        return self.distance_matrix_cpu
-    
-    def compute_distance_matrix_gpu(self, force: bool = False):
-        """
-        Compute or retrieve the distance matrix on GPU.
-        
-        Args:
-            force: If True, recompute even if already cached
-            
-        Returns:
-            Distance matrix as CuPy array (n_nodes, n_nodes)
-            
+            problem: Immutable Problem instance from database loader
+            xp: Backend module (numpy or cupy) to use for computation
+
         Raises:
-            RuntimeError: If CuPy is not available
+            ValueError: If problem has no coordinates or distances to
+                compute distance matrix from
         """
-        if not CUPY_AVAILABLE:
-            raise RuntimeError("CuPy is not available. Cannot compute GPU distance matrix.")
-        
-        if self.distance_matrix_gpu is None or force:
-            # Transfer coordinates to GPU and compute distance matrix
-            coords_gpu = cp.asarray(self.coordinates)
-            diff = coords_gpu[:, cp.newaxis, :] - coords_gpu[cp.newaxis, :, :]
-            self.distance_matrix_gpu = cp.sqrt(cp.sum(diff ** 2, axis=2))
-        
-        return self.distance_matrix_gpu
-    
-    def has_capacity_constraints(self) -> bool:
-        """Check if this is a capacitated VRP problem."""
-        return self.demands is not None and self.capacity is not None
-    
-    @classmethod
-    def from_coordinates(cls, coordinates: np.ndarray, **kwargs) -> "ProblemContext":
+        self.xp = xp
+        self.problem = problem
+        self.dimension = problem.dimension
+        self.capacity = problem.capacity
+
+        # Move demands to target backend
+        if problem.demands is not None:
+            self.demands = xp.asarray(problem.demands)
+        else:
+            self.demands = None
+
+        # Compute or move distance matrix ONCE
+        if problem.distances is not None:
+            # EXPLICIT edge type - matrix already exists
+            self.distances = xp.asarray(problem.distances)
+            self.coordinates = (
+                xp.asarray(problem.coordinates)
+                if problem.coordinates is not None
+                else None
+            )
+        elif problem.coordinates is not None:
+            # Compute from coordinates on the target backend
+            self.coordinates = xp.asarray(problem.coordinates)
+            self.distances = compute_distance_matrix(
+                self.coordinates, problem.edge_type, xp
+            )
+        else:
+            raise ValueError(
+                f"Problem '{problem.name}' has no distances or coordinates "
+                "to compute distance matrix from."
+            )
+
+    def get_cpu_demands(self) -> Optional[np.ndarray]:
         """
-        Create a ProblemContext from coordinates.
-        
-        Args:
-            coordinates: Node coordinates
-            **kwargs: Additional arguments (demands, capacity)
-            
+        Helper for Class S (sequential) algorithms requiring CPU data.
+
+        Performs explicit data transfer if context is on GPU. This is
+        acknowledged and acceptable for Class S algorithms which are
+        CPU-bound by design.
+
         Returns:
-            ProblemContext instance
+            Demands array as NumPy array on CPU, or None
+
+        Example:
+            >>> # GPU context used by Class P algorithm
+            >>> gpu_context = ProblemContext(problem, xp=cp)
+            >>> # But Class S bin packing needs CPU data
+            >>> cpu_demands = gpu_context.get_cpu_demands()  # Explicit transfer
+            >>> bins = ffd_strategy.pack(cpu_demands, capacity)
         """
-        return cls(coordinates=coordinates, **kwargs)
-    
-    @classmethod
-    def from_tsplib_problem(cls, problem) -> "ProblemContext":
+        if self.demands is None:
+            return None
+        if self.xp == np:
+            return self.demands
+        # CuPy → NumPy transfer
+        return self.demands.get()
+
+    def get_cpu_distances(self) -> np.ndarray:
         """
-        Create a ProblemContext from a TSPLIB problem instance.
-        
-        Args:
-            problem: TSPLIB problem object with node_coords attribute
-            
+        Helper for Class S algorithms requiring CPU distance matrix.
+
         Returns:
-            ProblemContext instance
+            Distance matrix as NumPy array on CPU
+
+        Example:
+            >>> context_gpu = ProblemContext(problem, xp=cp)
+            >>> # Class S algorithm needs CPU distances
+            >>> cpu_distances = context_gpu.get_cpu_distances()
         """
-        # Extract coordinates from TSPLIB problem - iterate over dict items for efficiency
-        # Sort by node index to ensure correct order
-        coordinates = np.array([
-            coords for _, coords in sorted(problem.node_coords.items())
-        ])
-        
-        # Extract demands and capacity if available
-        demands = None
-        capacity = None
-        
-        if hasattr(problem, 'demands') and problem.demands:
-            # Extract demands in the same order as coordinates
-            demands = np.array([
-                problem.demands.get(node_id, 0) 
-                for node_id in sorted(problem.node_coords.keys())
-            ])
-        
-        if hasattr(problem, 'capacity'):
-            capacity = problem.capacity
-        
-        return cls(coordinates=coordinates, demands=demands, capacity=capacity)
+        if self.xp == np:
+            return self.distances
+        return self.distances.get()
+
+    def get_cpu_coordinates(self) -> Optional[np.ndarray]:
+        """
+        Helper for algorithms requiring CPU coordinates.
+
+        Returns:
+            Coordinates as NumPy array on CPU, or None
+        """
+        if self.coordinates is None:
+            return None
+        if self.xp == np:
+            return self.coordinates
+        return self.coordinates.get()
+
+    def __repr__(self) -> str:
+        """String representation showing problem and backend."""
+        backend_name = "GPU (CuPy)" if hasattr(self.xp, "RawKernel") else "CPU (NumPy)"
+        return (
+            f"<ProblemContext: {self.problem.name} "
+            f"({self.problem.problem_type}, N={self.dimension}) "
+            f"on {backend_name}>"
+        )
