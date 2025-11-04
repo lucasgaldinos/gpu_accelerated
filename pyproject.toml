@@ -1,9 +1,30 @@
 [project]
 name = "gpu-accelerated"
 version = "0.1.0"
-description = "Add your description here"
+description = "GPU-accelerated TSP/VRP optimization with hybrid metaheuristics"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "pymupdf4llm>=0.0.27",
+    "numpy>=1.24.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+gpu = [
+    "cupy>=12.0.0",
+]
+jit = [
+    "numba>=0.57.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["code"]
+include = ["src*"]
