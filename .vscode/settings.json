@@ -3,7 +3,8 @@
     "markdown.styles": [
         "assets/styles/custom_markdown.css",
         "assets/styles/custom_classes.css",
-        // "assets/styles/custom_highlight.css"
+        "assets/styles/custom-callouts.css",
+        "assets/styles/katex_integration.css"
     ],
     "emeraldwalk.runonsave": {
         "commands": [
@@ -33,10 +34,6 @@
     "markdown.extension.toc.updateOnSave": true,
     "markdown.extension.toc.emoji": true,
     "markdown.extension.toc.plaintext": false,
-    "ruff.interpreter": [
-        "/home/lucas_galdino/TCC-name_to_define/gpu_accelerated/.venv/bin/ruff"
-    ],
-    "ruff.lineLength": 100,
     "chat.instructionsFilesLocations": {
         ".github/instructions/*": true
     },
@@ -46,5 +43,29 @@
         {
             "file": ".github/instructions/00_project_overview.instructions.md",
         }
-    ]
+    ],
+    // "prettier.proseWrap": "never",
+    "editor.wordWrapColumn": 80,
+    "workbench.editor.wrapTabs": true,
+    "markdown.math.macros": {
+        "\\RR": "\\mathbb{R}",
+        "\\NN": "\\mathbb{N}",
+        "\\ZZ": "\\mathbb{Z}",
+        "\\QQ": "\\mathbb{Q}",
+        "\\CC": "\\mathbb{C}",
+        "\\inf": "\\text{inf}",
+        "\\sup": "\\text{sup}"
+    },
+    "markdown.math.enabled": true,
+    "mermaid.theme": "neutral",
+    "mermaid.gantt.barHeight": 20,
+    "mermaid.flowchart.htmlLabels": true,
+    "mermaid.vscode.light": "base",
+    "mermaid.vscode.dark": "neo-dark",
+    "mermaidChart.aiVendor": "copilot",
+    "github.copilot.chat.claudeSonnet45AlternatePrompt": "You're an expert software architect, you know everything about design patters, engineering and architechting full solutions solutions, with correct selection of system design and design patterns. You know cupy, numpy and always follow the instructions, prioritizing process over speed.",
+    "github.copilot.chat.responsesApiReasoningEffort": "high",
+    // "notebook.output.wordWrap": false,
+    // "html.format.wrapAttributes": "preserve-aligned",
+    // "html.format.wrapLineLength": 0echo "no, I don't
 }

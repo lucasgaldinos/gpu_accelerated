@@ -18,6 +18,7 @@ wheels/
 knowledge_base/
 arxiv-messy-files/
 tcc_context/
-*data/
 .github/
 tsplib95_gpu_comparator/
+my_notes/*
+!my_notes/notebooks/
