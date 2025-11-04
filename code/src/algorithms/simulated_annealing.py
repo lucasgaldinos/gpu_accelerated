@@ -121,8 +121,8 @@ class SimulatedAnnealingStrategy:
         neighbor = solution.copy()
         n = len(neighbor)
         
-        # Random 2-opt swap - ensure i+2 < n
-        i = self.rng.integers(0, n - 2)  # Changed from n-1 to n-2
+        # Random 2-opt swap - ensure i can have a valid range for j (at least i+2)
+        i = self.rng.integers(0, n - 2)
         j = self.rng.integers(i + 2, n)
         
         # Reverse segment between i+1 and j

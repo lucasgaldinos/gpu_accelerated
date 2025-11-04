@@ -7,7 +7,7 @@ to evolve a population of solutions toward better fitness.
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import Optional
+from typing import Optional, List
 
 
 class GeneticAlgorithmStrategy:
@@ -126,7 +126,7 @@ class GeneticAlgorithmStrategy:
         
         return best_solution, best_cost
     
-    def _initialize_population(self, n_nodes: int) -> list[NDArray[np.int_]]:
+    def _initialize_population(self, n_nodes: int) -> List[NDArray[np.int_]]:
         """
         Initialize a random population.
         
@@ -145,10 +145,10 @@ class GeneticAlgorithmStrategy:
     
     def _tournament_selection(
         self,
-        population: list[NDArray[np.int_]],
+        population: List[NDArray[np.int_]],
         fitness: NDArray[np.float64],
         tournament_size: int = 3
-    ) -> list[NDArray[np.int_]]:
+    ) -> List[NDArray[np.int_]]:
         """
         Select parents using tournament selection.
         

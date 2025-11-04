@@ -95,7 +95,7 @@ class ComposableSolver:
             
             # Track improvement
             improvement = current_cost - cost if current_cost != float('inf') else 0.0
-            improvement_pct = (improvement / current_cost * 100) if current_cost != float('inf') else 0.0
+            improvement_pct = (improvement / current_cost * 100) if current_cost not in (float('inf'), 0.0) else 0.0
             
             # Update current solution
             current_solution = solution

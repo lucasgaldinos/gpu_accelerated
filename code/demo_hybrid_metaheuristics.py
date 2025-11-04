@@ -7,7 +7,11 @@ optimization strategies into hybrid metaheuristics.
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/gpu_accelerated/gpu_accelerated/code')
+from pathlib import Path
+
+# Add the code directory to the path for demonstration purposes
+code_dir = Path(__file__).parent
+sys.path.insert(0, str(code_dir))
 
 from src.algorithms import (
     NearestNeighborStrategy,
