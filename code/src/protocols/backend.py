@@ -138,3 +138,270 @@ class BackendModule(Protocol):
             coords[:, xp.newaxis, :]  # Also correct, but None is simpler
         """
         ...
+
+    def arccos(self, x: Any) -> Any:
+        """Element-wise inverse cosine (arccosine)."""
+        ...
+
+    # Reduction operations
+    def any(
+        self,
+        a: Any,
+        axis: Optional[Union[int, Tuple[int, ...]]] = None,
+        keepdims: bool = False,
+    ) -> Any:
+        """
+        Test whether any array element evaluates to True.
+
+        Args:
+            a: Input array or condition
+            axis: Axis along which to perform reduction
+            keepdims: Keep reduced dimensions as size 1
+
+        Returns:
+            Boolean or array of booleans
+        """
+        ...
+
+    def all(
+        self,
+        a: Any,
+        axis: Optional[Union[int, Tuple[int, ...]]] = None,
+        keepdims: bool = False,
+    ) -> Any:
+        """
+        Test whether all array elements evaluate to True.
+
+        Args:
+            a: Input array or condition
+            axis: Axis along which to perform reduction
+            keepdims: Keep reduced dimensions as size 1
+
+        Returns:
+            Boolean or array of booleans
+        """
+        ...
+
+    def max(
+        self,
+        a: Any,
+        axis: Optional[Union[int, Tuple[int, ...]]] = None,
+        keepdims: bool = False,
+    ) -> Any:
+        """
+        Return maximum value along axis.
+
+        Args:
+            a: Input array
+            axis: Axis along which to find maximum
+            keepdims: Keep reduced dimensions as size 1
+
+        Returns:
+            Maximum value(s)
+        """
+        ...
+
+    def min(
+        self,
+        a: Any,
+        axis: Optional[Union[int, Tuple[int, ...]]] = None,
+        keepdims: bool = False,
+    ) -> Any:
+        """
+        Return minimum value along axis.
+
+        Args:
+            a: Input array
+            axis: Axis along which to find minimum
+            keepdims: Keep reduced dimensions as size 1
+
+        Returns:
+            Minimum value(s)
+        """
+        ...
+
+    def argmax(
+        self,
+        a: Any,
+        axis: Optional[int] = None,
+    ) -> Any:
+        """
+        Return indices of maximum values along axis.
+
+        Args:
+            a: Input array
+            axis: Axis along which to find argmax
+
+        Returns:
+            Index or array of indices
+        """
+        ...
+
+    def argmin(
+        self,
+        a: Any,
+        axis: Optional[int] = None,
+    ) -> Any:
+        """
+        Return indices of minimum values along axis.
+
+        Args:
+            a: Input array
+            axis: Axis along which to find argmin
+
+        Returns:
+            Index or array of indices
+        """
+        ...
+
+    # Array creation (additional)
+    def arange(
+        self,
+        start: Union[int, float],
+        stop: Optional[Union[int, float]] = None,
+        step: Union[int, float] = 1,
+        dtype: Optional[Any] = None,
+    ) -> Any:
+        """
+        Return evenly spaced values within interval.
+
+        Args:
+            start: Start of interval (or stop if only one arg)
+            stop: End of interval
+            step: Spacing between values
+            dtype: Desired data type
+
+        Returns:
+            Array of evenly spaced values
+        """
+        ...
+
+    def full(
+        self,
+        shape: Union[int, Tuple[int, ...]],
+        fill_value: Any,
+        dtype: Optional[Any] = None,
+    ) -> Any:
+        """
+        Create array filled with specific value.
+
+        Args:
+            shape: Shape of array
+            fill_value: Value to fill array with
+            dtype: Desired data type
+
+        Returns:
+            Array filled with fill_value
+        """
+        ...
+
+    # Advanced indexing
+    def ix_(self, *args: Any) -> Tuple[Any, ...]:
+        """
+        Construct open mesh from multiple sequences.
+
+        Used for fancy indexing to extract submatrices.
+
+        Args:
+            *args: 1-D sequences (arrays or lists)
+
+        Returns:
+            Tuple of arrays for indexing
+
+        Example:
+            >>> subset_matrix = full_matrix[xp.ix_([0,2,3], [0,2,3])]
+        """
+        ...
+
+    # Constants (attributes, not methods)
+    @property
+    def inf(self) -> float:
+        """Positive infinity constant."""
+        ...
+
+    @property
+    def newaxis(self) -> Any:
+        """
+        Constant for adding new axes to arrays.
+
+        Note: Using None is equivalent and more portable:
+            arr[:, None, :]  # Recommended
+            arr[:, xp.newaxis, :]  # Also works
+        """
+        ...
+
+
+# ==============================================================================
+# CuPy-Specific Methods (Not in Protocol)
+# ==============================================================================
+
+"""
+Some operations are specific to CuPy and not available in NumPy.
+Use hasattr() to check for these methods before calling:
+
+**CuPy-only methods:**
+
+1. **xp.asnumpy(arr)** - Transfer CuPy array to NumPy (GPU → CPU)
+   
+   Usage pattern:
+   ```python
+   if hasattr(xp, 'asnumpy'):
+       cpu_array = xp.asnumpy(gpu_array)  # CuPy → NumPy
+   else:
+       cpu_array = np.asarray(gpu_array)  # NumPy (no-op)
+   ```
+
+2. **xp.get_array_module(arr)** - Get backend module from array
+   
+   Usage pattern:
+   ```python
+   import numpy as np
+   try:
+       import cupy as cp
+       xp = cp.get_array_module(distances)  # Returns cp if CuPy array
+   except ImportError:
+       xp = np
+   ```
+
+**NumPy-only methods:**
+
+- Most NumPy-specific methods have CuPy equivalents
+- Check CuPy documentation for compatibility: https://docs.cupy.dev/
+
+**Type checking:**
+
+The protocol uses `Any` for return types because NumPy and CuPy have
+incompatible type hierarchies. To check array types at runtime:
+
+```python
+import numpy as np
+try:
+    import cupy as cp
+    CUPY_AVAILABLE = True
+except ImportError:
+    CUPY_AVAILABLE = False
+
+def is_gpu_array(arr):
+    '''Check if array is CuPy array (on GPU).'''
+    if CUPY_AVAILABLE:
+        return isinstance(arr, cp.ndarray)
+    return False
+
+def is_cpu_array(arr):
+    '''Check if array is NumPy array (on CPU).'''
+    return isinstance(arr, np.ndarray)
+```
+
+**Backend detection:**
+
+```python
+def get_backend_name(xp):
+    '''Get human-readable backend name.'''
+    if xp.__name__ == 'cupy':
+        return 'CuPy (GPU)'
+    elif xp.__name__ == 'numpy':
+        return 'NumPy (CPU)'
+    else:
+        return f'Unknown ({xp.__name__})'
+```
+"""

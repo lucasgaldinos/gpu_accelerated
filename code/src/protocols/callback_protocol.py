@@ -139,3 +139,45 @@ Examples
 
 # Type alias for better IDE support
 CallbackType = CallbackFunction
+
+
+class ProgressCallback:
+    """
+    Protocol for class-based callbacks with lifecycle hooks.
+
+    This is an alternative to the functional CallbackFunction pattern,
+    providing explicit lifecycle methods for start, iteration, and completion.
+    Used by BenchmarkRunner's ConvergenceTracker.
+
+    Methods
+    -------
+    on_start(event: ProgressEvent) -> None
+        Called once at algorithm initialization
+    on_iteration(event: ProgressEvent) -> None
+        Called after each iteration (implementation may throttle)
+    on_complete(event: ProgressEvent) -> None
+        Called once at algorithm completion
+
+    Example
+    -------
+    >>> class MyTracker(ProgressCallback):
+    ...     def on_start(self, event):
+    ...         self.start_time = event['elapsed_time']
+    ...     def on_iteration(self, event):
+    ...         if event['iteration'] % 100 == 0:
+    ...             print(f"Iteration {event['iteration']}")
+    ...     def on_complete(self, event):
+    ...         print(f"Done! Final cost: {event['best_cost']}")
+    """
+
+    def on_start(self, event: ProgressEvent) -> None:
+        """Called when algorithm execution starts."""
+        pass
+
+    def on_iteration(self, event: ProgressEvent) -> None:
+        """Called after each iteration."""
+        pass
+
+    def on_complete(self, event: ProgressEvent) -> None:
+        """Called when algorithm execution completes."""
+        pass

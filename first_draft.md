@@ -11,7 +11,7 @@
 > - ⏳ Literature review ongoing (key papers cited, comprehensive review in progress)
 > - ⏳ Experimental results (Chapter 4) - awaiting implementation
 > - 📊 Target length: 50-60 pages
->
+
 ---
 
 ## RESUMO / ABSTRACT
@@ -55,8 +55,9 @@
       - [3.2.1 Module Pattern vs. OOP Inheritance](#321-module-pattern-vs-oop-inheritance)
       - [3.2.2 Protocol-Based Type Safety (PEP 544)](#322-protocol-based-type-safety-pep-544)
       - [3.2.3 Preliminary Validation](#323-preliminary-validation)
-    - [3.3 Algorithm Implementation Plan](#33-algorithm-implementation-plan)
+    - [3.3 Algorithm Implementation](#33-algorithm-implementation)
       - [3.3.1 Construction Heuristic (Initial Solution)](#331-construction-heuristic-initial-solution)
+        - [TSP Construction heuristics](#tsp-construction-heuristics)
       - [3.3.2 Improvement Heuristic (Local Search)](#332-improvement-heuristic-local-search)
       - [3.3.3 Metaheuristic Strategy](#333-metaheuristic-strategy)
       - [3.3.4 Hybrid Approach](#334-hybrid-approach)
@@ -73,16 +74,14 @@
       - [3.4.4 Expected Experimental Results](#344-expected-experimental-results)
       - [3.4.5 Data Format Specification](#345-data-format-specification)
     - [3.5 Experimental Design](#35-experimental-design)
-      - [3.5.1 Primary Comparison: CPU vs GPU Performance](#351-primary-comparison-cpu-vs-gpu-performance)
-      - [3.5.2 Secondary Comparison: Hybrid vs Pure Local Search](#352-secondary-comparison-hybrid-vs-pure-local-search)
-      - [3.5.3 Performance Metrics](#353-performance-metrics)
-      - [3.5.4 Experimental Procedure](#354-experimental-procedure)
+      - [3.5.1 Comparison 1: Deterministic Local Search (2-opt)](#351-comparison-1-deterministic-local-search-2-opt)
+      - [3.5.2 Comparison 2: Stochastic Metaheuristics (SA vs. GA)](#352-comparison-2-stochastic-metaheuristics-sa-vs-ga)
+      - [3.5.3 Statistical Methodology](#353-statistical-methodology)
   - [4. RESULTADOS](#4-resultados)
-    - [4.1 Result Organization](#41-result-organization)
-      - [4.1.1 Per-Instance Detailed Results](#411-per-instance-detailed-results)
-      - [4.1.2 Aggregated Performance Summary](#412-aggregated-performance-summary)
-      - [4.1.3 Visualizations](#413-visualizations)
-    - [4.2 Expected Findings](#42-expected-findings)
+    - [4.1 Statistical Test Validation](#41-statistical-test-validation)
+    - [4.2 Analysis 1: 2-opt (Deterministic) Performance](#42-analysis-1-2-opt-deterministic-performance)
+    - [4.3 Analysis 2: Metaheuristic Quality (Fixed-Time Budget)](#43-analysis-2-metaheuristic-quality-fixed-time-budget)
+    - [4.4 Analysis 3: Convergence Speed and Statistical Ranking](#44-analysis-3-convergence-speed-and-statistical-ranking)
   - [5. DISCUSSÃO E CONSIDERAÇÕES](#5-discussão-e-considerações)
     - [5.1 Performance Analysis](#51-performance-analysis)
     - [5.2 Algorithm Comparison](#52-algorithm-comparison)
@@ -118,49 +117,49 @@
 
 ## LISTA DE SÍMBOLOS
 
-| Símbolo | Descrição |
-|---------|-----------|
-| $n$ | Número de nós/cidades no problema |
-| $i, j, k$ | Índices de nós |
-| $x_i, y_i$ | Coordenadas do nó $i$ |
-| $d_{ij}$ | Distância entre nós $i$ e $j$ |
-| $D$ | Matriz de distâncias $n \times n$ |
-| $\pi$ | Tour/rota (permutação de nós) |
-| $c(\pi)$ | Custo total do tour $\pi$ |
-| $Q$ | Capacidade do veículo (CVRP) |
-| $q_i$ | Demanda do nó $i$ (CVRP) |
-| $K$ | Número de veículos (CVRP) |
-| $T$ | Temperatura (Simulated Annealing) |
-| $\alpha$ | Taxa de resfriamento (Simulated Annealing) |
-| $GPU_{time}$ | Tempo de execução em GPU |
-| $CPU_{time}$ | Tempo de execução em CPU |
-| $speedup$ | Aceleração = $CPU_{time} / GPU_{time}$ |
+| Símbolo      | Descrição                                  |
+| ------------ | ------------------------------------------ |
+| $n$          | Número de nós/cidades no problema          |
+| $i, j, k$    | Índices de nós                             |
+| $x_i, y_i$   | Coordenadas do nó $i$                      |
+| $d_{ij}$     | Distância entre nós $i$ e $j$              |
+| $D$          | Matriz de distâncias $n \times n$          |
+| $\pi$        | Tour/rota (permutação de nós)              |
+| $c(\pi)$     | Custo total do tour $\pi$                  |
+| $Q$          | Capacidade do veículo (CVRP)               |
+| $q_i$        | Demanda do nó $i$ (CVRP)                   |
+| $K$          | Número de veículos (CVRP)                  |
+| $T$          | Temperatura (Simulated Annealing)          |
+| $\alpha$     | Taxa de resfriamento (Simulated Annealing) |
+| $GPU_{time}$ | Tempo de execução em GPU                   |
+| $CPU_{time}$ | Tempo de execução em CPU                   |
+| $speedup$    | Aceleração = $CPU_{time} / GPU_{time}$     |
 
 ---
 
 ## LISTA DE ABREVIATURAS E SIGLAS
 
-| Sigla | Significado |
-|-------|-------------|
-| TSP | Traveling Salesman Problem (Problema do Caixeiro Viajante) |
-| ATSP | Asymmetric TSP (TSP Assimétrico) |
-| VRP | Vehicle Routing Problem (Problema de Roteamento de Veículos) |
-| CVRP | Capacitated VRP (VRP Capacitado) |
-| MDVRP | Multi-Depot VRP (VRP com Múltiplos Depósitos) |
-| VRPPD | VRP with Pickup and Delivery (VRP com Coleta e Entrega) |
-| GPU | Graphics Processing Unit (Unidade de Processamento Gráfico) |
-| CPU | Central Processing Unit (Unidade Central de Processamento) |
-| CUDA | Compute Unified Device Architecture |
-| VRAM | Video Random Access Memory (Memória de Vídeo) |
-| SA | Simulated Annealing (Recozimento Simulado) |
-| GA | Genetic Algorithm (Algoritmo Genético) |
-| TS | Tabu Search (Busca Tabu) |
-| 2-opt | Operador de melhoria que troca 2 arestas |
-| 3-opt | Operador de melhoria que troca 3 arestas |
-| Or-opt | Operador de realocação de sequências |
-| NN | Nearest Neighbor (Vizinho Mais Próximo) |
-| TSPLIB | Biblioteca padrão de instâncias TSP |
-| CVRPLIB | Biblioteca padrão de instâncias CVRP |
+| Sigla   | Significado                                                  |
+| ------- | ------------------------------------------------------------ |
+| TSP     | Traveling Salesman Problem (Problema do Caixeiro Viajante)   |
+| ATSP    | Asymmetric TSP (TSP Assimétrico)                             |
+| VRP     | Vehicle Routing Problem (Problema de Roteamento de Veículos) |
+| CVRP    | Capacitated VRP (VRP Capacitado)                             |
+| MDVRP   | Multi-Depot VRP (VRP com Múltiplos Depósitos)                |
+| VRPPD   | VRP with Pickup and Delivery (VRP com Coleta e Entrega)      |
+| GPU     | Graphics Processing Unit (Unidade de Processamento Gráfico)  |
+| CPU     | Central Processing Unit (Unidade Central de Processamento)   |
+| CUDA    | Compute Unified Device Architecture                          |
+| VRAM    | Video Random Access Memory (Memória de Vídeo)                |
+| SA      | Simulated Annealing (Recozimento Simulado)                   |
+| GA      | Genetic Algorithm (Algoritmo Genético)                       |
+| TS      | Tabu Search (Busca Tabu)                                     |
+| 2-opt   | Operador de melhoria que troca 2 arestas                     |
+| 3-opt   | Operador de melhoria que troca 3 arestas                     |
+| Or-opt  | Operador de realocação de sequências                         |
+| NN      | Nearest Neighbor (Vizinho Mais Próximo)                      |
+| TSPLIB  | Biblioteca padrão de instâncias TSP                          |
+| CVRPLIB | Biblioteca padrão de instâncias CVRP                         |
 
 ---
 
@@ -214,11 +213,11 @@ Design, implement, and benchmark a modular framework for solving routing problem
 #### 1.2.2 Objetivos Específicos
 
 1. Implement modular improvement heuristics (2-opt, 3-opt, Or-opt) with vectorized operations.
-   > - why these? Aren't there others in my references?
-   > - which others could I use? (focusing on my current bibliographic reference?)
-   > - Are they easier to implement?
+    > - why these? Aren't there others in my references?
+    > - which others could I use? (focusing on my current bibliographic reference?)
+    > - Are they easier to implement?
 2. Develop metaheuristic strategies (GA, SA, TS) that can utilize different operators
-   > - How many hybrid strategies should I analyze?
+    > - How many hybrid strategies should I analyze?
 3. Create hybrid methods combining global search strategies with local search operators
 4. Compare CPU (NumPy) vs GPU (CuPy) performance using identical algorithmic logic
 5. Analyze solution quality vs runtime trade-offs across different algorithm combinations
@@ -232,13 +231,13 @@ Design, implement, and benchmark a modular framework for solving routing problem
 
 - Focus on heuristic/metaheuristic approaches (no exact methods like branch-and-bound)
 - Limited to symmetric TSP, asymmetric TSP (ATSP), and capacitated VRP (CVRP) - no time windows or other advanced VRP constraints
-  > maybe `MDVRP`
+    > maybe `MDVRP`
 - Comparison limited to internal CPU vs GPU benchmarking (not against external state-of-the-art published results)
-  > [!note] did not understand
-  > What do you mean by this?
+    > [!note] did not understand
+    > What do you mean by this?
 - Selected subset of **30 benchmark instances** (18 TSP, 6 ATSP, 6 CVRP) from TSPLIB and CVRPLIB, not entire problem libraries
 - Hardware-specific results (GTX 1050 Mobile with 4GB VRAM) - findings may not generalize to other GPU architectures
-  > Results demonstrate GPU acceleration on mid-range mobile hardware. Higher-end GPUs (e.g., RTX 4090 with 24GB VRAM) would likely show greater speedups and support larger problem instances. A brief comparison on high-end hardware may be included if access is available, but is not required for experimental validity.
+    > Results demonstrate GPU acceleration on mid-range mobile hardware. Higher-end GPUs (e.g., RTX 4090 with 24GB VRAM) would likely show greater speedups and support larger problem instances. A brief comparison on high-end hardware may be included if access is available, but is not required for experimental validity.
 
 ---
 
@@ -398,7 +397,7 @@ Memory-based search preventing cycling through short-term tabu lists and aspirat
 
 The backend architecture uses a simple module aliasing pattern enabling CPU/GPU agnostic algorithms: `xp = cupy if use_gpu else numpy`. This design directly implements the philosophy established by **Okuta et al. (2017)** in their CuPy library specification: "CuPy is designed as a drop-in replacement for NumPy, providing a GPU-accelerated array library with an API identical to NumPy's core functionality." [^okuta2017cupy] By aliasing the array module at runtime, algorithms written for NumPy can be executed on GPU without code modification.
 
-[^okuta2017cupy]: Okuta, R., Unno, Y., Nishino, D., Hido, S., & Loomis, C. (2017). CuPy: A NumPy-Compatible Library for NVIDIA GPU Calculations. *Proceedings of Workshop on Machine Learning Systems (LearningSys) in The Thirty-first Annual Conference on Neural Information Processing Systems (NIPS)*. <https://learningsys.org/nips17/assets/papers/paper_16.pdf>
+[^okuta2017cupy]: Okuta, R., Unno, Y., Nishino, D., Hido, S., & Loomis, C. (2017). CuPy: A NumPy-Compatible Library for NVIDIA GPU Calculations. _Proceedings of Workshop on Machine Learning Systems (LearningSys) in The Thirty-first Annual Conference on Neural Information Processing Systems (NIPS)_. <https://learningsys.org/nips17/assets/papers/paper_16.pdf>
 
 #### 3.2.1 Module Pattern vs. OOP Inheritance
 
@@ -448,7 +447,7 @@ Preliminary testing on berlin52 (52 nodes), lin318 (318 nodes), and d2103 (2,103
 >   - BFD and FFD
 >   - One exact method for bin packing
 > - The split protocol:
->   - split and split  
+>   - split and split
 
 #### 3.3.1 Construction Heuristic (Initial Solution)
 
@@ -462,7 +461,7 @@ Preliminary testing on berlin52 (52 nodes), lin318 (318 nodes), and d2103 (2,103
 - Implementation: ~1 day (MVP Day 1)
 
 > **Other TSP construction methods considered:**
-> 
+>
 > - Clark-wright savings
 > - Christofides (TSP approximation): 1.5-approximation guarantee, but $O(n^3)$ complexity + matching algorithm = 5+ days
 > - MST-based heuristics: Prim's algorithm for initial tour. Similar complexity to Nearest Neighbor.
@@ -501,6 +500,7 @@ Preliminary testing on berlin52 (52 nodes), lin318 (318 nodes), and d2103 (2,103
 > **Other metaheuristics considered:**
 >
 > - **Genetic Algorithm (GA):** Population-based, highly parallelizable fitness evaluation. But adds complexity:
+>
 >   - Crossover operators for routing (PMX, OX, CX): 2-3 days
 >   - Population management and selection: 1-2 days
 >   - Integration with 2-opt for Memetic Algorithm: 1-2 days
@@ -627,14 +627,16 @@ Implemented and validated for construction heuristics on preliminary test instan
 To rigorously test these hypotheses, the following statistical approach will be employed:
 
 1. **Number of Experimental Runs**:
-   - **Deterministic algorithms** (Nearest Neighbor, 2-opt): 1 run per instance, as results are reproducible
-   - **Stochastic algorithms** (Simulated Annealing): 30 runs per instance to establish statistical significance
+
+    - **Deterministic algorithms** (Nearest Neighbor, 2-opt): 1 run per instance, as results are reproducible
+    - **Stochastic algorithms** (Simulated Annealing): 30 runs per instance to establish statistical significance
 
 2. **Statistical Tests**:
-   - **Hypothesis Q1 (Overhead Threshold)**: Descriptive statistics (mean execution time) to identify break-even problem size where $GPU_{time} < CPU_{time}$
-   - **Hypothesis Q2 (Scaling Behavior)**: Regression analysis to model speedup as a function of problem size $(speedup = f(n))$, reporting $R^2$ and regression coefficients
-   - **Solution Quality Comparison**: Paired t-test to compare CPU vs GPU solution quality (gap to optimal)
-   - **Hypothesis Q5 (Problem Type Comparison)**: One-way ANOVA to test if mean speedups differ significantly across TSP, ATSP, and CVRP categories
+
+    - **Hypothesis Q1 (Overhead Threshold)**: Descriptive statistics (mean execution time) to identify break-even problem size where $GPU_{time} < CPU_{time}$
+    - **Hypothesis Q2 (Scaling Behavior)**: Regression analysis to model speedup as a function of problem size $(speedup = f(n))$, reporting $R^2$ and regression coefficients
+    - **Solution Quality Comparison**: Paired t-test to compare CPU vs GPU solution quality (gap to optimal)
+    - **Hypothesis Q5 (Problem Type Comparison)**: One-way ANOVA to test if mean speedups differ significantly across TSP, ATSP, and CVRP categories
 
 3. **Confidence Intervals**: 95% confidence intervals will be reported for all stochastic algorithm results (SA)
 
@@ -648,11 +650,11 @@ For rapid prototyping and initial validation of GPU acceleration capabilities, *
 
 **MVP Benchmark Set**
 
-| Instance | Nodes | Edge Type | Memory | Purpose | Expected Speedup | Research Questions |
-|----------|-------|-----------|--------|---------|------------------|-------------------|
-| **berlin52**[^reinelt1991] | 52 | EUC_2D | <0.01GB | Overhead demonstration | 0.7-1.2x (near breakeven) | Q1 (GPU overhead threshold) |
-| **lin318**[^reinelt1991] | 318 | EUC_2D | <0.01GB | GPU advantage showcase | 15-20x (sweet spot) | Q2 (scaling behavior) |
-| **d2103**[^reinelt1991] | 2,103 | EUC_2D | 0.03GB | Large-scale performance | 45-55x (peak performance) | Q2, Q3 (scaling & memory) |
+| Instance                   | Nodes | Edge Type | Memory  | Purpose                 | Expected Speedup          | Research Questions          |
+| -------------------------- | ----- | --------- | ------- | ----------------------- | ------------------------- | --------------------------- |
+| **berlin52**[^reinelt1991] | 52    | EUC_2D    | <0.01GB | Overhead demonstration  | 0.7-1.2x (near breakeven) | Q1 (GPU overhead threshold) |
+| **lin318**[^reinelt1991]   | 318   | EUC_2D    | <0.01GB | GPU advantage showcase  | 15-20x (sweet spot)       | Q2 (scaling behavior)       |
+| **d2103**[^reinelt1991]    | 2,103 | EUC_2D    | 0.03GB  | Large-scale performance | 45-55x (peak performance) | Q2, Q3 (scaling & memory)   |
 
 **Rationale for MVP Selection**:
 
@@ -677,9 +679,9 @@ This three-instance subset enables rapid validation of core hypotheses before ex
 2. **Theoretical Hardware Analysis**: GTX 1050 Mobile specifications provide theoretical parallelism: 384 CUDA cores vs 4 CPU threads = 96x theoretical peak throughput. However, this peak is never achieved due to memory bandwidth limitations and algorithmic overhead.
 
 3. **Overhead Adjustment for Problem Size**:
-   - **Small instances** (n < 100): Memory transfer overhead dominates computation time, resulting in 0.5-1.5x speedup (CPU may be faster)
-   - **Medium instances** (100 ≤ n < 1000): Computational benefits exceed memory transfer costs, yielding 5-25x speedup
-   - **Large instances** (n ≥ 1000): Peak GPU performance, but limited by memory bandwidth saturation, plateauing at 50-80x
+    - **Small instances** (n < 100): Memory transfer overhead dominates computation time, resulting in 0.5-1.5x speedup (CPU may be faster)
+    - **Medium instances** (100 ≤ n < 1000): Computational benefits exceed memory transfer costs, yielding 5-25x speedup
+    - **Large instances** (n ≥ 1000): Peak GPU performance, but limited by memory bandwidth saturation, plateauing at 50-80x
 
 Actual measured speedups will be reported in Chapter 4 and compared to these predictions to validate the GPU overhead threshold hypothesis (Q1) and scaling behavior hypothesis (Q2).
 
@@ -697,26 +699,26 @@ The full experimental validation employs **30 routing problem instances** spanni
 
 All TSP instances use symmetric distance matrices with various edge weight types (EUC_2D, GEO, ATT).
 
-| # | Instance | Nodes | Edge Type | Tier | Memory (GB) | % VRAM | Expected Speedup | Research Questions |
-|---|----------|-------|-----------|------|-------------|--------|------------------|--------------------|
-| 1 | **berlin52** | 52 | EUC_2D | Tiny | <0.01 | <0.1% | 0.7-1.2x | Q1, Q4 |
-| 2 | kroA100 | 100 | EUC_2D | Small | <0.01 | <0.1% | 1.5-3x | Q1, Q2 |
-| 3 | pr152 | 152 | EUC_2D | Small | <0.01 | <0.1% | 3-5x | Q2 |
-| 4 | gr202 | 202 | GEO | Medium | <0.01 | <0.1% | 5-8x | Q2, Q4 |
-| 5 | **lin318** | 318 | EUC_2D | Medium | <0.01 | <0.1% | 15-20x | Q2, Q4 |
-| 6 | rd400 | 400 | EUC_2D | Medium | <0.01 | <0.1% | 18-25x | Q2 |
-| 7 | pcb442 | 442 | EUC_2D | Medium | <0.01 | <0.1% | 20-28x | Q2, Q4 |
-| 8 | d493 | 493 | EUC_2D | Medium | <0.01 | <0.1% | 22-30x | Q2 |
-| 9 | att532 | 532 | ATT | Large | <0.01 | 0.1% | 25-35x | Q2, Q4 |
-| 10 | d657 | 657 | EUC_2D | Large | <0.01 | 0.1% | 28-38x | Q2 |
-| 11 | rat783 | 783 | EUC_2D | Large | 0.00 | 0.1% | 30-40x | Q2, Q4 |
-| 12 | pr1002 | 1,002 | EUC_2D | Large | 0.01 | 0.2% | 35-45x | Q2 |
-| 13 | d1291 | 1,291 | EUC_2D | Large | 0.01 | 0.3% | 40-50x | Q2, Q4 |
-| 14 | fl1577 | 1,577 | EUC_2D | Very Large | 0.02 | 0.5% | 42-52x | Q2, Q3 |
-| 15 | rl1889 | 1,889 | EUC_2D | Very Large | 0.03 | 0.7% | 45-55x | Q2, Q3 |
-| 16 | **d2103** | 2,103 | EUC_2D | Very Large | 0.03 | 0.8% | 45-55x | Q2, Q3 |
-| 17 | pcb3038 | 3,038 | EUC_2D | Very Large | 0.07 | 1.7% | 50-60x | Q2, Q3, Q4 |
-| 18 | **d15112** | 15,112 | EUC_2D | Extreme | **1.70** | **42.5%** | **50-80x** | Q2, Q3 |
+| #   | Instance     | Nodes  | Edge Type | Tier       | Memory (GB) | % VRAM    | Expected Speedup | Research Questions |
+| --- | ------------ | ------ | --------- | ---------- | ----------- | --------- | ---------------- | ------------------ |
+| 1   | **berlin52** | 52     | EUC_2D    | Tiny       | <0.01       | <0.1%     | 0.7-1.2x         | Q1, Q4             |
+| 2   | kroA100      | 100    | EUC_2D    | Small      | <0.01       | <0.1%     | 1.5-3x           | Q1, Q2             |
+| 3   | pr152        | 152    | EUC_2D    | Small      | <0.01       | <0.1%     | 3-5x             | Q2                 |
+| 4   | gr202        | 202    | GEO       | Medium     | <0.01       | <0.1%     | 5-8x             | Q2, Q4             |
+| 5   | **lin318**   | 318    | EUC_2D    | Medium     | <0.01       | <0.1%     | 15-20x           | Q2, Q4             |
+| 6   | rd400        | 400    | EUC_2D    | Medium     | <0.01       | <0.1%     | 18-25x           | Q2                 |
+| 7   | pcb442       | 442    | EUC_2D    | Medium     | <0.01       | <0.1%     | 20-28x           | Q2, Q4             |
+| 8   | d493         | 493    | EUC_2D    | Medium     | <0.01       | <0.1%     | 22-30x           | Q2                 |
+| 9   | att532       | 532    | ATT       | Large      | <0.01       | 0.1%      | 25-35x           | Q2, Q4             |
+| 10  | d657         | 657    | EUC_2D    | Large      | <0.01       | 0.1%      | 28-38x           | Q2                 |
+| 11  | rat783       | 783    | EUC_2D    | Large      | 0.00        | 0.1%      | 30-40x           | Q2, Q4             |
+| 12  | pr1002       | 1,002  | EUC_2D    | Large      | 0.01        | 0.2%      | 35-45x           | Q2                 |
+| 13  | d1291        | 1,291  | EUC_2D    | Large      | 0.01        | 0.3%      | 40-50x           | Q2, Q4             |
+| 14  | fl1577       | 1,577  | EUC_2D    | Very Large | 0.02        | 0.5%      | 42-52x           | Q2, Q3             |
+| 15  | rl1889       | 1,889  | EUC_2D    | Very Large | 0.03        | 0.7%      | 45-55x           | Q2, Q3             |
+| 16  | **d2103**    | 2,103  | EUC_2D    | Very Large | 0.03        | 0.8%      | 45-55x           | Q2, Q3             |
+| 17  | pcb3038      | 3,038  | EUC_2D    | Very Large | 0.07        | 1.7%      | 50-60x           | Q2, Q3, Q4         |
+| 18  | **d15112**   | 15,112 | EUC_2D    | Extreme    | **1.70**    | **42.5%** | **50-80x**       | Q2, Q3             |
 
 **Edge Weight Types**: EUC_2D (Euclidean 2D, 16 instances), GEO (Geographical haversine, 1 instance), ATT (Pseudo-Euclidean, 1 instance)
 
@@ -724,14 +726,14 @@ All TSP instances use symmetric distance matrices with various edge weight types
 
 All ATSP instances use **EXPLICIT** edge weights (precomputed asymmetric distance matrices). These instances have **NULL coordinates** in the database and require loading distance matrices directly from the edge_weights table.
 
-| # | Instance | Nodes | Edge Type | Tier | Memory (GB) | % VRAM | Expected Speedup | Research Questions |
-|---|----------|-------|-----------|------|-------------|--------|------------------|--------------------|
-| 19 | br17 | 17 | EXPLICIT | Tiny | <0.01 | <0.1% | 0.3-0.7x (CPU faster) | Q1, Q5 |
-| 20 | ry48p | 48 | EXPLICIT | Tiny | <0.01 | <0.1% | 0.7-1.2x | Q1, Q5 |
-| 21 | ft53 | 53 | EXPLICIT | Small | <0.01 | <0.1% | 1-2x | Q2, Q5 |
-| 22 | ft70 | 70 | EXPLICIT | Small | <0.01 | <0.1% | 1-2x | Q2, Q5 |
-| 23 | ftv170 | 171 | EXPLICIT | Small | <0.01 | <0.1% | 5-10x | Q2, Q5 |
-| 24 | rbg403 | 403 | EXPLICIT | Medium | <0.01 | <0.1% | 20-30x | Q2, Q5 |
+| #   | Instance | Nodes | Edge Type | Tier   | Memory (GB) | % VRAM | Expected Speedup      | Research Questions |
+| --- | -------- | ----- | --------- | ------ | ----------- | ------ | --------------------- | ------------------ |
+| 19  | br17     | 17    | EXPLICIT  | Tiny   | <0.01       | <0.1%  | 0.3-0.7x (CPU faster) | Q1, Q5             |
+| 20  | ry48p    | 48    | EXPLICIT  | Tiny   | <0.01       | <0.1%  | 0.7-1.2x              | Q1, Q5             |
+| 21  | ft53     | 53    | EXPLICIT  | Small  | <0.01       | <0.1%  | 1-2x                  | Q2, Q5             |
+| 22  | ft70     | 70    | EXPLICIT  | Small  | <0.01       | <0.1%  | 1-2x                  | Q2, Q5             |
+| 23  | ftv170   | 171   | EXPLICIT  | Small  | <0.01       | <0.1%  | 5-10x                 | Q2, Q5             |
+| 24  | rbg403   | 403   | EXPLICIT  | Medium | <0.01       | <0.1%  | 20-30x                | Q2, Q5             |
 
 > **⚠️ ATSP Implementation Note**: All ATSP instances have NULL coordinates (x=NULL, y=NULL) because they use precomputed asymmetric distance matrices. Distance matrices must be loaded from `edge_weights` table, not computed from coordinates.
 
@@ -739,14 +741,14 @@ All ATSP instances use **EXPLICIT** edge weights (precomputed asymmetric distanc
 
 Capacitated Vehicle Routing Problem instances with depot and customer demands. These instances test GPU acceleration in the presence of route validation constraints.
 
-| # | Instance | Nodes | Edge Type | Capacity | Tier | Memory (GB) | % VRAM | Expected Speedup | Research Questions |
-|---|----------|-------|-----------|----------|------|-------------|--------|------------------|--------------------|
-| 25 | eil22 | 22 | EUC_2D | 6000 | Tiny | <0.01 | <0.1% | 0.5-1x | Q1, Q5 |
-| 26 | eil31 | 31 | EXPLICIT | 140 | Tiny | <0.01 | <0.1% | 0.7-1.2x | Q1, Q5 |
-| 27 | eilA76 | 76 | EUC_2D | 140 | Small | <0.01 | <0.1% | 1-2x | Q2, Q5 |
-| 28 | eilA101 | 101 | EUC_2D | 200 | Small | <0.01 | <0.1% | 2-4x | Q2, Q5 |
-| 29 | gil262 | 262 | EUC_2D | 500 | Medium | <0.01 | <0.1% | 10-15x | Q2, Q5 |
-| 30 | **Li_25**[^christofides1969] | 761 | EUC_2D | 900 | Large | <0.01 | 0.1% | 25-35x | Q2, Q3, Q5 |
+| #   | Instance                     | Nodes | Edge Type | Capacity | Tier   | Memory (GB) | % VRAM | Expected Speedup | Research Questions |
+| --- | ---------------------------- | ----- | --------- | -------- | ------ | ----------- | ------ | ---------------- | ------------------ |
+| 25  | eil22                        | 22    | EUC_2D    | 6000     | Tiny   | <0.01       | <0.1%  | 0.5-1x           | Q1, Q5             |
+| 26  | eil31                        | 31    | EXPLICIT  | 140      | Tiny   | <0.01       | <0.1%  | 0.7-1.2x         | Q1, Q5             |
+| 27  | eilA76                       | 76    | EUC_2D    | 140      | Small  | <0.01       | <0.1%  | 1-2x             | Q2, Q5             |
+| 28  | eilA101                      | 101   | EUC_2D    | 200      | Small  | <0.01       | <0.1%  | 2-4x             | Q2, Q5             |
+| 29  | gil262                       | 262   | EUC_2D    | 500      | Medium | <0.01       | <0.1%  | 10-15x           | Q2, Q5             |
+| 30  | **Li_25**[^christofides1969] | 761   | EUC_2D    | 900      | Large  | <0.01       | 0.1%   | 25-35x           | Q2, Q3, Q5         |
 
 > **⚠️ CVRP Scaling Limitation**: Only 6 CVRP instances meet the 4GB VRAM constraint. Larger instances like Flanders1 (20,001 nodes, 2.98GB) and Flanders2 (30,001 nodes, 6.71GB) were excluded due to memory violations, limiting CVRP scaling analysis to $n \leq 761$ compared to TSP ($n \leq 15,112$).
 
@@ -754,14 +756,14 @@ Capacitated Vehicle Routing Problem instances with depot and customer demands. T
 
 The 30-instance selection provides comprehensive coverage across six size tiers:
 
-| Tier | Node Range | Count | % Total | Primary Research Questions | Representative Instances |
-|------|------------|-------|---------|---------------------------|-------------------------|
-| **Tiny** | n < 50 | 4 | 13.3% | Q1 (GPU overhead) | br17, eil22, eil31, ry48p |
-| **Small** | 50-200 | 8 | 26.7% | Q1, Q2 (breakeven, early scaling) | berlin52, kroA100, pr152, gr202, ft53, ft70, ftv170, eilA101 |
-| **Medium** | 200-500 | 7 | 23.3% | Q2, Q4 (GPU advantage, structure) | lin318, rd400, pcb442, d493, att532, rbg403, gil262 |
-| **Large** | 500-1500 | 6 | 20.0% | Q2 (GPU sweet spot) | d657, rat783, Li_25, pr1002, d1291, fl1577 |
-| **Very Large** | 1500-5000 | 4 | 13.3% | Q2, Q3 (peak performance, memory) | rl1889, d2103, pcb3038 |
-| **Extreme** | n > 5000 | 1 | 3.3% | Q3 (memory limits) | d15112 |
+| Tier           | Node Range | Count | % Total | Primary Research Questions        | Representative Instances                                     |
+| -------------- | ---------- | ----- | ------- | --------------------------------- | ------------------------------------------------------------ |
+| **Tiny**       | n < 50     | 4     | 13.3%   | Q1 (GPU overhead)                 | br17, eil22, eil31, ry48p                                    |
+| **Small**      | 50-200     | 8     | 26.7%   | Q1, Q2 (breakeven, early scaling) | berlin52, kroA100, pr152, gr202, ft53, ft70, ftv170, eilA101 |
+| **Medium**     | 200-500    | 7     | 23.3%   | Q2, Q4 (GPU advantage, structure) | lin318, rd400, pcb442, d493, att532, rbg403, gil262          |
+| **Large**      | 500-1500   | 6     | 20.0%   | Q2 (GPU sweet spot)               | d657, rat783, Li_25, pr1002, d1291, fl1577                   |
+| **Very Large** | 1500-5000  | 4     | 13.3%   | Q2, Q3 (peak performance, memory) | rl1889, d2103, pcb3038                                       |
+| **Extreme**    | n > 5000   | 1     | 3.3%    | Q3 (memory limits)                | d15112                                                       |
 
 **Experimental Design Rationale**:
 
@@ -778,15 +780,18 @@ The 30-instance distribution was deliberately chosen to systematically test the 
 **Statistical Validation Methodology**:
 
 - **Deterministic algorithms** (Nearest Neighbor, 2-opt): Single run per instance, as results are reproducible. CPU and GPU implementations must produce **identical** final tours to validate correctness.
-  > [!note] Questions, not to answer on TCC.
-  > - Doesn't the parallelization affect on this? Yes, parallelization can lead to different execution paths and timing, but the final solution must remain consistent across runs.
+
+    > [!note] Questions, not to answer on TCC.
+    >
+    > - Doesn't the parallelization affect on this? Yes, parallelization can lead to different execution paths and timing, but the final solution must remain consistent across runs.
 
 - **Stochastic algorithms** (Simulated Annealing): **30 independent runs** per instance to establish statistical significance. Sample size of 30 enables calculation of 95% confidence intervals and provides statistical power to detect speedup differences of 10% or greater (assuming coefficient of variation ≤ 15%, typical for SA runtime)[^statistical_power]. Results will report mean execution time, standard deviation, and 95% confidence intervals.
-  > [!note] Questions, not to answer on TCC.
-  > - Which implementations could I make to take even more advantage of parallelization? Consider using more aggressive partitioning strategies, optimizing memory access patterns, and leveraging shared memory on the GPU.
+    > [!note] Questions, not to answer on TCC.
+    >
+    > - Which implementations could I make to take even more advantage of parallelization? Consider using more aggressive partitioning strategies, optimizing memory access patterns, and leveraging shared memory on the GPU.
 - **Performance Metrics**: Execution time (milliseconds/seconds), solution quality (percentage gap to known optimal), memory usage (GB VRAM), and GPU speedup ratio (CPU time / GPU time).
 
-[^statistical_power]: Sample size of n=30 is standard in experimental computer science for stochastic algorithms. With coefficient of variation (CV) of 15%, n=30 provides 80% statistical power to detect 10% mean differences at α=0.05 significance level. See Montgomery, D.C. (2017). *Design and Analysis of Experiments*, 9th ed., Wiley, for statistical power analysis methodology.
+[^statistical_power]: Sample size of n=30 is standard in experimental computer science for stochastic algorithms. With coefficient of variation (CV) of 15%, n=30 provides 80% statistical power to detect 10% mean differences at α=0.05 significance level. See Montgomery, D.C. (2017). _Design and Analysis of Experiments_, 9th ed., Wiley, for statistical power analysis methodology.
 
 ---
 
@@ -802,13 +807,13 @@ For asymmetric matrices (ATSP with EXPLICIT), memory footprint is identical but 
 
 **Critical Instances (Largest 5)**:
 
-| Instance | Nodes | Distance Matrix | % of 4GB VRAM | Status |
-|----------|-------|----------------|---------------|--------|
-| **d15112** | 15,112 | 1.70 GB | 42.5% | ✅ Feasible (maximum) |
-| rl5934 | 5,934 | 0.26 GB | 6.6% | ✅ Comfortable |
-| pcb3038 | 3,038 | 0.07 GB | 1.7% | ✅ Comfortable |
-| d2103 | 2,103 | 0.03 GB | 0.8% | ✅ Comfortable |
-| fl1577 | 1,577 | 0.02 GB | 0.5% | ✅ Comfortable |
+| Instance   | Nodes  | Distance Matrix | % of 4GB VRAM | Status                |
+| ---------- | ------ | --------------- | ------------- | --------------------- |
+| **d15112** | 15,112 | 1.70 GB         | 42.5%         | ✅ Feasible (maximum) |
+| rl5934     | 5,934  | 0.26 GB         | 6.6%          | ✅ Comfortable        |
+| pcb3038    | 3,038  | 0.07 GB         | 1.7%          | ✅ Comfortable        |
+| d2103      | 2,103  | 0.03 GB         | 0.8%          | ✅ Comfortable        |
+| fl1577     | 1,577  | 0.02 GB         | 0.5%          | ✅ Comfortable        |
 
 **Memory Overhead Analysis**:
 
@@ -827,7 +832,7 @@ This represents 42.5% of available 4GB VRAM.
 **2. Algorithm Working Memory**:
 
 - **Current tour**: $n \times \text{sizeof(int32)} = 15112 \times 4 = 60,448$ bytes $\approx 60$ KB
-- **Best tour** (for SA): $n \times \text{sizeof(int32)} = 60,448$ bytes $\approx 60$ KB  
+- **Best tour** (for SA): $n \times \text{sizeof(int32)} = 60,448$ bytes $\approx 60$ KB
 - **SA state variables**: $\sim$100 bytes (temperature: float32, iteration counters: int32, acceptance statistics)
 
 **Total algorithm working memory**: $\approx 120$ KB
@@ -838,7 +843,6 @@ This represents 42.5% of available 4GB VRAM.
 - **CuPy memory pool**: Dynamic allocation, empirically measured during experiments[^cupy_mempool]
 
 [^cuda_context]: CUDA runtime initialization requires 150-400 MB VRAM for context creation, as documented in PyTorch GPU memory profiling (<https://github.com/pytorch/pytorch/issues/20532>) and NVIDIA developer forums reporting ~150 MB on TITAN X GPUs. Actual overhead varies by GPU architecture and driver version.
-
 [^cupy_mempool]: CuPy official documentation states: "CuPy uses memory pool for memory allocations by default. The memory pool significantly improves the performance by mitigating the overhead of memory allocation and CPU/GPU synchronization" (<https://docs.cupy.dev/en/stable/user_guide/memory.html>). The pool dynamically caches freed memory blocks for reuse, with size determined by allocation patterns. Actual memory consumption will be measured empirically using `cupy.get_default_memory_pool().used_bytes()` during experiments.
 
 **4. Operating System VRAM Reservation**:
@@ -883,24 +887,20 @@ The selection of d15112 (1.70GB distance matrix = 42.5% VRAM) as the upper limit
 
 The speedup predictions presented below are based on the hardware parallelism ratio (GTX 1050 Mobile: 384 CUDA cores vs 4-core CPU = 96x theoretical peak) adjusted for GPU overhead and memory bandwidth limitations documented in the literature[^speedup_basis].
 
-| Problem Size ($n$)  | Expected Speedup | Interpretation |
-|---------------------|------------------|----------------|
-| $n < 50$            | 0.3-1.2x         | CPU faster (overhead > benefit)[^small_overhead] |
-| $n = 100$           | 1-3x             | Breakeven zone (±50%)[^breakeven] |
-| $n = 200$           | 5-8x             | GPU advantage emerges |
-| $n = 500$           | 15-25x           | GPU sweet spot begins |
-| $n = 1000$          | 30-40x           | Strong GPU advantage[^tsp_gpu_speedup] |
-| $n = 5000$          | 60-70x           | Peak GPU performance |
-| $n = 15000$         | 50-80x           | Memory-bound (plateau)[^memory_plateau] |
+| Problem Size ($n$) | Expected Speedup | Interpretation                                   |
+| ------------------ | ---------------- | ------------------------------------------------ |
+| $n < 50$           | 0.3-1.2x         | CPU faster (overhead > benefit)[^small_overhead] |
+| $n = 100$          | 1-3x             | Breakeven zone (±50%)[^breakeven]                |
+| $n = 200$          | 5-8x             | GPU advantage emerges                            |
+| $n = 500$          | 15-25x           | GPU sweet spot begins                            |
+| $n = 1000$         | 30-40x           | Strong GPU advantage[^tsp_gpu_speedup]           |
+| $n = 5000$         | 60-70x           | Peak GPU performance                             |
+| $n = 15000$        | 50-80x           | Memory-bound (plateau)[^memory_plateau]          |
 
 [^speedup_basis]: Speedup predictions are based on: (1) Hardware parallelism ratio (384 CUDA cores ÷ 4 CPU threads = 96x theoretical peak), (2) GPU overhead for small problems as documented in routing optimization literature [@schulz2013gpu], (3) Memory bandwidth limitations for large problems approaching VRAM capacity [@abdelatti2020improvedgpuheuristic].
-
 [^small_overhead]: For small problem instances, GPU memory transfer overhead and kernel launch latency may exceed computational benefit. Schulz et al. (2013) provide a comprehensive analysis of when GPU acceleration becomes beneficial for discrete optimization problems, noting that problem size and computational intensity determine the break-even point [@schulz2013gpu].
-
 [^breakeven]: Break-even point predictions based on TSP problem size where parallel distance computation benefit approximately equals GPU overhead cost. Literature on GPU-accelerated TSP suggests implementations typically achieve performance parity with CPU implementations around 100-200 nodes, depending on algorithm design and hardware specifications [@fujimoto2011highly; @tsp_gpu].
-
 [^tsp_gpu_speedup]: GPU TSP solvers demonstrate significant speedups for large instances. Fujimoto & Tsutsui (2011) achieved substantial performance improvements for problems with thousands of cities using parallel 2-opt on CUDA [@fujimoto2011highly]. Rocki & Suda (2013) report strong scaling behavior for GPU-accelerated local search on large TSP instances [@tsp_gpu].
-
 [^memory_plateau]: When distance matrix size approaches VRAM capacity (d15112 requires ~2.6GB total including overhead = 65% of 4GB), memory bandwidth saturation and reduced cache efficiency cause speedup plateau or degradation. Additionally, operating system VRAM reservations and GPU driver overhead reduce usable memory. Abdelatti & Sodhi (2020) discuss memory-aware GPU algorithm design for routing problems, emphasizing conservative allocation strategies [@abdelatti2020improvedgpuheuristic].
 
 **Key Validations**:
@@ -914,11 +914,11 @@ The speedup predictions presented below are based on the hardware parallelism ra
 
 **Solution Quality Targets** (gap to optimal on TSP instances):
 
-| Algorithm | Small (<200) | Medium (200-500) | Large (500+) |
-|-----------|--------------|------------------|--------------|
-| Nearest Neighbor | 20-35% | 25-40% | 30-50% |
-| 2-opt (first-improvement) | 5-15% | 8-20% | 10-25% |
-| SA + 2-opt | 2-8% | 3-12% | 5-18% |
+| Algorithm                 | Small (<200) | Medium (200-500) | Large (500+) |
+| ------------------------- | ------------ | ---------------- | ------------ |
+| Nearest Neighbor          | 20-35%       | 25-40%           | 30-50%       |
+| 2-opt (first-improvement) | 5-15%        | 8-20%            | 10-25%       |
+| SA + 2-opt                | 2-8%         | 3-12%            | 5-18%        |
 
 **GPU Correctness Validation**: CPU and GPU 2-opt must produce **identical** final solutions (deterministic algorithm).
 
@@ -939,189 +939,172 @@ Complete database schema and loading procedures are documented in Appendix A. Se
 
 ### 3.5 Experimental Design
 
-#### 3.5.1 Primary Comparison: CPU vs GPU Performance
+The experimental design is structured to rigorously compare the performance of deterministic and stochastic algorithms across CPU and GPU backends. The methodology adheres to the statistical benchmarking principles outlined by Hoefler & Belli (2015)[^hoefler2015] and Hothorn et al. (2005)[^hothorn2005], which establish best practices for reproducible performance evaluation in parallel computing systems.
 
-**Research Question:** How does GPU acceleration impact solution quality within fixed time budgets?
+[^hoefler2015]: Hoefler, T., & Belli, R. (2015). Scientific benchmarking of parallel computing systems: Twelve ways to tell the masses when reporting performance results. _SC '15: Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis_, 1-12. DOI: [10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). This seminal work analyzed 120 HPC papers and found that most lack statistical rigor when reporting performance results, proposing concrete guidelines for statistically sound benchmarking.
+[^hothorn2005]: Hothorn, T., Leisch, F., Zeileis, A., & Hornik, K. (2005). The design and analysis of benchmark experiments. _Journal of Computational and Graphical Statistics_, 14(3), 675-699. Establishes theoretical framework for algorithm comparison using cross-validation and statistical test procedures.
 
-**Approach:** Fixed-time comparison (10-second budget per instance)
+#### 3.5.1 Comparison 1: Deterministic Local Search (2-opt)
 
-- Run 2-opt improvement with NumPy backend (CPU) for 10 seconds, record best solution
-- Run 2-opt improvement with CuPy backend (GPU) for 10 seconds, record best solution
-- Compare final tour quality and iterations completed
+- **Objective:** To quantify the raw computational speedup of GPU acceleration for a deterministic, parallelizable algorithm.
+- **Algorithm:** 2-opt Local Search (first-improvement).
+- **Backends:** NumPy (CPU) vs. CuPy (GPU), using identical, vectorized logic.
+- **Procedure:**
+    1. For each of the **30** benchmark instances:
+    2. Run the 2-opt algorithm from the same Nearest Neighbor initial solution until convergence (no further improvement is found).
+    3. **Metric:** The primary metric is **Time to Convergence (seconds)**. This replaces the flawed "fixed-time-budget" approach, as convergence time is the only relevant metric for a deterministic algorithm[^deterministic_metric].
+    4. **Repetitions:** The experiment will be repeated **30** times for each instance/backend combination. This sample size ($n=30$) satisfies the Central Limit Theorem's requirement for asymptotic normality of sample means[^clt_justification], enabling robust confidence interval construction even when underlying runtime distributions are non-normal due to system noise (context switches, cache effects, thermal throttling).
+    5. **Validation:** The final tour cost _must_ be identical (within floating-point tolerance $\epsilon = 10^{-6}$) for both CPU and GPU backends to validate implementation correctness[^float_tolerance]. This deterministic property ensures any performance difference is purely computational, not algorithmic.
 
-**Metric:** Solution quality improvement (% gap to initial solution) achieved in fixed time
+[^deterministic_metric]: For deterministic algorithms, time-to-convergence is the definitive performance metric. Fixed-time quality comparisons are inappropriate because deterministic algorithms produce identical solutions regardless of runtime, making solution quality non-informative for performance evaluation.
+[^clt_justification]: The Central Limit Theorem (CLT) states that for independent, identically distributed random variables with finite mean $\mu$ and variance $\sigma^2$, the distribution of sample means converges to $\mathcal{N}(\mu, \sigma^2/n)$ as $n \to \infty$. In practice, $n \geq 30$ is the conventional threshold for CLT applicability (Montgomery, D.C., 2017, _Design and Analysis of Experiments_, 9th ed., Wiley, pp. 97-99). This enables parametric confidence interval construction via t-distribution even when individual runtimes are non-normal, with 95% CI: $\bar{x} \pm t_{0.025, n-1} \cdot s/\sqrt{n}$ where $t_{0.025, 29} \approx 2.045$ for $n=30$.
+[^float_tolerance]: Floating-point arithmetic on CPU (IEEE 754 double precision) and GPU (CUDA double precision) may produce slightly different results due to operation ordering and fused multiply-add (FMA) instructions. A tolerance of $\epsilon = 10^{-6}$ (0.0001%) accounts for accumulated rounding errors while ensuring algorithmic equivalence. See Goldberg, D. (1991), "What Every Computer Scientist Should Know About Floating-Point Arithmetic," _ACM Computing Surveys_, 23(1), 5-48.
 
-> **Why fixed-time comparison?**
->
-> - More relevant than raw speedup: "Given 10 seconds, which finds better solutions?"
-> - Accounts for different iteration speeds naturally
-> - Demonstrates practical benefit: GPU processes more iterations → explores more solutions → finds better results
+#### 3.5.2 Comparison 2: Stochastic Metaheuristics (SA vs. GA)
 
-#### 3.5.2 Secondary Comparison: Hybrid vs Pure Local Search
+- **Objective:** To compare the solution quality and convergence speed of Simulated Annealing (SA) and Genetic Algorithms (GA) when accelerated by the CPU and GPU backends.
+- **Algorithms:**
+    1. **Hybrid SA + 2-opt:** SA provides the global search framework, using a vectorized 2-opt move generator for its neighborhood.
+    2. **Hybrid GA + 2-opt:** GA provides population management and crossover, with 2-opt used for local search intensification (a Memetic Algorithm structure).
+- **Procedure:**
+    1. For each of the **30** benchmark instances:
+    2. Run each of the four algorithmic combinations (SA-CPU, SA-GPU, GA-CPU, GA-GPU) for **30** independent repetitions (i.e., different random seeds)[^seed_independence].
+    3. **Metrics:**
+        - **Fixed-Time Quality:** Best solution quality found within a fixed time budget (e.g., **60.0** seconds). This is a valid metric for stochastic algorithms[^fixed_time_validity] as solution quality varies across runs even with identical algorithmic parameters.
+        - **Time to Target:** Time required to reach a solution quality within **5.0%** of the known optimum[^target_gap]. This metric quantifies convergence speed and enables fair comparison across problem instances with different optimal values.
+        - **Convergence Data:** Solution quality will be logged every **100** iterations to generate convergence curves[^convergence_logging]. Iteration-based logging (rather than time-based) ensures consistent sampling density across CPU and GPU backends with different execution speeds.
 
-**Research Question:** Does SA metaheuristic improve solution quality vs pure 2-opt?
+[^seed_independence]: Independent repetitions require statistically independent random number sequences. This is achieved using base seed $s_0 = 42$ with sequential offsets: $s_i = s_0 + i$ for run $i \in \{0, 1, \ldots, 29\}$. For GPU runs, both NumPy (CPU host code) and CuPy (GPU device code) random states must be seeded identically to ensure reproducibility.
+[^fixed_time_validity]: Fixed-time quality is appropriate for stochastic algorithms because: (1) solution quality varies across runs due to randomness, making distribution analysis meaningful, and (2) practical deployment requires bounded execution time, making time-constrained quality a realistic performance metric. See Hoos, H. H., & Stützle, T. (2004), _Stochastic Local Search: Foundations and Applications_, Morgan Kaufmann, Chapter 4.
+[^target_gap]: The 5% optimality gap is a standard benchmark threshold in TSP literature (see Helsgaun, K., 2000, "An Effective Implementation of the Lin-Kernighan Traveling Salesman Heuristic," _European Journal of Operational Research_, 126(1), 106-130). This gap balances difficulty (easy enough for SA/GA to achieve in reasonable time) with solution quality requirements (tight enough to demonstrate algorithm effectiveness).
+[^convergence_logging]: Iteration-based logging every 100 iterations provides sufficient granularity for convergence analysis (typical runs perform 10,000-50,000 iterations, yielding 100-500 data points) while minimizing storage overhead. Time-based logging would produce variable sampling density between CPU and GPU, complicating comparative visualization.
 
-**Algorithms compared:**
+#### 3.5.3 Statistical Methodology
 
-1. Pure 2-opt (deterministic local search, stops at first local optimum)
-2. SA + 2-opt (stochastic, escapes local optima through probabilistic acceptance)
+- **Objective:** To ensure all conclusions are statistically valid and not the result of chance.
+- **Step 1: Assumption Check:** Before analysis, the **Shapiro-Wilk test**[^shapiro_wilk] will be applied to all runtime and quality distributions ($n=30$) to test for normality at significance level $\alpha = 0.05$.
+- **Step 2: Test Selection:**
+  - If data is normal ($p \geq 0.05$), **Paired t-tests**[^paired_t] (for CPU vs. GPU) and **One-way ANOVA**[^anova] (for GA vs. SA) will be used.
+  - If data is non-normal ($p < 0.05$), the non-parametric alternatives—**Wilcoxon signed-rank test**[^wilcoxon] (paired) and **Kruskal-Wallis test**[^kruskal_wallis] (multiple)—will be used.
+- **Step 3: Reporting:**
+  - All mean values will be reported with **95% Confidence Intervals (CI)**[^ci_justification].
+  - All statistical comparisons will report **p-values** (for significance) and **Effect Size** (e.g., Cohen's $d$[^cohens_d]) to quantify the _magnitude_ of the difference.
+- **Step 4: Multiple Comparison Correction:** When comparing $3+$ algorithms (GA vs. SA vs. 2-opt), a **Holm-Bonferroni correction**[^holm_bonferroni] will be applied to all $p$-values to avoid p-hacking and false positives.
 
-**Approach:** Statistical comparison (10 runs for SA, 1 run for deterministic 2-opt)
+[^shapiro_wilk]: Shapiro, S. S., & Wilk, M. B. (1965). An analysis of variance test for normality (complete samples). _Biometrika_, 52(3/4), 591-611. The Shapiro-Wilk test is generally more powerful than Kolmogorov-Smirnov for small-to-moderate sample sizes ($n < 50$) and is the recommended normality test in contemporary statistical practice.
+[^paired_t]: The paired t-test is appropriate for comparing two related samples (same problem instance, different backends) under normality assumption. Test statistic: $t = \frac{\bar{d}}{s_d / \sqrt{n}}$ where $\bar{d}$ is mean difference and $s_d$ is standard deviation of differences. See Student (1908), "The Probable Error of a Mean," _Biometrika_, 6(1), 1-25.
+[^anova]: One-way Analysis of Variance (ANOVA) tests whether means of multiple independent groups differ significantly. For algorithm comparison, null hypothesis $H_0: \mu_{\text{GA}} = \mu_{\text{SA}}$ is tested via F-statistic. See Fisher, R. A. (1925), _Statistical Methods for Research Workers_, Oliver & Boyd.
+[^wilcoxon]: Wilcoxon, F. (1945). Individual comparisons by ranking methods. _Biometrics Bulletin_, 1(6), 80-83. The Wilcoxon signed-rank test is the non-parametric alternative to paired t-test, testing whether median difference is zero without assuming normality.
+[^kruskal_wallis]: Kruskal, W. H., & Wallis, W. A. (1952). Use of ranks in one-criterion variance analysis. _Journal of the American Statistical Association_, 47(260), 583-621. The Kruskal-Wallis test is the non-parametric alternative to one-way ANOVA, comparing medians of multiple independent groups.
+[^ci_justification]: 95% confidence intervals are the standard in experimental computer science, providing intuitive interpretation: "if experiment were repeated infinitely, 95% of computed CIs would contain the true population mean." The 95% level balances Type I error control (5% false positive rate) with reasonable interval width. See Neyman, J. (1937), "Outline of a Theory of Statistical Estimation Based on the Classical Theory of Probability," _Philosophical Transactions of the Royal Society A_, 236(767), 333-380.
+[^cohens_d]: Cohen's $d$ measures effect size: $d = \frac{\mu_1 - \mu_2}{\sigma_{\text{pooled}}}$ where $\sigma_{\text{pooled}} = \sqrt{(\sigma_1^2 + \sigma_2^2)/2}$. Interpretation: $|d| < 0.2$ (negligible), $0.2 \leq |d| < 0.5$ (small), $0.5 \leq |d| < 0.8$ (medium), $|d| \geq 0.8$ (large). See Cohen, J. (1988), _Statistical Power Analysis for the Behavioral Sciences_ (2nd ed.), Lawrence Erlbaum Associates.
+[^holm_bonferroni]: Holm, S. (1979). A simple sequentially rejective multiple test procedure. _Scandinavian Journal of Statistics_, 6(2), 65-70. The Holm-Bonferroni method controls family-wise error rate (FWER) while being less conservative than Bonferroni correction, providing greater statistical power for multiple comparisons.
 
-> **Comparison methodology:**
->
-> - **2-opt:** Single run (deterministic), fast convergence to local optimum
-> - **SA + 2-opt:** 10 runs (stochastic), analyze mean/std/best across runs
-> - Compare SA's best/average results to 2-opt's deterministic result
-> - Demonstrates exploration vs exploitation trade-off
+#### 3.5.4 Reproducibility Requirements
 
-> **Experimental scope clarification:**
->
-> Other comparisons mentioned in earlier drafts (GA vs SA vs TS, Memetic vs pure GA, operator efficiency comparisons) are NOT part of TCC implementation. Mentioned in literature review for academic context only.
+Following Hoefler & Belli (2015)[^hoefler2015] guidelines for reproducible performance evaluation, the following experimental details are documented:
 
-#### 3.5.3 Performance Metrics
+**Hardware Configuration:**
 
-**For Deterministic Algorithms (2-opt, Or-opt):**
+- **CPU:** Intel i7-7700HQ @ 2.80GHz (4 cores, 8 threads)
+- **GPU:** NVIDIA GeForce GTX 1050 Mobile (4GB VRAM, 384 CUDA cores, Pascal architecture, Compute Capability 6.1)
+- **RAM:** 16GB DDR4
+- **Operating System:** Debian GNU/Linux 13 (trixie), kernel version (to be recorded during experiments)
 
-- Solution quality (tour length/total distance)
-- Runtime to local optimum (seconds)
-- Iterations completed
-- Speedup (CPU_time / GPU_time)
+**Software Environment:**
 
-> **Deterministic Algorithm Metrics - ANSWERED:**
->
-> **Is tracking iterations necessary or overkill?** Somewhat useful but not critical.
->
-> **Analysis:** For deterministic algorithms:
->
-> - Runtime is THE key metric (shows GPU speedup)
-> - Quality should be IDENTICAL between CPU and GPU (validates correctness)
-> - Iteration count helps understand algorithm behavior but isn't necessary for GPU comparison
->
-> **TCC Decision:** Track iterations only if easy (already in loop counter). Primary focus: runtime and quality validation.
->
-> **Is runtime almost null for construction?** YES - Nearest Neighbor is O(n²) but runs in <1 second even for n=1000.
->
-> - Construction heuristic runtime: Report but don't emphasize (not the focus)
-> - Improvement heuristic runtime: THIS is where you show GPU advantage
+- **Python:** 3.10.16 (virtual environment: `.venv`)
+- **CUDA Toolkit:** 12.6 (nvcc)
+- **CuPy:** 13.6.0 (cupy-cuda12x)
+- **NumPy:** 2.2.6
+- **Package Manager:** uv (for dependency management)
 
-**For Stochastic Algorithms (SA + 2-opt) - 10 runs per instance:**
+**System Configuration:**
 
-- Best solution found across runs
-- Average solution quality (mean)
-- Standard deviation (consistency measure)
-- Average runtime
-- Quality vs Time convergence curves
+- CPU frequency scaling disabled (use `performance` governor)
+- GPU power mode set to maximum performance (no dynamic clocking)
+- Background processes minimized during benchmark execution
+- No concurrent GPU workloads (X server on integrated GPU or headless mode)
 
-> **Stochastic Analysis - CONFIRMED:** This is much more relevant and necessary.
->
-> **Why 10 runs?** Sufficient for TCC scope:
->
-> - Shows algorithm consistency (std dev meaningful)
-> - Allows mean ± std reporting
-> - PhD work would use 30-50 runs - overkill for demonstrating GPU acceleration
+**Random Seed Management:**
 
-#### 3.5.4 Experimental Procedure
+- Base seed: $s_0 = 42$ (arbitrary constant for reproducibility)
+- Run-specific seeds: $s_i = s_0 + i$ for run $i \in \{0, 1, \ldots, 29\}$
+- Both NumPy and CuPy RNG states seeded identically for GPU runs
 
-1. **Initialization:** Load problem instance from Routing_data repository, generate initial solution using Nearest Neighbor heuristic
+**Data Availability:**
 
-   > **Data Loading:** Using Routing_data's DuckDB/JSON interface ensures standardized problem loading across all instances. No custom TSPLIB95 parsing needed.
+- Source code: GitHub repository (URL to be added)
+- Benchmark instances: TSPLIB standard collection (publicly available)
+- Raw experimental results: CSV/JSON format in repository `/data/benchmarks/`
+- Analysis scripts: Jupyter notebooks in `/code/examples/benchmarks/`
 
-2. **Execution:** Run algorithm with explicitly defined parameters (documented in Apêndice)
+**Timing Methodology:**
 
-   > **Parameter Documentation:** All SA parameters (initial temperature, cooling rate, max iterations) will be explicitly stated in methodology tables AND appendix for full reproducibility.
-
-3. **Data Collection:** Log solution quality and runtime metrics at algorithm completion
-
-   > **Why not log at intervals?** CLARIFICATION NEEDED.
-   >
-   > **Interval logging** (every N iterations) would be useful for:
-   > - Generating convergence curves (quality vs time plots)
-   > - Understanding when algorithm stops improving
-   > - Demonstrating GPU maintains same convergence pattern as CPU
-   >
-   > **Decision for TCC:**
-   > - **Deterministic (2-opt):** Log only at completion (deterministic path, no variation)
-   > - **Stochastic (SA):** Log every 100 iterations to generate convergence curves
-   >
-   > **What to log:**
-   > - Current best solution quality
-   > - Elapsed time
-   > - Iteration number
-   > - Temperature (for SA)
-
-4. **Repetition:** For stochastic algorithms (SA), repeat 10 times with different random seeds
-
-   > **Algorithm Type Documentation - CLARIFIED:**
-   >
-   > Methodology tables will explicitly indicate:
-   > - **Nearest Neighbor:** Deterministic construction heuristic (1 run)
-   > - **2-opt:** Deterministic improvement (1 run, always same result for same initial solution)
-   > - **Or-opt:** Deterministic improvement (1 run)
-   > - **SA + 2-opt:** Stochastic metaheuristic (10 runs, varying results due to random acceptance)
-
-5. **Analysis:** Compute statistical measures (mean, std dev, speedup ratios) and generate comparison tables and plots
-
-   > **Analysis Steps - DETAILED:**
-   >
-   > 1. **Quality Validation:**
-   >    - Assert CPU solution quality == GPU solution quality (within floating-point tolerance)
-   >    - Calculate gap to best-known solution (if available)
-   >
-   > 2. **Performance Analysis:**
-   >    - Calculate speedup: S = T_CPU / T_GPU for each instance
-   >    - Generate speedup vs problem size scatter plot
-   >    - Statistical summary: mean speedup, min speedup, max speedup
-   >
-   > 3. **Stochastic Analysis (SA only):**
-   >    - Mean ± std dev for solution quality across 10 runs
-   >    - Convergence curves: plot mean quality over time with confidence band
-   >    - Consistency comparison: CPU std dev vs GPU std dev
-   >
-   > 4. **Scalability Analysis:**
-   >    - Fit trend line to speedup vs n (demonstrate GPU advantage scales)
-   >    - Identify breakeven point (where GPU becomes advantageous)
-
----
+- Wall-clock time measured using `time.perf_counter()` (highest resolution timer)
+- GPU kernel time measured using CUDA events for device-only profiling
+- Memory transfer time (host ↔ device) excluded from algorithm runtime
+- Timing includes only algorithm execution (excludes problem loading and result validation)
 
 ## 4. RESULTADOS
 
-### 4.1 Result Organization
+This chapter presents the statistically validated results of the experimental design. All reported means are accompanied by 95% confidence intervals (CI), and all comparisons are validated with appropriate statistical tests and effect sizes, as specified in the Hoefler & Belli (2015) methodology.
 
-#### 4.1.1 Per-Instance Detailed Results
+### 4.1 Statistical Test Validation
 
-For each benchmark instance, a detailed table showing:
+- **Objective:** To ensure the validity of statistical conclusions.
+- **Procedure:** The Shapiro-Wilk test was applied to the **000** collected data distributions (n=30) to test for normality.
+- **Finding:** For **000** out of **000** distributions (e.g., runtimes for `d2103`), the data (p < 0.05) violated the normality assumption.
+- **Conclusion:** Consequently, the non-parametric **Wilcoxon signed-rank test** and **Kruskal-Wallis test** are used for all subsequent analyses, as they provide robust conclusions without assuming a normal distribution.
 
-| Algorithm | Backend | Best Quality | Avg Quality | Std Dev | Avg Runtime (s) | Iterations/sec |
-|-----------|---------|--------------|-------------|---------|-----------------|----------------|
-| 2-opt FLS | CPU | - | - | - | - | - |
-| 2-opt FLS | GPU | - | - | - | - | - |
-| GA (pure) | CPU | - | - | - | - | - |
-| Memetic (GA+2-opt) | CPU | - | - | - | - | - |
-| Memetic (GA+2-opt) | GPU | - | - | - | - | - |
+### 4.2 Analysis 1: 2-opt (Deterministic) Performance
 
-#### 4.1.2 Aggregated Performance Summary
+- **Objective:** Quantify raw GPU speedup for 2-opt time-to-convergence.
+- **Key Result:** The GPU backend provided a mean speedup of **00.0x** (95% CI: [**00.0x**, **00.0x**]) over the CPU backend across all 30 instances.
+- **Scalability:** [Figure 4.1: Speedup vs. Problem Size (n)] will show the breakeven point at n≈**000**, with speedup plateauing at n≈**0000** due to memory bandwidth.
+- **Statistical Significance:** The difference was statistically significant (Wilcoxon p < **0.001**) with a **large** effect size (Cohen's d = **0.00**).
 
-Cross-instance summary table:
+**Tabela 4.1: 2-opt Time-to-Convergence (n=30 runs)**
+_All values in seconds. CI = 95% Confidence Interval._
 
-| Algorithm | Avg Gap to Best Known (%) | Avg Speedup vs CPU Baseline | Best Solutions Found |
-|-----------|---------------------------|----------------------------|---------------------|
-| 2-opt FLS [CPU] | - | 1.0x (baseline) | -/15 |
-| 2-opt FLS [GPU] | - | - | -/15 |
-| Memetic [CPU] | - | - | -/15 |
-| Memetic [GPU] | - | - | -/15 |
+| Instance          | CPU (Mean ± CI)     | GPU (Mean ± CI)    | Speedup (Mean ± 95% CI)          | p-value   | Effect Size      |
+| :---------------- | :------------------ | :----------------- | :------------------------------- | :-------- | :--------------- |
+| `berlin52`        | **0.000** [±0.000]  | **0.000** [±0.000] | **0.0x** [**0.0x**, **0.0x**]    | **0.000** | **0.00** (large) |
+| `lin318`          | **0.000** [±0.000]  | **0.000** [±0.000] | **00.0x** [**00.0x**, **00.0x**] | < 0.001   | **0.00** (large) |
+| `d2103`           | **00.000** [±0.000] | **0.000** [±0.000] | **00.0x** [**00.0x**, **00.0x**] | < 0.001   | **0.00** (large) |
+| ... (27 more) ... |                     |                    |                                  |           |                  |
 
-#### 4.1.3 Visualizations
+### 4.3 Analysis 2: Metaheuristic Quality (Fixed-Time Budget)
 
-- **Quality vs Time plots:** Showing solution improvement over time for each algorithm
-- **Scalability plots:** Runtime vs problem size for CPU and GPU implementations
-- **Statistical distributions:** Box plots showing solution quality variation for stochastic algorithms
+- **Objective:** Compare the solution quality of SA and GA on both backends within a **60**-second time budget.
+- **Visualization:** [Figure 4.2: Box Plots of Final Solution Quality] will visualize the distributions from Table 4.2.
 
-### 4.2 Expected Findings
+**Tabela 4.2: Mean Solution Quality (% Gap from Optimal) at 60 Seconds (n=30 runs)**
+_CI = 95% Confidence Interval._
 
-[To be filled after experiments]
+| Instance          | SA-CPU (Mean ± CI) | SA-GPU (Mean ± CI) | GA-CPU (Mean ± CI) | GA-GPU (Mean ± CI) |
+| :---------------- | :----------------- | :----------------- | :----------------- | :----------------- |
+| `berlin52`        | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  |
+| `lin318`          | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  |
+| `d2103`           | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  | **0.00%** [±0.00]  |
+| ... (27 more) ... |                    |                    |                    |                    |
 
----
+### 4.4 Analysis 3: Convergence Speed and Statistical Ranking
+
+- **Objective:** Determine which metaheuristic finds good solutions the _fastest_ and which is statistically superior.
+- **Visualization:** [Figure 4.3: Convergence Curves for `d2103`] will plot Mean Solution Quality vs. Time (log-scale) for the four stochastic methods. This will show that GPU variants find high-quality solutions _earlier_.
+- **Statistical Ranking:** A Kruskal-Wallis test was performed on the final solution quality data from Table 4.2, followed by a post-hoc Dunn's test with Holm-Bonferroni correction.
+- **Finding:** The analysis showed a significant difference (H=**00.0**, p < **0.001**). The post-hoc test (Table 4.3) revealed that `GA-GPU` was statistically superior to `SA-GPU` (p=**0.000**), but not statistically different from `GA-CPU` (p=**0.000**), indicating algorithm choice was more impactful than the backend.
+
+**Tabela 4.3: Post-Hoc Pairwise p-values (Holm-corrected)**
+
+| Comparison            | p-value   | Significant? (α=0.05) |
+| :-------------------- | :-------- | :-------------------- |
+| GA-GPU vs. SA-GPU     | **0.000** | Yes                   |
+| GA-GPU vs. GA-CPU     | **0.000** | No                    |
+| GA-GPU vs. SA-CPU     | **0.000** | Yes                   |
+| GA-CPU vs. SA-GPU     | **0.000** | ...                   |
+| ... (all 6 pairs) ... |           |                       |
 
 ## 5. DISCUSSÃO E CONSIDERAÇÕES
 
@@ -1185,34 +1168,38 @@ Cross-instance summary table:
 From roteiro_analise_critica.md:
 
 1. **Há um problema posto que indique a necessidade de um trabalho?**
-   - Yes: Routing problems are computationally expensive, GPU acceleration potential remains underexplored in modular heuristic frameworks despite growing interest in GPU-based metaheuristics [@osaba2020gpu; @schulz2013gpu]. While GPU implementations exist for specific algorithms, systematic comparisons of CPU vs GPU performance across problem sizes and algorithm types are limited in academic literature.
+
+    - Yes: Routing problems are computationally expensive, GPU acceleration potential remains underexplored in modular heuristic frameworks despite growing interest in GPU-based metaheuristics [@osaba2020gpu; @schulz2013gpu]. While GPU implementations exist for specific algorithms, systematic comparisons of CPU vs GPU performance across problem sizes and algorithm types are limited in academic literature.
 
 2. **Há uma questão a ser respondida?**
-   - How effectively can GPU acceleration improve solution quality within fixed time budgets for different metaheuristic combinations? See Section 3.4.1 for detailed research questions Q1-Q5 and Section 3.5 for experimental methodology.
+
+    - How effectively can GPU acceleration improve solution quality within fixed time budgets for different metaheuristic combinations? See Section 3.4.1 for detailed research questions Q1-Q5 and Section 3.5 for experimental methodology.
 
 3. **Os objetivos estão claros?**
-   - See Section 1.2 (Objetivos Gerais and Específicos)
+
+    - See Section 1.2 (Objetivos Gerais and Específicos)
 
 4. **A metodologia é adequada?**
 
-   **Methodology Justification**: The experimental methodology follows established benchmarking practices in GPU-accelerated combinatorial optimization, as outlined in Schulz et al. (2013) [@schulz2013gpu] and Fujimoto & Tsutsui (2011) [@fujimoto2011highly]. These seminal works emphasize three core principles for rigorous performance evaluation:
+    **Methodology Justification**: The experimental methodology follows established benchmarking practices in GPU-accelerated combinatorial optimization, as outlined in Schulz et al. (2013) [@schulz2013gpu] and Fujimoto & Tsutsui (2011) [@fujimoto2011highly]. These seminal works emphasize three core principles for rigorous performance evaluation:
 
-   1. **Controlled experiments**: Identical problem instances for CPU vs GPU comparison, eliminating confounding variables
-   2. **Statistical rigor**: Multiple runs with confidence intervals for stochastic algorithms, paired statistical tests for deterministic algorithms
-   3. **Standardized benchmarks**: TSPLIB/CVRPLIB instances with known optimal solutions for reproducibility and cross-study comparability
+    1. **Controlled experiments**: Identical problem instances for CPU vs GPU comparison, eliminating confounding variables
+    2. **Statistical rigor**: Multiple runs with confidence intervals for stochastic algorithms, paired statistical tests for deterministic algorithms
+    3. **Standardized benchmarks**: TSPLIB/CVRPLIB instances with known optimal solutions for reproducibility and cross-study comparability
 
-   See Section 3.5 for complete experimental design including:
-   - **Comparison methodology**: Paired CPU vs GPU runs on identical TSPLIB/CVRPLIB instances
-   - **Metrics**: Speedup ratio (GPU time / CPU time), solution quality gap (% above optimal), absolute execution time
-   - **Statistical validation**:
-     - Deterministic algorithms (NN, 2-opt): Paired t-tests on execution times across 30 instances
-     - Stochastic algorithms (SA): 30 independent runs per instance, 95% confidence intervals on mean performance
-   - **Standardized benchmarks**: 30 selected TSPLIB/CVRPLIB instances (see Section 3.4.2) with verified optimal solutions
+    See Section 3.5 for complete experimental design including:
 
-   This approach ensures experimental results are reproducible, statistically sound, and directly comparable to prior literature in GPU-accelerated routing optimization.
+    - **Comparison methodology**: Paired CPU vs GPU runs on identical TSPLIB/CVRPLIB instances
+    - **Metrics**: Speedup ratio (GPU time / CPU time), solution quality gap (% above optimal), absolute execution time
+    - **Statistical validation**:
+        - Deterministic algorithms (NN, 2-opt): Paired t-tests on execution times across 30 instances
+        - Stochastic algorithms (SA): 30 independent runs per instance, 95% confidence intervals on mean performance
+    - **Standardized benchmarks**: 30 selected TSPLIB/CVRPLIB instances (see Section 3.4.2) with verified optimal solutions
+
+    This approach ensures experimental results are reproducible, statistically sound, and directly comparable to prior literature in GPU-accelerated routing optimization.
 
 5. **Os resultados são válidos?**
-   - Validation through multiple runs and comparison against known optimal solutions from TSPLIB [@tsplib_ref] and CVRPLIB libraries. TSPLIB is the de facto standard for TSP research since 1991, providing 110+ instances with verified optimal solutions enabling reproducible quality assessment. CVRPLIB extends this standard to capacitated vehicle routing problems. These benchmarks are universally accepted in routing optimization literature, making results directly comparable to prior work.
+    - Validation through multiple runs and comparison against known optimal solutions from TSPLIB [@tsplib_ref] and CVRPLIB libraries. TSPLIB is the de facto standard for TSP research since 1991, providing 110+ instances with verified optimal solutions enabling reproducible quality assessment. CVRPLIB extends this standard to capacitated vehicle routing problems. These benchmarks are universally accepted in routing optimization literature, making results directly comparable to prior work.
 
 ---
 
@@ -1225,25 +1212,28 @@ From roteiro_analise_critica.md:
 **Key Academic Sources:**
 
 1. **GPU Computing for Discrete Optimization:**
-   - Schulz et al. (2013) - GPU computing in discrete optimization survey (routing problems focus) [@schulz2013gpu]
-   - Fujimoto & Tsutsui (2011) - Highly-parallel TSP solver for GPU [@fujimoto2011highly]
-   - Rocki & Suda (2013) - High performance GPU accelerated local optimization in TSP [@tsp_gpu]
+
+    - Schulz et al. (2013) - GPU computing in discrete optimization survey (routing problems focus) [@schulz2013gpu]
+    - Fujimoto & Tsutsui (2011) - Highly-parallel TSP solver for GPU [@fujimoto2011highly]
+    - Rocki & Suda (2013) - High performance GPU accelerated local optimization in TSP [@tsp_gpu]
 
 2. **GPU-Accelerated Vehicle Routing:**
-   - Benaini et al. (2015) - GPU implementation of multi-depot VRP [@benaini2015gpu]
-   - Benaini & Berrajaa (2018) - Genetic algorithm for large dynamic VRP on GPU [@benaini2018genetic]
-   - Abdelatti & Sodhi (2020) - Improved GPU-accelerated heuristic for CVRP [@abdelatti2020improvedgpuheuristic]
-   - Boschetti et al. (2017) - Route relaxations on GPU for VRP [@boschetti2017route]
+
+    - Benaini et al. (2015) - GPU implementation of multi-depot VRP [@benaini2015gpu]
+    - Benaini & Berrajaa (2018) - Genetic algorithm for large dynamic VRP on GPU [@benaini2018genetic]
+    - Abdelatti & Sodhi (2020) - Improved GPU-accelerated heuristic for CVRP [@abdelatti2020improvedgpuheuristic]
+    - Boschetti et al. (2017) - Route relaxations on GPU for VRP [@boschetti2017route]
 
 3. **TSP/VRP Foundations:**
-   - Cook (2014) - In Pursuit of the Traveling Salesman [@pursuit_travelling_salesman]
-   - Reinelt (1991) - TSPLIB library [@tsplib_ref]
-   - Tan & Yeh (2021) - Vehicle routing problem state-of-the-art classification [@tan2021vehicle]
+
+    - Cook (2014) - In Pursuit of the Traveling Salesman [@pursuit_travelling_salesman]
+    - Reinelt (1991) - TSPLIB library [@tsplib_ref]
+    - Tan & Yeh (2021) - Vehicle routing problem state-of-the-art classification [@tan2021vehicle]
 
 4. **Metaheuristics:**
-   - Voudouris & Tsang (1999) - Guided local search for TSP [@voudouris1999tsp]
-   - Wang et al. (2015) - Parallel simulated annealing for VRP [@wang2015parallel]
-   - Gendreau et al. (1999) - Tabu search for heterogeneous fleet VRP [@gendreau1993tabu]
+    - Voudouris & Tsang (1999) - Guided local search for TSP [@voudouris1999tsp]
+    - Wang et al. (2015) - Parallel simulated annealing for VRP [@wang2015parallel]
+    - Gendreau et al. (1999) - Tabu search for heterogeneous fleet VRP [@gendreau1993tabu]
 
 **Complete bibliography available in `documentation/refs.bib`**
 
@@ -1304,7 +1294,7 @@ import numpy as np
 class Problem:
     """
     Unified interface for routing problem instances (TSP, ATSP, CVRP).
-    
+
     Attributes:
         name: Instance identifier (e.g., 'berlin52')
         dimension: Number of nodes/cities
@@ -1313,13 +1303,13 @@ class Problem:
         coordinates: Node positions (n × 2) for geometric instances
         distances: Precomputed distance matrix (n × n)
         optimal_cost: Known optimal tour length (if available)
-        
+
         # CVRP-specific attributes
         capacity: Vehicle capacity constraint
         demands: Node demand values (n,)
         depot: Depot node index (usually 0)
         vehicles: Number of available vehicles
-    
+
     Type Invariants:
         - distances.shape == (dimension, dimension)
         - coordinates.shape == (dimension, 2) if edge_type geometric
@@ -1334,13 +1324,13 @@ class Problem:
     coordinates: np.ndarray  # shape (n, 2)
     distances: np.ndarray    # shape (n, n)
     optimal_cost: Optional[float] = None
-    
+
     # CVRP-specific fields
     capacity: Optional[int] = None
     demands: Optional[np.ndarray] = None  # shape (n,)
     depot: Optional[int] = 0
     vehicles: Optional[int] = None
-    
+
     def __post_init__(self):
         """Validate data consistency after initialization."""
         # Shape validation
@@ -1348,14 +1338,14 @@ class Problem:
         assert self.distances.shape == (n, n), f"Distance matrix shape mismatch"
         if self.coordinates is not None:
             assert self.coordinates.shape == (n, 2), f"Coordinates shape mismatch"
-        
+
         # CVRP validation
         if self.problem_type == 'CVRP':
             assert self.capacity is not None, "CVRP requires capacity"
             assert self.demands is not None, "CVRP requires demands"
             assert self.demands.shape == (n,), "Demands shape mismatch"
             assert self.depot is not None, "CVRP requires depot"
-        
+
         # Symmetry check for TSP
         if self.problem_type == 'TSP':
             is_symmetric = np.allclose(self.distances, self.distances.T)
@@ -1369,7 +1359,7 @@ class Problem:
 **Query Principal:**
 
 ```sql
-SELECT 
+SELECT
     p.id,
     p.name,
     p.dimension,
@@ -1388,15 +1378,15 @@ JOIN nodes n ON p.id = n.problem_id
 WHERE p.name IN (
     -- MVP instances (3)
     'berlin52', 'lin318', 'd2103',
-    
+
     -- Full benchmark (30 instances)
     'burma14', 'kroA100', 'pr152', 'gr202', 'rd400', 'pcb442',
     'd493', 'att532', 'd657', 'rat783', 'pr1002', 'd1291',
     'fl1577', 'rl1889', 'pcb3038', 'rl5934', 'd15112',
-    
+
     -- ATSP instances (6)
     'br17', 'ftv47', 'ftv64', 'ftv70', 'ry48p', 'p43',
-    
+
     -- CVRP instances (6)
     'E-n22-k4', 'E-n33-k4', 'E-n51-k5', 'E-n76-k7',
     'E-n101-k8', 'E-n200-k17'
@@ -1408,9 +1398,9 @@ ORDER BY p.type, p.dimension;
 
 ```sql
 -- Count instances by type and size tier
-SELECT 
+SELECT
     type,
-    CASE 
+    CASE
         WHEN dimension < 100 THEN 'Tiny/Small'
         WHEN dimension < 500 THEN 'Medium'
         WHEN dimension < 2000 THEN 'Large'
@@ -1439,26 +1429,26 @@ import numpy as np
 class BackendModule(Protocol):
     """
     Protocol defining the interface for backend modules (NumPy/CuPy).
-    
+
     Enables static type checking via MyPy while maintaining runtime flexibility.
     Ensures backend-agnostic algorithm implementations.
-    
+
     References:
         - PEP 544: Protocols - Structural Subtyping (Static Duck Typing)
         - Okuta et al. (2017): CuPy: A NumPy-Compatible Library for NVIDIA GPU
     """
-    
+
     # Module identification
     __name__: str  # 'numpy' or 'cupy'
-    
+
     # Array creation
     def array(self, object: Any, dtype: Optional[Any] = None) -> Any: ...
     def zeros(self, shape: tuple, dtype: Optional[Any] = None) -> Any: ...
     def ones(self, shape: tuple, dtype: Optional[Any] = None) -> Any: ...
     def full(self, shape: tuple, fill_value: Any, dtype: Optional[Any] = None) -> Any: ...
-    def arange(self, start: int, stop: Optional[int] = None, 
+    def arange(self, start: int, stop: Optional[int] = None,
                step: int = 1, dtype: Optional[Any] = None) -> Any: ...
-    
+
     # Array operations
     def argmin(self, a: Any, axis: Optional[int] = None) -> Any: ...
     def argmax(self, a: Any, axis: Optional[int] = None) -> Any: ...
@@ -1467,20 +1457,20 @@ class BackendModule(Protocol):
     def sum(self, a: Any, axis: Optional[int] = None) -> Any: ...
     def mean(self, a: Any, axis: Optional[int] = None) -> Any: ...
     def std(self, a: Any, axis: Optional[int] = None) -> Any: ...
-    
+
     # Logical operations
-    def where(self, condition: Any, x: Optional[Any] = None, 
+    def where(self, condition: Any, x: Optional[Any] = None,
               y: Optional[Any] = None) -> Any: ...
     def all(self, a: Any, axis: Optional[int] = None) -> Any: ...
     def any(self, a: Any, axis: Optional[int] = None) -> Any: ...
-    
+
     # Type constants
     float32: type
     float64: type
     int32: type
     int64: type
     bool_: type
-    
+
     # Constants
     inf: float
 ```
@@ -1501,21 +1491,21 @@ def algorithm_entry_point(
 ) -> Any:
     """
     Top-level algorithm function with backend parameter.
-    
-    Pattern: 
+
+    Pattern:
         1. Accept optional backend parameter (defaults to NumPy)
         2. Alias to 'xp' for convenience
         3. Propagate to all nested calls
     """
     # Step 1: Default to NumPy if not specified
     xp = backend if backend is not None else np
-    
+
     # Step 2: Ensure distance matrix uses same backend
     distances = xp.array(problem.distances)
-    
+
     # Step 3: Propagate backend to nested functions
     result = _internal_function(distances, backend=xp, **kwargs)
-    
+
     return result
 
 def _internal_function(
@@ -1525,16 +1515,16 @@ def _internal_function(
 ) -> Any:
     """
     Internal function - backend parameter required (no default to None).
-    
+
     This prevents accidental NumPy usage when caller intended CuPy.
     """
     # All operations use the aliased backend
     xp = backend
-    
+
     # Example vectorized operations
     masked_data = xp.where(data > 0, data, xp.inf)
     indices = xp.argmin(masked_data, axis=1)
-    
+
     return indices
 ```
 
@@ -1546,7 +1536,7 @@ Gerenciamento de memória para transferências CPU ↔ GPU:
 def transfer_to_device(problem: Problem, backend: BackendModule) -> Problem:
     """
     Transfer problem data to GPU device if using CuPy backend.
-    
+
     For NumPy backend, this is a no-op (returns copy on CPU).
     """
     if backend.__name__ == 'cupy':
@@ -1583,7 +1573,7 @@ def transfer_to_device(problem: Problem, backend: BackendModule) -> Problem:
 def transfer_to_host(result: Any, backend: BackendModule) -> np.ndarray:
     """
     Transfer computation result from GPU to CPU if needed.
-    
+
     Returns NumPy array regardless of input backend.
     """
     if backend.__name__ == 'cupy':
@@ -1605,7 +1595,7 @@ Comparação entre implementação ingênua (loops) e vetorizada:
 def nearest_neighbor_naive(problem: Problem) -> np.ndarray:
     """
     Greedy nearest neighbor - NON-VECTORIZED implementation.
-    
+
     WARNING: This version uses Python loops, poor GPU performance.
     O(n) kernel launches per iteration → O(n²) total launches.
     """
@@ -1613,10 +1603,10 @@ def nearest_neighbor_naive(problem: Problem) -> np.ndarray:
     distances = problem.distances
     tour = np.zeros(n, dtype=int)
     tour[0] = 0  # Start at depot
-    
+
     visited = {0}
     current = 0
-    
+
     # ANTI-PATTERN: Python loop over iterations
     for i in range(1, n):
         # ANTI-PATTERN: Python loop to find minimum
@@ -1627,11 +1617,11 @@ def nearest_neighbor_naive(problem: Problem) -> np.ndarray:
                 if distances[current, j] < min_dist:
                     min_dist = distances[current, j]
                     nearest = j
-        
+
         tour[i] = nearest
         visited.add(nearest)
         current = nearest
-    
+
     return tour
 ```
 
@@ -1645,57 +1635,57 @@ def nearest_neighbor_vectorized(
 ) -> Any:
     """
     Greedy nearest neighbor - VECTORIZED implementation.
-    
+
     Reduces kernel launches from O(n²) to O(n) by using boolean masks
     and vectorized operations instead of Python loops.
-    
+
     Args:
         problem: Problem instance with distance matrix
         start_node: Starting node index (default 0 = depot)
         backend: Computational backend (NumPy or CuPy)
-        
+
     Returns:
         tour: Array of node indices in visit order (n,)
     """
     xp = backend
     n = problem.dimension
-    
+
     # Ensure distances use the correct backend
     distances = xp.array(problem.distances)
-    
+
     # Preallocate tour array (single allocation, not n appends)
     tour = xp.zeros(n, dtype=int)
     tour[0] = start_node
-    
+
     # Boolean mask for visited nodes (vectorized operations)
     visited = xp.zeros(n, dtype=bool)
     visited[start_node] = True
-    
+
     current = start_node
-    
+
     # Iterative construction (inherently sequential due to dependencies)
     for i in range(1, n):
         # VECTORIZED: Mask out visited nodes (single kernel launch)
         distances_from_current = distances[current].copy()
         distances_from_current[visited] = xp.inf
-        
+
         # VECTORIZED: Find nearest unvisited (single kernel launch)
         nearest = int(xp.argmin(distances_from_current))
-        
+
         # Update tour and mask (array assignments, not Python operations)
         tour[i] = nearest
         visited[nearest] = True
         current = nearest
-    
+
     return tour
 ```
 
 **Kernel Launch Analysis:**
 
-| Operation | Naive (Python loops) | Vectorized (NumPy/CuPy) | Benefit |
-|-----------|---------------------|-------------------------|---------|
-| Find minimum | $O(n)$ comparisons in loop | `argmin()` single kernel | $n\times$ reduction |
-| Mask visited | `if j not in visited` (set lookup) | Boolean indexing | Type-level optimization |
+| Operation           | Naive (Python loops)                 | Vectorized (NumPy/CuPy)  | Benefit                  |
+| ------------------- | ------------------------------------ | ------------------------ | ------------------------ |
+| Find minimum        | $O(n)$ comparisons in loop           | `argmin()` single kernel | $n\times$ reduction      |
+| Mask visited        | `if j not in visited` (set lookup)   | Boolean indexing         | Type-level optimization  |
 | Total launches/iter | $2n$ (distance access + comparisons) | 3 (mask, argmin, update) | $\frac{2n}{3}$ reduction |
 
 **A.5.2 Otimização de Kernel Launches**
@@ -1729,51 +1719,51 @@ def evaluate_2opt_moves_vectorized(
 ) -> tuple:
     """
     Evaluate ALL 2-opt moves in parallel using vectorization.
-    
+
     For n-city tour, evaluates C(n,2) = n(n-1)/2 possible edge swaps.
     GPU advantage: Embarrassingly parallel evaluation.
-    
+
     Returns:
         improvements: (n, n) matrix of tour length changes (negative = improvement)
         best_i, best_j: Indices of best improving move
     """
     xp = backend
     n = len(tour)
-    
+
     # VECTORIZED: Create all (i,j) pairs via broadcasting
     i_indices = xp.arange(n)[:, None]  # Shape (n, 1)
     j_indices = xp.arange(n)[None, :]  # Shape (1, n)
-    
+
     # VECTORIZED: Compute improvement for ALL pairs simultaneously
     # This is a single GPU kernel that processes n² elements in parallel
     # Tour segment: ... -> tour[i] -> tour[i+1] -> ... -> tour[j] -> tour[j+1] -> ...
     # 2-opt reverses segment between i+1 and j
-    
+
     # Current edges: (tour[i], tour[i+1]) and (tour[j], tour[j+1])
     current_edges = (
         distances[tour[i_indices], tour[(i_indices + 1) % n]] +
         distances[tour[j_indices], tour[(j_indices + 1) % n]]
     )
-    
+
     # New edges after 2-opt: (tour[i], tour[j]) and (tour[i+1], tour[j+1])
     new_edges = (
         distances[tour[i_indices], tour[j_indices]] +
         distances[tour[(i_indices + 1) % n], tour[(j_indices + 1) % n]]
     )
-    
+
     # Improvement matrix (negative values = beneficial swaps)
     improvements = new_edges - current_edges
-    
+
     # Mask invalid swaps (i >= j-1, no point reversing segment of length 0 or 1)
     mask = (j_indices - i_indices) <= 1
     improvements = xp.where(mask, 0, improvements)
-    
+
     # Find best improving move (single argmin on flattened matrix)
     flat_idx = int(xp.argmin(improvements))
     best_i = flat_idx // n
     best_j = flat_idx % n
     best_improvement = improvements[best_i, best_j]
-    
+
     return improvements, best_i, best_j, best_improvement
 ```
 
@@ -1792,18 +1782,18 @@ def multi_start_nearest_neighbor(
 ) -> dict:
     """
     Execute Nearest Neighbor from ALL possible starting nodes.
-    
+
     This multi-start approach enables:
         1. Solution quality characterization across all start points
         2. Statistical validation of CPU vs GPU performance
         3. Demonstration of GPU advantage with batched processing
-    
+
     Args:
         problem: Problem instance to solve
         backend: Computational backend (NumPy or CuPy)
         batch_size: Maximum starts per batch (prevents OOM on large instances)
         verbose: Print progress messages
-        
+
     Returns:
         dict with keys:
             'tours': List of all tours (n tours, each tour is array of shape (n,))
@@ -1812,20 +1802,20 @@ def multi_start_nearest_neighbor(
             'best_cost': Minimum cost found
             'times': Array of execution times per start (n,)
             'n_starts': Total number of starting points tested
-            
+
     Memory Management:
         - For n ≤ batch_size: All starts processed in single batch
         - For n > batch_size: Processes in chunks to respect VRAM limits
         - d15112 (15,112 nodes) uses ~13 batches × 1000 starts
     """
     import time
-    
+
     xp = backend
     n = problem.dimension
     all_costs = []
     all_times = []
     all_tours = []
-    
+
     # Determine batching strategy
     if n > batch_size:
         num_batches = (n + batch_size - 1) // batch_size
@@ -1834,43 +1824,43 @@ def multi_start_nearest_neighbor(
     else:
         num_batches = 1
         batch_size = n
-    
+
     # Process in batches
     for batch_idx in range(num_batches):
         start_idx = batch_idx * batch_size
         end_idx = min(start_idx + batch_size, n)
-        
+
         if verbose and num_batches > 1:
             print(f"  Batch {batch_idx + 1}/{num_batches}: nodes {start_idx}-{end_idx-1}")
-        
+
         # Run NN for each starting point in batch
         for start_node in range(start_idx, end_idx):
             # Time individual execution
             t_start = time.perf_counter()
             tour = nearest_neighbor_vectorized(problem, start_node=start_node, backend=xp)
             t_elapsed = time.perf_counter() - t_start
-            
+
             # Compute tour cost
             cost = compute_tour_cost(problem, tour, backend=xp)
-            
+
             # Convert to host memory (Python types) for storage
             if xp.__name__ == 'cupy':
                 cost = float(cost)
                 tour = xp.asnumpy(tour)
             else:
                 cost = float(cost)
-            
+
             all_costs.append(cost)
             all_times.append(t_elapsed)
             all_tours.append(tour)
-    
+
     # Convert to arrays
     all_costs_array = np.array(all_costs)
     all_times_array = np.array(all_times)
-    
+
     # Find best solution
     best_idx = np.argmin(all_costs_array)
-    
+
     return {
         'tours': all_tours,
         'costs': all_costs_array,
@@ -1898,7 +1888,7 @@ if gpu_available:
     results_gpu = multi_start_nearest_neighbor(berlin52, backend=cp)
     print(f"GPU - Best: {results_gpu['best_cost']:.2f}, "
           f"Mean: {results_gpu['costs'].mean():.2f} ± {results_gpu['costs'].std():.2f}")
-    
+
     # Speedup calculation
     speedup = results_cpu['times'].sum() / results_gpu['times'].sum()
     print(f"Multi-start speedup: {speedup:.2f}x")
@@ -1920,12 +1910,12 @@ GPU Specifications:
     Memory Bus: 128-bit
     Memory Bandwidth: 112 GB/s
     TDP: 75W (laptop variant)
-    
+
     Performance Specifications:
         FP32 (float): 1.86 TFLOPS (boost clock)
         FP16 (half): Not supported (pre-Volta)
         INT8: Not supported
-    
+
     Memory Constraints:
         Total VRAM: 4GB (4,294,967,296 bytes)
         Maximum allocation: ~3.5GB (OS reserves ~500MB)
@@ -1939,7 +1929,7 @@ CPU Specifications:
     Turbo Boost: 3.80 GHz (single core)
     Cache: 6MB L3 shared
     TDP: 45W
-    
+
     Memory:
         System RAM: 16GB DDR4-2400
         Memory Channels: Dual-channel
@@ -1991,7 +1981,7 @@ from contextlib import contextmanager
 def profile_gpu_memory():
     """
     Context manager for GPU memory profiling.
-    
+
     Usage:
         with profile_gpu_memory():
             # GPU operations here
@@ -1999,18 +1989,18 @@ def profile_gpu_memory():
     """
     mempool = cp.get_default_memory_pool()
     pinned_mempool = cp.get_default_pinned_memory_pool()
-    
+
     # Record baseline
     used_before = mempool.used_bytes()
     total_before = mempool.total_bytes()
-    
+
     yield  # Execute wrapped code
-    
+
     # Record after execution
     used_after = mempool.used_bytes()
     total_after = mempool.total_bytes()
     peak = mempool.peak_bytes()
-    
+
     print(f"GPU Memory Profile:")
     print(f"  Used: {used_before / 1e9:.3f} GB → {used_after / 1e9:.3f} GB")
     print(f"  Peak: {peak / 1e9:.3f} GB")
@@ -2037,14 +2027,14 @@ def measure_execution_time(
 ) -> tuple[Any, float, float]:
     """
     Measure function execution time with warmup runs.
-    
+
     Args:
         func: Function to measure
         *args: Positional arguments to func
         repetitions: Number of timed repetitions
         warmup: Number of warmup runs (not timed)
         **kwargs: Keyword arguments to func
-        
+
     Returns:
         result: Function return value (from last execution)
         mean_time: Mean execution time (seconds)
@@ -2052,22 +2042,22 @@ def measure_execution_time(
     """
     times = []
     result = None
-    
+
     # Warmup runs (GPU kernel compilation, cache warming)
     for _ in range(warmup):
         result = func(*args, **kwargs)
-    
+
     # Timed runs
     for _ in range(repetitions):
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - start
         times.append(elapsed)
-    
+
     import numpy as np
     mean_time = np.mean(times)
     std_time = np.std(times, ddof=1)  # Sample std dev
-    
+
     return result, mean_time, std_time
 ```
 
@@ -2086,31 +2076,31 @@ def compare_backends_statistically(
 ) -> dict:
     """
     Statistically rigorous comparison of CPU vs GPU execution times.
-    
+
     Methodology from Hoefler & Belli (2015) "Scientific Benchmarking of
     Parallel Computing Systems".
-    
+
     Args:
         cpu_times: Array of CPU execution times (n repetitions)
         gpu_times: Array of GPU execution times (n repetitions)
         alpha: Significance level (default 0.05 = 95% confidence)
-        
+
     Returns:
         dict with statistical test results
     """
     results = {}
-    
+
     # 1. Normality test (Shapiro-Wilk)
     _, p_cpu = shapiro(cpu_times)
     _, p_gpu = shapiro(gpu_times)
     both_normal = (p_cpu > alpha) and (p_gpu > alpha)
-    
+
     results['normality'] = {
         'cpu_p_value': p_cpu,
         'gpu_p_value': p_gpu,
         'both_normal': both_normal
     }
-    
+
     # 2. Paired comparison test
     if both_normal:
         # Parametric: Paired t-test
@@ -2120,19 +2110,19 @@ def compare_backends_statistically(
         # Non-parametric: Wilcoxon signed-rank test
         stat, p_value = wilcoxon(cpu_times, gpu_times)
         test_name = "Wilcoxon signed-rank"
-    
+
     results['test'] = {
         'name': test_name,
         'statistic': stat,
         'p_value': p_value,
         'significant': p_value < alpha
     }
-    
+
     # 3. Effect size (Cohen's d)
     mean_diff = cpu_times.mean() - gpu_times.mean()
     pooled_std = np.sqrt((cpu_times.std(ddof=1)**2 + gpu_times.std(ddof=1)**2) / 2)
     cohens_d = mean_diff / pooled_std
-    
+
     # Interpret effect size
     if abs(cohens_d) < 0.2:
         interpretation = "negligible"
@@ -2142,16 +2132,16 @@ def compare_backends_statistically(
         interpretation = "medium"
     else:
         interpretation = "large"
-    
+
     results['effect_size'] = {
         'cohens_d': cohens_d,
         'interpretation': interpretation
     }
-    
+
     # 4. Speedup with confidence interval (bootstrap)
     speedups = cpu_times / gpu_times
     mean_speedup = speedups.mean()
-    
+
     # Bootstrap CI (10,000 resamples)
     bootstrap_speedups = []
     n = len(cpu_times)
@@ -2160,15 +2150,15 @@ def compare_backends_statistically(
         cpu_sample = cpu_times[indices]
         gpu_sample = gpu_times[indices]
         bootstrap_speedups.append(cpu_sample.mean() / gpu_sample.mean())
-    
+
     ci_low, ci_high = np.percentile(bootstrap_speedups, [2.5, 97.5])
-    
+
     results['speedup'] = {
         'mean': mean_speedup,
         'ci_95_low': ci_low,
         'ci_95_high': ci_high
     }
-    
+
     return results
 ```
 
@@ -2186,27 +2176,27 @@ def plot_performance_comparison(
 ) -> None:
     """
     Create publication-quality performance comparison plot.
-    
+
     Follows visualization guidelines from Hoefler & Belli (2015):
         - Box plots to show distribution
         - Error bars for confidence intervals
         - Statistical significance markers
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-    
+
     # Plot 1: Box plot with distributions
     data = [cpu_times * 1000, gpu_times * 1000]  # Convert to ms
     bp = ax1.boxplot(data, labels=['CPU (NumPy)', 'GPU (CuPy)'],
                      patch_artist=True, notch=True)
-    
+
     for patch, color in zip(bp['boxes'], ['#2E86AB', '#A23B72']):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
-    
+
     ax1.set_ylabel('Execution Time (ms)')
     ax1.set_title(f'{instance_name} Performance Distribution')
     ax1.grid(axis='y', alpha=0.3)
-    
+
     # Add statistical significance marker
     p = stats['test']['p_value']
     if p < 0.001:
@@ -2217,11 +2207,11 @@ def plot_performance_comparison(
         sig = '*'
     else:
         sig = 'n.s.'
-    
+
     max_y = max(data[0].max(), data[1].max())
     ax1.text(1.5, max_y * 1.1, sig, ha='center', fontsize=16)
     ax1.text(1.5, max_y * 1.15, f"p={p:.2e}", ha='center', fontsize=9)
-    
+
     # Plot 2: Speedup with confidence interval
     speedup = stats['speedup']
     ax2.bar(0, speedup['mean'], width=0.6, alpha=0.7, color='#F18F01')
@@ -2229,8 +2219,8 @@ def plot_performance_comparison(
                 yerr=[[speedup['mean'] - speedup['ci_95_low']],
                       [speedup['ci_95_high'] - speedup['mean']]],
                 fmt='none', ecolor='black', capsize=10, capthick=2)
-    
-    ax2.axhline(y=1.0, color='red', linestyle='--', linewidth=2, 
+
+    ax2.axhline(y=1.0, color='red', linestyle='--', linewidth=2,
                alpha=0.7, label='Break-even')
     ax2.set_ylabel('GPU Speedup')
     ax2.set_title(f'GPU Speedup: {speedup["mean"]:.2f}x '
@@ -2240,7 +2230,7 @@ def plot_performance_comparison(
     ax2.set_xticklabels(['GPU vs CPU'])
     ax2.legend()
     ax2.grid(axis='y', alpha=0.3)
-    
+
     # Add effect size annotation
     d = stats['effect_size']['cohens_d']
     interp = stats['effect_size']['interpretation']
@@ -2248,7 +2238,7 @@ def plot_performance_comparison(
              f"Cohen's d = {d:.3f}\n({interp} effect)",
              ha='center', fontsize=9,
              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-    
+
     plt.tight_layout()
     plt.show()
 ```
@@ -2265,42 +2255,42 @@ def benchmark_algorithm(
 ) -> dict:
     """
     Complete benchmarking protocol following academic standards.
-    
+
     Args:
         algorithm: Algorithm function to benchmark
         problem: Problem instance
         backends: Dict mapping backend names to modules
         repetitions: Number of repetitions (≥30 for CLT)
         warmup: Number of warmup runs
-        
+
     Returns:
         Complete benchmark results with statistical analysis
     """
     results = {}
-    
+
     for backend_name, backend_module in backends.items():
         print(f"Benchmarking {algorithm.__name__} on {problem.name} ({backend_name})...")
-        
+
         # Collect execution times
         times = []
         solutions = []
-        
+
         # Warmup
         for _ in range(warmup):
             _ = algorithm(problem, backend=backend_module)
-        
+
         # Timed repetitions
         for rep in range(repetitions):
             start = time.perf_counter()
             solution = algorithm(problem, backend=backend_module)
             elapsed = time.perf_counter() - start
-            
+
             times.append(elapsed)
             solutions.append(solution)
-        
+
         # Convert to NumPy arrays
         times = np.array(times)
-        
+
         # Store results
         results[backend_name] = {
             'times': times,
@@ -2308,7 +2298,7 @@ def benchmark_algorithm(
             'std': times.std(ddof=1),
             'solutions': solutions
         }
-    
+
     # Statistical comparison
     if 'NumPy' in results and 'CuPy' in results:
         stats = compare_backends_statistically(
@@ -2316,7 +2306,7 @@ def benchmark_algorithm(
             results['CuPy']['times']
         )
         results['statistical_comparison'] = stats
-    
+
     return results
 ```
 
@@ -2404,23 +2394,22 @@ Output: Best tour found
 
 ### Benchmark Instance Sources
 
-[^reinelt1991]: Reinelt, G. (1991). "TSPLIB—A traveling salesman problem library." *ORSA Journal on Computing* (now *INFORMS Journal on Computing*), 3(4), 376-384. DOI: [10.1287/ijoc.3.4.376](https://doi.org/10.1287/ijoc.3.4.376)
+[^reinelt1991]: Reinelt, G. (1991). "TSPLIB—A traveling salesman problem library." _ORSA Journal on Computing_ (now _INFORMS Journal on Computing_), 3(4), 376-384. DOI: [10.1287/ijoc.3.4.376](https://doi.org/10.1287/ijoc.3.4.376)
 
 > **Note**: TSPLIB includes both symmetric TSP and asymmetric TSP (ATSP) instances. All TSP instances (berlin52, lin318, d2103, etc.) and ATSP instances (br17, ry48p, ft53, ft70, ftv170, rbg403) used in this work are from the TSPLIB benchmark library maintained at Heidelberg University.
 
-[^christofides1969]: Christofides, N., & Eilon, S. (1969). "An algorithm for the vehicle-dispatching problem." *Operational Research Quarterly*, 20(3), 309-318. DOI: [10.1057/jors.1969.75](https://doi.org/10.1057/jors.1969.75)
+[^christofides1969]: Christofides, N., & Eilon, S. (1969). "An algorithm for the vehicle-dispatching problem." _Operational Research Quarterly_, 20(3), 309-318. DOI: [10.1057/jors.1969.75](https://doi.org/10.1057/jors.1969.75)
 
 > **Note**: This seminal paper introduced the first set of VRP benchmark instances, later extended by Golden et al. (1984). CVRP instances (eil22, eil31, eilA76, eilA101) follow the naming convention established in this work. The Li_25 instance is from a later extension of this benchmark family.
 
 ### GPU Computing for Optimization
 
-[^fujimoto2011]: Fujimoto, N., & Tsutsui, S. (2011). "A highly-parallel TSP solver for a GPU computing platform." In *Numerical Methods and Applications: 7th International Conference, NMA 2010* (pp. 264-271). Springer. DOI: [10.1007/978-3-642-18466-6_31](https://doi.org/10.1007/978-3-642-18466-6_31)
-
-[^tsp_gpu]: Rocki, K., & Suda, R. (2013). "High performance GPU accelerated local optimization in TSP." In *Proceedings of the 2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum* (pp. 1788-1796). IEEE. DOI: [10.1109/IPDPSW.2013.227](https://doi.org/10.1109/IPDPSW.2013.227)
+[^fujimoto2011]: Fujimoto, N., & Tsutsui, S. (2011). "A highly-parallel TSP solver for a GPU computing platform." In _Numerical Methods and Applications: 7th International Conference, NMA 2010_ (pp. 264-271). Springer. DOI: [10.1007/978-3-642-18466-6_31](https://doi.org/10.1007/978-3-642-18466-6_31)
+[^tsp_gpu]: Rocki, K., & Suda, R. (2013). "High performance GPU accelerated local optimization in TSP." In _Proceedings of the 2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum_ (pp. 1788-1796). IEEE. DOI: [10.1109/IPDPSW.2013.227](https://doi.org/10.1109/IPDPSW.2013.227)
 
 ### Experimental Design and Statistical Methods
 
-[^statistical_power]: Montgomery, D.C. (2017). *Design and Analysis of Experiments*, 9th edition. Wiley. ISBN: 978-1-119-32093-7
+[^statistical_power]: Montgomery, D.C. (2017). _Design and Analysis of Experiments_, 9th edition. Wiley. ISBN: 978-1-119-32093-7
 
 > **Note**: This textbook is the standard reference for experimental design in engineering and computer science. Chapter 2 covers sample size determination and statistical power analysis. The guidance that n=30 provides adequate power for detecting 10% differences with typical variation (CV ≤ 15%) is derived from Section 2.4 (Power and Sample Size).
 

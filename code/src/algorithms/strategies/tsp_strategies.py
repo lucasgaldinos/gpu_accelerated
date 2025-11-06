@@ -37,7 +37,6 @@ See Also:
 
 from typing import List, TYPE_CHECKING
 import numpy as np
-from ...protocols.backend import BackendModule
 
 if TYPE_CHECKING:
     from ...protocols.problem_context import ProblemContext
@@ -50,21 +49,16 @@ if TYPE_CHECKING:
 
 class NearestNeighborStrategy:
     """
-    Nearest Neighbor TSP construction strategy (Class S - CPU only).
+    Nearest Neighbor TSP construction strategy.
 
     Starts at depot (customer 0), iteratively selects the nearest unvisited
     customer, returns to depot at the end.
-
-    **Architectural Classification: Class S (Sequential)**
-    This algorithm is inherently sequential - each step depends on the previous.
-    It always runs on CPU, even when ProblemContext is on GPU. Uses
-    context.get_cpu_distances() for explicit data transfer when needed.
 
     Time Complexity: O(n²) - n iterations, each O(n) distance comparisons
     Approximation Ratio: No worst-case guarantee (can be arbitrarily bad)
 
     Practical Advantages:
-        - Very fast (CPU-friendly sequential algorithm)
+        - Very fast (GPU-friendly with distance matrix)
         - Produces reasonable tours in practice
         - Baseline for local search improvement
 
@@ -75,15 +69,12 @@ class NearestNeighborStrategy:
         build_tour: Construct TSP tour via nearest neighbor heuristic
 
     Example:
-        >>> from src.protocols import ProblemContext
-        >>> from src.loaders import DatabaseLoader
-        >>> import numpy as np
-        >>> 
-        >>> with DatabaseLoader() as loader:
-        ...     problem = loader.load('berlin52')
-        >>> context = ProblemContext(problem, xp=np)
         >>> strategy = NearestNeighborStrategy()
-        >>> tour = strategy.build_tour(context, customers=[1, 2, 3])
+        >>> tour = strategy.build_tour(
+        ...     customers=[1, 2, 3],
+        ...     locations=np.array([[0, 0], [1, 0], [0, 1], [1, 1]]),
+        ...     xp=np
+        ... )
         >>> # tour = [0, 1, 3, 2, 0]  (depot → 1 → 3 → 2 → depot)
 
     Implementation Note:
@@ -91,18 +82,16 @@ class NearestNeighborStrategy:
         from algorithms.construction.nearest_neighbor.
 
         The wrapper:
-        1. Extracts CPU distance submatrix from context for given customers
+        1. Extracts distance submatrix for given customers
         2. Creates temporary Problem instance
-        3. Calls nearest_neighbor(problem, xp=np) on CPU
+        3. Calls nearest_neighbor(problem, xp=xp)
         4. Maps tour indices back to original customer indices
         5. Prepends depot (0) and appends depot return
     """
 
-    def build_tour(
-        self, context: "ProblemContext", customers: List[int]
-    ) -> List[int]:
+    def build_tour(self, context: "ProblemContext", customers: List[int]) -> List[int]:
         """
-        Build nearest neighbor tour for subset of customers.
+        Build nearest neighbor tour for subset of customers using ProblemContext.
 
         Args:
             context: ProblemContext with precomputed distance matrix
@@ -112,6 +101,7 @@ class NearestNeighborStrategy:
             Tour visiting depot and customers: [0, c1, c2, ..., ck, 0]
 
         Example:
+            >>> from src.protocols import ProblemContext
             >>> context = ProblemContext(problem, xp=np)
             >>> strategy = NearestNeighborStrategy()
             >>> tour = strategy.build_tour(context, [1, 2, 3])
@@ -128,15 +118,16 @@ class NearestNeighborStrategy:
         if 0 in customers:
             raise ValueError("Depot (index 0) should not be in customers list")
 
-        # Get CPU distances from context (handles GPU→CPU transfer if needed)
-        distances_cpu = context.get_cpu_distances()
-
         # Create subset indices: [depot, customer1, customer2, ...]
         subset_indices = [0] + customers  # Depot always first
         n_subset = len(subset_indices)
 
+        # Extract CPU distances (Class S algorithm - sequential)
+        # Even if context is on GPU, we use CPU for sequential algorithm
+        distances_cpu = context.get_cpu_distances()
+
         # Extract distance submatrix for this subset
-        # Use NumPy for indexing since we're on CPU
+        # Note: Using NumPy indexing since distances_cpu is always np.ndarray
         distances_subset = distances_cpu[np.ix_(subset_indices, subset_indices)]
 
         # Create temporary Problem instance for subset
@@ -147,11 +138,10 @@ class NearestNeighborStrategy:
             edge_type="EXPLICIT",  # Use explicit distances, not coordinates
             coordinates=None,  # Not needed when using explicit distances
             distances=distances_subset,
-            capacity=None,
-            demands=None,
         )
 
-        # Call nearest_neighbor on CPU (Class S algorithm)
+        # Call nearest_neighbor (returns tour of subset indices)
+        # Always use NumPy backend since we're working with CPU data
         tour_subset = nearest_neighbor(temp_problem, start_node=0, xp=np)
 
         # Convert to Python list and map back to original indices
@@ -171,19 +161,15 @@ class NearestNeighborStrategy:
 
 class ChristofidesStrategy:
     """
-    Christofides approximation for TSP subset construction (Class S - CPU only).
+    Christofides approximation for TSP subset construction.
 
     Wrapper for the Christofides-Serdyukov algorithm that constructs a tour
     for a subset of customers extracted from a larger problem instance. This
     strategy provides a 3/2-approximation guarantee for metric TSP.
 
-    **Architectural Classification: Class S (Sequential)**
-    This algorithm uses sequential matching and MST computations that are
-    CPU-bound. Always runs on CPU via context.get_cpu_distances().
-
     The wrapper:
     1. Extracts a subproblem with depot + selected customers
-    2. Gets CPU distances from context
+    2. Computes distances for the subproblem
     3. Calls the Christofides algorithm
     4. Maps the resulting tour back to original customer indices
 
@@ -212,16 +198,14 @@ class ChristofidesStrategy:
 
         self._algorithm = christofides
 
-    def build_tour(
-        self, context: "ProblemContext", customers: List[int]
-    ) -> List[int]:
+    def build_tour(self, context: "ProblemContext", customers: List[int]) -> List[int]:
         """
         Build a TSP tour for a subset of customers using Christofides.
 
         Parameters
         ----------
         context : ProblemContext
-            Problem context with precomputed distance matrix
+            ProblemContext with precomputed distance matrix
         customers : List[int]
             Indices of customers to visit (excluding depot 0).
             Must be non-empty and not contain depot.
@@ -242,8 +226,7 @@ class ChristofidesStrategy:
         >>> from src.protocols import ProblemContext
         >>> context = ProblemContext(problem, xp=np)
         >>> strategy = ChristofidesStrategy()
-        >>> customers = [1, 2, 3]  # Customers to visit
-        >>> tour = strategy.build_tour(context, customers)
+        >>> tour = strategy.build_tour(context, [1, 2, 3])
         >>> tour[0] == 0 and tour[-1] == 0  # Starts and ends at depot
         True
         >>> set(tour[1:-1]) == {1, 2, 3}  # Visits all customers
@@ -252,7 +235,7 @@ class ChristofidesStrategy:
         Notes
         -----
         - Uses precomputed distances from context (no recomputation)
-        - Always runs on CPU (Class S algorithm)
+        - Class S algorithm: uses CPU data via get_cpu_distances()
         - Matching computation is CPU-only (uses NumPy internally)
         - Returns depot at start AND end (full closed tour)
         """
@@ -265,17 +248,16 @@ class ChristofidesStrategy:
                 "Only customer indices should be provided."
             )
 
-        # Get CPU distances from context (handles GPU→CPU transfer if needed)
-        distances_cpu = context.get_cpu_distances()
-
         # Step 1: Create subset indices (depot + customers)
         subset_indices = [0] + customers
 
-        # Step 2: Extract distance submatrix for this subset
-        # Use NumPy for indexing since we're on CPU (Class S)
+        # Step 2: Get CPU distances (Class S algorithm - sequential)
+        distances_cpu = context.get_cpu_distances()
+
+        # Step 3: Extract distance submatrix for this subset
         distances_subset = distances_cpu[np.ix_(subset_indices, subset_indices)]
 
-        # Step 3: Create temporary Problem instance for subset
+        # Step 4: Create temporary Problem instance for subset
         from ...data_models.problem import Problem
 
         temp_problem = Problem(
@@ -285,11 +267,9 @@ class ChristofidesStrategy:
             edge_type="EXPLICIT",  # Use explicit distances, not coordinates
             coordinates=None,  # Not needed when using explicit distances
             distances=distances_subset,
-            capacity=None,
-            demands=None,
         )
 
-        # Step 4: Call Christofides algorithm on CPU (Class S)
+        # Step 5: Call Christofides algorithm on subset problem (CPU-only)
         # Returns: array of indices in subset space [0, i1, i2, ..., ik]
         # Does NOT include return to depot
         tour_subset = self._algorithm(temp_problem, xp=np)

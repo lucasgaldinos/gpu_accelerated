@@ -36,9 +36,10 @@ See Also:
     - algorithms.bin_packing.best_fit_decreasing
 """
 
-from typing import List
-import numpy as np
-from ...protocols.backend import BackendModule
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ...protocols.problem_context import ProblemContext
 
 
 # ==============================================================================
@@ -48,7 +49,11 @@ from ...protocols.backend import BackendModule
 
 class FFDStrategy:
     """
-    First Fit Decreasing bin packing strategy.
+    First Fit Decreasing bin packing strategy (Class S - CPU only).
+
+    **Architectural Classification: Class S (Sequential)**
+    Bin packing is inherently sequential with greedy bin assignment. Runs
+    on CPU regardless of ProblemContext backend.
 
     Sorts items by demand (descending), then assigns each item to the first
     bin with sufficient remaining capacity. Creates new bin if none found.
@@ -60,27 +65,30 @@ class FFDStrategy:
         _algorithm: FirstFitDecreasing instance (existing implementation)
 
     Methods:
-        pack: Group items into capacity-constrained bins
+        pack: Group customers into capacity-constrained bins
 
     Example:
+        >>> from src.protocols import ProblemContext
+        >>> import numpy as np
+        >>>
+        >>> context = ProblemContext(problem, xp=np)
         >>> strategy = FFDStrategy()
-        >>> bins = strategy.pack(
-        ...     demands=np.array([0.6, 0.4, 0.5, 0.3]),
-        ...     capacity=1.0,
-        ...     xp=np
-        ... )
-        >>> # bins = [[0, 3], [1, 2]]  (0.6+0.3=0.9, 0.5+0.4=0.9)
+        >>> bins = strategy.pack(context)
+        >>> # bins = [[1, 4], [2, 3]]  (customer indices)
+        >>>
+        >>> # Even with GPU context, bin packing runs on CPU
+        >>> import cupy as cp
+        >>> gpu_context = ProblemContext(problem, xp=cp)
+        >>> bins = strategy.pack(gpu_context)
+        >>> # Internally calls gpu_context.get_cpu_demands()
 
     Implementation Note:
         This is an ADAPTER that wraps the existing FirstFitDecreasing class
         from algorithms.bin_packing.construction.first_fit_decreasing.
 
-        **Backend Limitation (Temporary):**
-        The wrapped algorithm is CPU-only (uses vanilla NumPy). The `xp`
-        parameter is accepted for protocol compliance, but CuPy arrays are
-        converted to NumPy before processing.
-
-        Future: Vectorize bin packing for GPU acceleration.
+        The wrapped algorithm is CPU-only (uses vanilla NumPy), which is
+        acceptable since bin packing is O(n log n) and typically fast even
+        on CPU for CVRP problem sizes (n < 3000).
     """
 
     def __init__(self):
@@ -92,39 +100,54 @@ class FFDStrategy:
         self._algorithm = FirstFitDecreasing()
 
     def pack(
-        self, demands: np.ndarray, capacity: float, xp: BackendModule = np
+        self, context: "ProblemContext", customer_indices: List[int]
     ) -> List[List[int]]:
         """
-        Group items into bins using First Fit Decreasing.
+        Group customers into bins using First Fit Decreasing.
 
         Args:
-            demands: (n,) array of item demands
-            capacity: Maximum bin capacity
-            xp: Backend module (NumPy or CuPy) - currently only NumPy supported
+            context: ProblemContext with demands and capacity
+            customer_indices: Indices of customers to pack (excludes depots)
 
         Returns:
-            List of bins (each bin is list of item indices)
+            List of bins (each bin contains customer indices from customer_indices)
 
         Raises:
             ValueError: If any demand exceeds capacity
             ValueError: If capacity <= 0
+            IndexError: If customer_indices contains invalid indices
 
         Implementation Note:
-            CuPy arrays are converted to NumPy (CPU processing) because the
-            underlying bin packing algorithm is not yet vectorized for GPU.
-            This is acceptable since bin packing is O(n log n) and typically
-            fast even on CPU for CVRP problem sizes (n < 3000).
+            Uses context.get_cpu_demands() to extract demands from context
+            (which may be on GPU). Bin packing always runs on CPU since it's
+            inherently sequential. The one-time GPU→CPU transfer is cheaper
+            than the anti-pattern of running sequential code with GPU kernels.
+
+        Example:
+            >>> # Pack customers [1, 3, 5] from a problem with 6 nodes
+            >>> bins = strategy.pack(context, [1, 3, 5])
+            >>> # bins might be: [[5, 1], [3]]  (global indices)
         """
-        # Convert backend arrays to NumPy (bin packing is CPU-only for now)
-        if hasattr(demands, "get"):  # CuPy array
-            demands_np = demands.get()  # Explicit GPU->CPU transfer
-        else:  # NumPy array
-            demands_np = np.asarray(demands)  # Zero-copy
+        # Get full CPU demands array from context (handles GPU→CPU if needed)
+        demands_full = context.get_cpu_demands()
 
-        # Call existing algorithm (validates inputs internally)
-        bins = self._algorithm.pack(demands_np, capacity)
+        # Extract demands for specified customers only
+        # This supports arbitrary subsets: single cluster, depot subset, etc.
+        customer_demands = demands_full[customer_indices]
 
-        return bins
+        # Call existing CPU algorithm
+        # Returns bins with LOCAL indices [0, len(customer_indices)-1]
+        bins_local = self._algorithm.pack(customer_demands, context.capacity)
+
+        # Map local indices back to global problem space
+        # Example: customer_indices=[5,1,3], bins_local=[[0,2],[1]]
+        #          → bins_global=[[5,3],[1]]
+        bins_global = [
+            [customer_indices[local_idx] for local_idx in bin_local]
+            for bin_local in bins_local
+        ]
+
+        return bins_global
 
 
 # ==============================================================================
@@ -134,7 +157,11 @@ class FFDStrategy:
 
 class BFDStrategy:
     """
-    Best Fit Decreasing bin packing strategy.
+    Best Fit Decreasing bin packing strategy (Class S - CPU only).
+
+    **Architectural Classification: Class S (Sequential)**
+    Bin packing is inherently sequential with greedy bin assignment. Runs
+    on CPU regardless of ProblemContext backend.
 
     Sorts items by demand (descending), then assigns each item to the bin
     with least remaining capacity that can still fit it. Creates new bin if none found.
@@ -150,27 +177,30 @@ class BFDStrategy:
         _algorithm: BestFitDecreasing instance (existing implementation)
 
     Methods:
-        pack: Group items into capacity-constrained bins
+        pack: Group customers into capacity-constrained bins
 
     Example:
+        >>> from src.protocols import ProblemContext
+        >>> import numpy as np
+        >>>
+        >>> context = ProblemContext(problem, xp=np)
         >>> strategy = BFDStrategy()
-        >>> bins = strategy.pack(
-        ...     demands=np.array([0.7, 0.5, 0.3, 0.2]),
-        ...     capacity=1.0,
-        ...     xp=np
-        ... )
-        >>> # bins = [[0, 2], [1, 3]]  (0.7+0.2=0.9, 0.5+0.3=0.8)
+        >>> bins = strategy.pack(context)
+        >>> # bins = [[1, 4], [2, 3]]  (customer indices)
+        >>>
+        >>> # Even with GPU context, bin packing runs on CPU
+        >>> import cupy as cp
+        >>> gpu_context = ProblemContext(problem, xp=cp)
+        >>> bins = strategy.pack(gpu_context)
+        >>> # Internally calls gpu_context.get_cpu_demands()
 
     Implementation Note:
         This is an ADAPTER that wraps the existing BestFitDecreasing class
         from algorithms.bin_packing.construction.best_fit_decreasing.
 
-        **Backend Limitation (Temporary):**
-        The wrapped algorithm is CPU-only (uses vanilla NumPy). The `xp`
-        parameter is accepted for protocol compliance, but CuPy arrays are
-        converted to NumPy before processing.
-
-        Future: Vectorize bin packing for GPU acceleration.
+        The wrapped algorithm is CPU-only (uses vanilla NumPy), which is
+        acceptable since bin packing is O(n log n) and typically fast even
+        on CPU for CVRP problem sizes (n < 3000).
     """
 
     def __init__(self):
@@ -182,39 +212,54 @@ class BFDStrategy:
         self._algorithm = BestFitDecreasing()
 
     def pack(
-        self, demands: np.ndarray, capacity: float, xp: BackendModule = np
+        self, context: "ProblemContext", customer_indices: List[int]
     ) -> List[List[int]]:
         """
-        Group items into bins using Best Fit Decreasing.
+        Group customers into bins using Best Fit Decreasing.
 
         Args:
-            demands: (n,) array of item demands
-            capacity: Maximum bin capacity
-            xp: Backend module (NumPy or CuPy) - currently only NumPy supported
+            context: ProblemContext with demands and capacity
+            customer_indices: Indices of customers to pack (excludes depots)
 
         Returns:
-            List of bins (each bin is list of item indices)
+            List of bins (each bin contains customer indices from customer_indices)
 
         Raises:
             ValueError: If any demand exceeds capacity
             ValueError: If capacity <= 0
+            IndexError: If customer_indices contains invalid indices
 
         Implementation Note:
-            CuPy arrays are converted to NumPy (CPU processing) because the
-            underlying bin packing algorithm is not yet vectorized for GPU.
-            This is acceptable since bin packing is O(n log n) and typically
-            fast even on CPU for CVRP problem sizes (n < 3000).
+            Uses context.get_cpu_demands() to extract demands from context
+            (which may be on GPU). Bin packing always runs on CPU since it's
+            inherently sequential. The one-time GPU→CPU transfer is cheaper
+            than the anti-pattern of running sequential code with GPU kernels.
+
+        Example:
+            >>> # Pack customers [1, 3, 5] from a problem with 6 nodes
+            >>> bins = strategy.pack(context, [1, 3, 5])
+            >>> # bins might be: [[5, 1], [3]]  (global indices)
         """
-        # Convert backend arrays to NumPy (bin packing is CPU-only for now)
-        if hasattr(demands, "get"):  # CuPy array
-            demands_np = demands.get()  # Explicit GPU->CPU transfer
-        else:  # NumPy array
-            demands_np = np.asarray(demands)  # Zero-copy
+        # Get full CPU demands array from context (handles GPU→CPU if needed)
+        demands_full = context.get_cpu_demands()
 
-        # Call existing algorithm (validates inputs internally)
-        bins = self._algorithm.pack(demands_np, capacity)
+        # Extract demands for specified customers only
+        # This supports arbitrary subsets: single cluster, depot subset, etc.
+        customer_demands = demands_full[customer_indices]
 
-        return bins
+        # Call existing CPU algorithm
+        # Returns bins with LOCAL indices [0, len(customer_indices)-1]
+        bins_local = self._algorithm.pack(customer_demands, context.capacity)
+
+        # Map local indices back to global problem space
+        # Example: customer_indices=[5,1,3], bins_local=[[0,2],[1]]
+        #          → bins_global=[[5,3],[1]]
+        bins_global = [
+            [customer_indices[local_idx] for local_idx in bin_local]
+            for bin_local in bins_local
+        ]
+
+        return bins_global
 
 
 # ==============================================================================

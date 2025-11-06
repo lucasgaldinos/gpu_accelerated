@@ -1,24 +1,15 @@
 """
-GPU-Accelerated TSP/VRP Optimization Framework.
+GPU-accelerated optimization algorithms for routing problems.
 
-This package provides a modular architecture for solving TSP and VRP problems
-using both CPU and GPU backends with ProblemContext-based caching.
+This package provides implementations of TSP, ATSP, and CVRP algorithms
+with support for both CPU (NumPy) and GPU (CuPy) backends.
 
-Example:
-    >>> from src.loaders import DatabaseLoader
-    >>> from src.protocols import ProblemContext
-    >>> from src.algorithms.strategies import NearestNeighborStrategy
-    >>> import numpy as np
-    >>> 
-    >>> with DatabaseLoader() as loader:
-    ...     problem = loader.load('berlin52')
-    >>> 
-    >>> context = ProblemContext(problem, xp=np)
-    >>> strategy = NearestNeighborStrategy()
-    >>> tour = strategy.build_tour(context, customers=[1, 2, 3])
+Main modules:
+- protocols: Type safety interfaces for backend compatibility
+- data_models: Problem representation and exceptions
+- loaders: Database loading and data access
+- distances: Distance matrix computation functions
+- algorithms: Construction and improvement heuristics (future)
 """
 
-# Core exports - minimal to avoid circular imports
-__version__ = '0.1.0'
-
-__all__ = ['__version__']
+__version__ = "0.1.0"

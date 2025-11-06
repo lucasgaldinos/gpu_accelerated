@@ -5,7 +5,7 @@ This module provides a baseline CPU implementation of 2-opt local search
 for performance comparison with GPU implementations.
 
 Algorithm Overview:
-    - Sequential 2-opt improvement (Class P - but CPU implementation)
+    - Sequential 2-opt improvement
     - Evaluates all O(N²) possible 2-opt moves
     - Applies best improving move iteratively
     - Continues until local optimum (no improvement found)
@@ -17,39 +17,30 @@ Performance Characteristics:
 
 Example Usage:
     >>> import numpy as np
-    >>> from src.protocols import ProblemContext
     >>> from src.algorithms.improvement.two_opt_cpu import TwoOptCPU
     >>>
-    >>> # Create context with precomputed distance matrix
-    >>> context = ProblemContext(problem, xp=np)
+    >>> # Precomputed distance matrix (n × n)
+    >>> distances = np.array([[...]])
     >>>
     >>> # Initial tour from construction heuristic
     >>> tour = [0, 5, 3, 7, 2, 0]
     >>>
     >>> # Improve tour on CPU
     >>> strategy = TwoOptCPU(max_iterations=1000)
-    >>> improved_tour = strategy.improve_tour(context, tour)
+    >>> improved_tour = strategy.improve_tour(tour, distances, xp=np)
 
 See Also:
     - protocols.algorithm_strategies.TspImprovementStrategy
     - algorithms.improvement.two_opt_gpu (GPU acceleration)
 """
 
-from typing import List, TYPE_CHECKING
+from typing import List
 import numpy as np
-
-if TYPE_CHECKING:
-    from ...protocols.problem_context import ProblemContext
 
 
 class TwoOptCPU:
     """
-    CPU-based 2-opt local search for TSP (Class P - parallelizable).
-
-    **Architectural Classification: Class P (Parallel)**
-    While this is the CPU implementation, 2-opt is classified as Class P because
-    it has parallelizable components (evaluating all O(n²) swaps). This CPU
-    version serves as the baseline for comparing GPU acceleration.
+    CPU-based 2-opt local search for TSP.
 
     This implementation provides a baseline for comparing GPU performance.
     It uses standard Python loops with NumPy for distance lookups.
@@ -61,13 +52,11 @@ class TwoOptCPU:
     Performance Notes:
         - Suitable for all problem sizes
         - Typical time: 10-100ms for N=100, 1-10s for N=1000
-        - Memory: O(N) tour + O(N²) distance matrix (from context)
+        - Memory: O(N) tour + O(N²) distance matrix
 
     Example:
-        >>> from src.protocols import ProblemContext
-        >>> context = ProblemContext(problem, xp=np)
         >>> strategy = TwoOptCPU(max_iterations=1000)
-        >>> improved = strategy.improve_tour(context, tour)
+        >>> improved = strategy.improve_tour(tour, distances, xp=np)
     """
 
     def __init__(self, max_iterations: int = 1000, convergence_threshold: float = 1e-6):
@@ -81,16 +70,14 @@ class TwoOptCPU:
         self.max_iterations = max_iterations
         self.convergence_threshold = convergence_threshold
 
-    def improve_tour(self, context: "ProblemContext", tour: List[int]) -> List[int]:
+    def improve_tour(self, tour: List[int], distances: np.ndarray, xp=np) -> List[int]:
         """
         Improve TSP tour using CPU 2-opt.
 
         Args:
-            context: ProblemContext with precomputed distance matrix
             tour: Current tour [depot, c1, c2, ..., ck, depot]
-
-        Returns:
-            Improved tour with same structure (same customers, better cost)
+            distances: (n, n) precomputed distance matrix for ALL nodes
+            xp: Backend module (NumPy or CuPy, converted to NumPy)
 
         Returns:
             Improved tour with same structure
@@ -114,8 +101,11 @@ class TwoOptCPU:
                 f"Got: tour[0]={tour[0]}, tour[-1]={tour[-1]}"
             )
 
-        # Get CPU distances from context (handles GPU→CPU transfer if needed)
-        distances_np = context.get_cpu_distances()
+        # Convert to NumPy if needed (for CPU execution)
+        if hasattr(distances, "get"):
+            distances_np = distances.get()
+        else:
+            distances_np = np.asarray(distances)
 
         # Remove duplicate depot at end for processing
         current_tour = list(tour[:-1])

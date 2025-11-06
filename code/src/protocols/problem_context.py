@@ -22,19 +22,22 @@ Example:
     >>> from src.data_models.problem import Problem
     >>> from src.protocols.problem_context import ProblemContext
     >>> import numpy as np
-    >>> 
+    >>>
     >>> # Load problem
     >>> with DatabaseLoader() as loader:
     ...     problem = loader.load('berlin52')
-    >>> 
+    >>>
     >>> # Create CPU context (Class S algorithms)
     >>> cpu_context = ProblemContext(problem, xp=np)
     >>> cpu_context.distances  # Computed once, cached
-    >>> 
-    >>> # Create GPU context (Class P algorithms)
-    >>> import cupy as cp
-    >>> gpu_context = ProblemContext(problem, xp=cp)
-    >>> gpu_context.distances  # Computed once on GPU, stays in VRAM
+    >>>
+    >>> # Create GPU context (Class P algorithms - requires CuPy)
+    >>> try:
+    ...     import cupy as cp
+    ...     gpu_context = ProblemContext(problem, xp=cp)
+    ...     gpu_context.distances  # Computed once on GPU, stays in VRAM
+    ... except ImportError:
+    ...     print("CuPy not available - GPU acceleration unavailable")
 
 References:
     - flaws.md: Documents the distance matrix recomputation anti-pattern
@@ -48,6 +51,15 @@ from typing import Optional
 from ..data_models.problem import Problem
 from ..protocols.backend import BackendModule
 from ..distances.matrix import compute_distance_matrix
+
+# CuPy availability check
+try:
+    import cupy as cp
+
+    CUPY_AVAILABLE = True
+except ImportError:
+    cp = None
+    CUPY_AVAILABLE = False
 
 
 class ProblemContext:
@@ -94,43 +106,61 @@ class ProblemContext:
 
     def __init__(self, problem: Problem, xp: BackendModule):
         """
-        Initialize ProblemContext and precompute distance matrix.
+        Initialize ProblemContext with lazy computation strategy.
+
+        Unlike the previous eager implementation, this version does NOT
+        precompute distance matrices or transfer data in __init__. All
+        computations are deferred until first access, eliminating the
+        wasteful double-transfer pattern for Class S algorithms.
 
         Args:
             problem: Immutable Problem instance from database loader
-            xp: Backend module (numpy or cupy) to use for computation
+            xp: Backend module (numpy or cupy) - preferred backend hint
 
         Raises:
-            ValueError: If problem has no coordinates or distances to
-                compute distance matrix from
+            ImportError: If xp is CuPy but CuPy is not installed/available
+
+        Note:
+            The xp parameter indicates the PREFERRED backend but does not
+            force eager computation on that backend. Actual computation
+            happens lazily when get_cpu_*() or get_gpu_*() is called.
+
+        Example:
+            >>> # Create GPU context (no computation yet)
+            >>> import cupy as cp
+            >>> context = ProblemContext(problem, xp=cp)
+            >>> # Class S algorithm calls get_cpu_distances()
+            >>> # → Computes on CPU directly (no GPU transfer waste)
+            >>> distances_cpu = context.get_cpu_distances()
+
+            >>> # CuPy not available - clear error
+            >>> context = ProblemContext(problem, xp=cp)  # Raises ImportError
         """
+        # Validate GPU backend availability
+        if xp != np and not CUPY_AVAILABLE:
+            raise ImportError(
+                "GPU backend requested but CuPy is not installed.\n"
+                "To use GPU acceleration, install CuPy:\n"
+                "  pip install cupy-cuda12x  # For CUDA 12.x\n"
+                "  pip install cupy-cuda11x  # For CUDA 11.x\n"
+                "Or use CPU backend with xp=np (NumPy)."
+            )
+
         self.xp = xp
         self.problem = problem
         self.dimension = problem.dimension
         self.capacity = problem.capacity
 
-        # Move demands to target backend
-        if problem.demands is not None:
-            self.demands = xp.asarray(problem.demands)
-        else:
-            self.demands = None
+        # Lazy computation cache (all None until first access)
+        self._cpu_distances = None
+        self._gpu_distances = None
+        self._cpu_demands = None
+        self._gpu_demands = None
+        self._cpu_coordinates = None
+        self._gpu_coordinates = None
 
-        # Compute or move distance matrix ONCE
-        if problem.distances is not None:
-            # EXPLICIT edge type - matrix already exists
-            self.distances = xp.asarray(problem.distances)
-            self.coordinates = (
-                xp.asarray(problem.coordinates)
-                if problem.coordinates is not None
-                else None
-            )
-        elif problem.coordinates is not None:
-            # Compute from coordinates on the target backend
-            self.coordinates = xp.asarray(problem.coordinates)
-            self.distances = compute_distance_matrix(
-                self.coordinates, problem.edge_type, xp
-            )
-        else:
+        # Validate problem has data to compute from
+        if problem.distances is None and problem.coordinates is None:
             raise ValueError(
                 f"Problem '{problem.name}' has no distances or coordinates "
                 "to compute distance matrix from."
@@ -138,57 +168,220 @@ class ProblemContext:
 
     def get_cpu_demands(self) -> Optional[np.ndarray]:
         """
-        Helper for Class S (sequential) algorithms requiring CPU data.
+        Get demands as NumPy array on CPU (lazy computation with caching).
 
-        Performs explicit data transfer if context is on GPU. This is
-        acknowledged and acceptable for Class S algorithms which are
-        CPU-bound by design.
+        This method implements lazy computation: demands are only moved/
+        computed on first access and then cached for subsequent calls.
+
+        For Class S (sequential) algorithms requiring CPU data, this
+        eliminates wasteful GPU transfers when context was created with
+        xp=cupy but algorithm needs CPU data.
 
         Returns:
-            Demands array as NumPy array on CPU, or None
+            Demands array as NumPy array on CPU, or None if no demands
 
         Example:
-            >>> # GPU context used by Class P algorithm
-            >>> gpu_context = ProblemContext(problem, xp=cp)
-            >>> # But Class S bin packing needs CPU data
-            >>> cpu_demands = gpu_context.get_cpu_demands()  # Explicit transfer
-            >>> bins = ffd_strategy.pack(cpu_demands, capacity)
+            >>> # GPU context (xp=cp) but Class S bin packing needs CPU
+            >>> context = ProblemContext(problem, xp=cp)
+            >>> # First call: computes on CPU directly (no GPU waste)
+            >>> cpu_demands = context.get_cpu_demands()
+            >>> # Subsequent calls: returns cached value
+            >>> same_demands = context.get_cpu_demands()
         """
-        if self.demands is None:
-            return None
-        if self.xp == np:
-            return self.demands
-        # CuPy → NumPy transfer
-        return self.demands.get()
+        if self._cpu_demands is None and self.problem.demands is not None:
+            # Lazy computation: extract demands on CPU
+            self._cpu_demands = self.problem.demands  # Already NumPy array
+        return self._cpu_demands
 
     def get_cpu_distances(self) -> np.ndarray:
         """
-        Helper for Class S algorithms requiring CPU distance matrix.
+        Get distance matrix as NumPy array on CPU (lazy computation with caching).
+
+        This method implements lazy computation: the distance matrix is only
+        computed on CPU when first requested, eliminating wasteful GPU
+        computation and transfer for Class S algorithms.
 
         Returns:
-            Distance matrix as NumPy array on CPU
+            Distance matrix as NumPy array on CPU, shape (n, n)
+
+        Raises:
+            ValueError: If problem has no distances or coordinates
 
         Example:
-            >>> context_gpu = ProblemContext(problem, xp=cp)
+            >>> # Context created with xp=cp (GPU hint)
+            >>> context = ProblemContext(problem, xp=cp)
             >>> # Class S algorithm needs CPU distances
-            >>> cpu_distances = context_gpu.get_cpu_distances()
+            >>> # First call: computes on CPU directly (no GPU waste!)
+            >>> cpu_dist = context.get_cpu_distances()
+            >>> # Subsequent calls: returns cached CPU matrix
+            >>> same_dist = context.get_cpu_distances()
         """
-        if self.xp == np:
-            return self.distances
-        return self.distances.get()
+        if self._cpu_distances is None:
+            # Lazy computation on CPU
+            if self.problem.distances is not None:
+                # EXPLICIT edge type - use pre-computed matrix
+                self._cpu_distances = self.problem.distances
+            elif self.problem.coordinates is not None:
+                # Compute from coordinates on CPU (using NumPy)
+                self._cpu_distances = compute_distance_matrix(
+                    self.problem.coordinates, self.problem.edge_type, np
+                )
+            else:
+                raise ValueError(
+                    f"Problem '{self.problem.name}' has no distances or "
+                    "coordinates to compute distance matrix from."
+                )
+        return self._cpu_distances
 
     def get_cpu_coordinates(self) -> Optional[np.ndarray]:
         """
-        Helper for algorithms requiring CPU coordinates.
+        Get coordinates as NumPy array on CPU (lazy with caching).
 
         Returns:
-            Coordinates as NumPy array on CPU, or None
+            Coordinates as NumPy array on CPU, or None if not available
         """
-        if self.coordinates is None:
-            return None
+        if self._cpu_coordinates is None and self.problem.coordinates is not None:
+            # Lazy extraction: coordinates already NumPy array
+            self._cpu_coordinates = self.problem.coordinates
+        return self._cpu_coordinates
+
+    def get_gpu_demands(self):
+        """
+        Get demands on GPU (lazy computation with caching).
+
+        Transfers from CPU cache if available, otherwise from problem data.
+        Only valid when xp is CuPy.
+
+        Returns:
+            Demands as CuPy array on GPU, or None if no demands
+
+        Raises:
+            ValueError: If xp is NumPy (not CuPy)
+        """
         if self.xp == np:
-            return self.coordinates
-        return self.coordinates.get()
+            raise ValueError("get_gpu_demands() requires xp to be CuPy, not NumPy")
+
+        if self._gpu_demands is None and self.problem.demands is not None:
+            if self._cpu_demands is not None:
+                # Transfer from CPU cache
+                self._gpu_demands = self.xp.asarray(self._cpu_demands)
+            else:
+                # Transfer from problem data
+                self._gpu_demands = self.xp.asarray(self.problem.demands)
+        return self._gpu_demands
+
+    def get_gpu_distances(self):
+        """
+        Get distance matrix on GPU (lazy computation with caching).
+
+        This method computes or transfers the distance matrix to GPU only
+        when first requested. If CPU cache exists, transfers from there.
+        Otherwise, computes directly on GPU or transfers from problem data.
+
+        Returns:
+            Distance matrix as CuPy array on GPU, shape (n, n)
+
+        Raises:
+            ValueError: If xp is NumPy (not CuPy) or no data to compute from
+
+        Example:
+            >>> # Context with GPU hint
+            >>> context = ProblemContext(problem, xp=cp)
+            >>> # Class P algorithm needs GPU distances
+            >>> # First call: computes on GPU and caches
+            >>> gpu_dist = context.get_gpu_distances()
+            >>> # Subsequent calls: returns cached GPU matrix (stays in VRAM)
+            >>> same_dist = context.get_gpu_distances()
+        """
+        if self.xp == np:
+            raise ValueError("get_gpu_distances() requires xp to be CuPy, not NumPy")
+
+        if self._gpu_distances is None:
+            # Priority: CPU cache > problem.distances > compute from coordinates
+            if self._cpu_distances is not None:
+                # Transfer from CPU cache (most efficient if CPU was used first)
+                self._gpu_distances = self.xp.asarray(self._cpu_distances)
+            elif self.problem.distances is not None:
+                # Transfer EXPLICIT matrix to GPU
+                self._gpu_distances = self.xp.asarray(self.problem.distances)
+            elif self.problem.coordinates is not None:
+                # Compute from coordinates on GPU
+                coords_gpu = self.xp.asarray(self.problem.coordinates)
+                self._gpu_distances = compute_distance_matrix(
+                    coords_gpu, self.problem.edge_type, self.xp
+                )
+            else:
+                raise ValueError(
+                    f"Problem '{self.problem.name}' has no distances or "
+                    "coordinates to compute distance matrix from."
+                )
+        return self._gpu_distances
+
+    def get_gpu_coordinates(self):
+        """
+        Get coordinates on GPU (lazy with caching).
+
+        Returns:
+            Coordinates as CuPy array on GPU, or None if not available
+
+        Raises:
+            ValueError: If xp is NumPy (not CuPy)
+        """
+        if self.xp == np:
+            raise ValueError("get_gpu_coordinates() requires xp to be CuPy, not NumPy")
+
+        if self._gpu_coordinates is None and self.problem.coordinates is not None:
+            if self._cpu_coordinates is not None:
+                # Transfer from CPU cache
+                self._gpu_coordinates = self.xp.asarray(self._cpu_coordinates)
+            else:
+                # Transfer from problem data
+                self._gpu_coordinates = self.xp.asarray(self.problem.coordinates)
+        return self._gpu_coordinates
+
+    # Backward compatibility properties
+    @property
+    def distances(self):
+        """
+        Distance matrix on preferred backend (backward compatibility property).
+
+        This property maintains compatibility with existing code that accesses
+        context.distances directly. It returns distances on the backend
+        specified by self.xp (CPU for NumPy, GPU for CuPy).
+
+        Returns:
+            Distance matrix on backend specified by xp
+        """
+        if self.xp == np:
+            return self.get_cpu_distances()
+        else:
+            return self.get_gpu_distances()
+
+    @property
+    def demands(self):
+        """
+        Demands on preferred backend (backward compatibility property).
+
+        Returns:
+            Demands on backend specified by xp, or None
+        """
+        if self.xp == np:
+            return self.get_cpu_demands()
+        else:
+            return self.get_gpu_demands()
+
+    @property
+    def coordinates(self):
+        """
+        Coordinates on preferred backend (backward compatibility property).
+
+        Returns:
+            Coordinates on backend specified by xp, or None
+        """
+        if self.xp == np:
+            return self.get_cpu_coordinates()
+        else:
+            return self.get_gpu_coordinates()
 
     def __repr__(self) -> str:
         """String representation showing problem and backend."""

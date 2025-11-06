@@ -65,7 +65,6 @@ See Also:
 from typing import List, Optional
 import numpy as np
 from ..protocols.backend import BackendModule
-from ..protocols.problem_context import ProblemContext
 from ..protocols.algorithm_strategies import (
     BinPackingStrategy,
     TspConstructionStrategy,
@@ -73,6 +72,7 @@ from ..protocols.algorithm_strategies import (
     ClusteringStrategy,
 )
 from ..data_models.problem import Problem
+from ..protocols.problem_context import ProblemContext
 
 
 # ==============================================================================
@@ -81,134 +81,187 @@ from ..data_models.problem import Problem
 
 
 def lego_cvrp_solver(
-    problem: Problem,
-    bin_packing_strategy: BinPackingStrategy,
-    tsp_strategy: TspConstructionStrategy,
+    locations: np.ndarray,
+    demands: Optional[np.ndarray] = None,
+    capacity: Optional[float] = None,
+    bin_packing_strategy: Optional[BinPackingStrategy] = None,
+    tsp_strategy: Optional[TspConstructionStrategy] = None,
     clustering_strategy: Optional[ClusteringStrategy] = None,
     improvement_strategy: Optional["TspImprovementStrategy"] = None,
     xp: BackendModule = np,
 ) -> List[List[int]]:
     """
-    Solve CVRP via compositional "Lego Blocks" architecture with ProblemContext.
-
-    **Key Performance Fix:**
-    Creates ProblemContext ONCE at the start, precomputing the distance matrix.
-    All strategies reuse this cached matrix, eliminating k × O(m²) redundant
-    distance computations (where k = number of routes).
+    Solve TSP or CVRP via compositional "Lego Blocks" architecture.
 
     Enables runtime algorithm selection by accepting strategy objects.
     Single backend (xp) propagates through all strategies for GPU/CPU consistency.
 
+    Problem Type Auto-Detection:
+        - TSP Mode: If demands=None and capacity=None
+        - CVRP Mode: If demands and capacity are provided
+
     Algorithm Pipeline:
-        0. Create ProblemContext (precompute distance matrix ONCE)
-        1. [If clustering_strategy provided] Partition customers into clusters
-        2. For each cluster (or all customers if no clustering):
-            a. Group customers into bins via bin_packing_strategy
-            b. Build tour for each bin via tsp_strategy
-            c. [If improvement_strategy] Improve tour
-        3. Return list of routes
+        TSP Mode:
+            1. Build single tour via tsp_strategy (default: NearestNeighbor)
+            2. [Optional] Improve tour via improvement_strategy
+            3. Return single-route solution
+
+        CVRP Mode:
+            1. [Optional] Cluster customers via clustering_strategy
+            2. Group customers into bins via bin_packing_strategy (default: FFD)
+            3. Build tour for each bin via tsp_strategy (default: NearestNeighbor)
+            4. [Optional] Improve each tour via improvement_strategy
+            5. Return multi-route solution
 
     Args:
-        problem: Problem instance with coordinates/distances and demands
-        bin_packing_strategy: Strategy for capacity grouping (e.g., FFDStrategy())
-        tsp_strategy: Strategy for tour construction (e.g., ChristofidesStrategy())
+        locations: (n, 2) array of customer coordinates (depot at index 0)
+        demands: Optional (n,) array of customer demands. If None, TSP mode.
+        capacity: Optional vehicle capacity. Required for CVRP mode.
+        bin_packing_strategy: Optional strategy for capacity grouping.
+            If None and CVRP mode, defaults to FFDStrategy().
+            Ignored in TSP mode.
+        tsp_strategy: Optional strategy for tour construction.
+            If None, defaults to NearestNeighborStrategy().
         clustering_strategy: Optional spatial clustering (e.g., KMeansStrategy(k=5))
-        improvement_strategy: Optional tour improvement (e.g., TwoOptCPU(), TwoOptGPU())
+        improvement_strategy: Optional tour improvement (e.g., TwoOptGPU())
         xp: Backend module (NumPy for CPU, CuPy for GPU)
 
     Returns:
         List of routes, where each route is a list of customer indices
         including depot (e.g., [[0, 1, 3, 0], [0, 2, 4, 0]])
 
+        TSP mode: Single route [[0, 1, 2, ..., n, 0]]
+        CVRP mode: Multiple routes, one per vehicle
+
     Raises:
-        ValueError: If demands exceed capacity or problem structure is invalid
+        ValueError: If CVRP mode but demands or capacity missing
+        ValueError: If demands exceed capacity or locations/demands shape mismatch
 
     Time Complexity:
-        - Without clustering: O(n²) distance matrix + O(n log n + k·m²)
-        - With clustering: O(n²) + O(c·n log n + c·k·m²) where c = clusters
-
-    Approximation Ratio:
-        Depends on strategy choices:
-        - FFD + Nearest Neighbor: No theoretical guarantee
-        - BFD + Christofides: ≤ (11/9) * 1.5 ≈ 1.83 (heuristic bound)
+        - TSP mode: O(n²) with default NearestNeighbor
+        - CVRP mode: O(n log n + k·n²) where k = number of bins
 
     Example:
-        >>> from src.loaders import DatabaseLoader
-        >>> from src.algorithms.strategies import FFDStrategy, NearestNeighborStrategy
-        >>> from src.algorithms.compositional_cvrp_solver import lego_cvrp_solver
-        >>> 
-        >>> # Load problem
-        >>> with DatabaseLoader() as loader:
-        ...     problem = loader.load('eil22')
-        >>> 
-        >>> # CPU with FFD + Nearest Neighbor
+        >>> # TSP with defaults (Nearest Neighbor on CPU)
+        >>> routes = lego_cvrp_solver(locations)
+        >>>
+        >>> # TSP with custom strategy
         >>> routes = lego_cvrp_solver(
-        ...     problem,
-        ...     bin_packing_strategy=FFDStrategy(),
-        ...     tsp_strategy=NearestNeighborStrategy(),
+        ...     locations,
+        ...     tsp_strategy=ChristofidesStrategy(),
         ...     xp=np
         ... )
         >>>
-        >>> # GPU with BFD + Nearest Neighbor + 2-opt improvement
-        >>> import cupy as cp
-        >>> from src.algorithms.improvement import TwoOptGPU
+        >>> # CVRP with defaults (FFD + Nearest Neighbor)
         >>> routes = lego_cvrp_solver(
-        ...     problem,
+        ...     locations, demands, capacity=100
+        ... )
+        >>>
+        >>> # CVRP with custom strategies (GPU-accelerated)
+        >>> routes = lego_cvrp_solver(
+        ...     locations, demands, capacity=100,
         ...     bin_packing_strategy=BFDStrategy(),
-        ...     tsp_strategy=NearestNeighborStrategy(),
-        ...     improvement_strategy=TwoOptGPU(),
+        ...     tsp_strategy=ChristofidesStrategy(),
+        ...     improvement_strategy=TwoOptGPUStrategy(),
+        ...     xp=cp  # GPU backend
+        ... )
+        >>>
+        >>> # Pure improvement on existing tour
+        >>> routes = lego_cvrp_solver(
+        ...     locations,
+        ...     improvement_strategy=GeneticAlgorithmStrategy(),
         ...     xp=cp
         ... )
 
     Implementation Notes:
-        - Distance matrix computed ONCE in ProblemContext creation
-        - Backend (xp) must flow through all strategy method calls
-        - Strategies access context.distances (no redundant computation)
-        - GPU memory cleaned up automatically when context goes out of scope
+        - Preset defaults applied automatically based on problem type
+        - Backend (xp) flows through all strategy method calls
+        - Distance matrix cached in ProblemContext (lazy computation)
+        - Bin packing only used if CVRP mode (demands + capacity provided)
     """
-    # Step 0: Create ProblemContext (critical performance fix!)
-    # This precomputes the distance matrix ONCE on the target backend,
-    # eliminating k × O(m²) redundant computations where k = number of routes
-    context = ProblemContext(problem, xp=xp)
+    # Step 1: Auto-detect problem type and apply preset defaults
+    is_cvrp = demands is not None and capacity is not None
 
-    # Step 1: Validate inputs
-    if problem.capacity is None or problem.demands is None:
-        raise ValueError(
-            f"Problem '{problem.name}' must have capacity and demands for CVRP"
-        )
+    if is_cvrp:
+        # CVRP mode: Apply preset bin packing if not provided
+        if bin_packing_strategy is None:
+            from .strategies.bin_packing_strategies import FFDStrategy
 
-    capacity = problem.capacity
-    demands = context.get_cpu_demands()  # Class S bin packing needs CPU data
-
-    if np.any(demands > capacity):
-        raise ValueError(
-            f"Some demands exceed capacity: max demand = {np.max(demands)}, capacity = {capacity}"
-        )
-
-    # Step 2: Extract customers (exclude depot at index 0)
-    n_total = problem.dimension
-    all_customers = list(range(1, n_total))  # [1, 2, 3, ..., n-1]
-    customer_demands = demands[1:]  # Exclude depot demand (should be 0)
-
-    # Step 3: [OPTIONAL] Clustering - partition customers spatially
-    if clustering_strategy is not None:
-        # Get CPU coordinates for clustering (Class S algorithm)
-        coordinates_cpu = context.get_cpu_coordinates()
-        if coordinates_cpu is None:
+            bin_packing_strategy = FFDStrategy()
+    else:
+        # TSP mode: Bin packing not needed
+        if bin_packing_strategy is not None:
             raise ValueError(
-                "Clustering requires coordinates, but problem has EXPLICIT distances only"
+                "bin_packing_strategy provided but demands/capacity are None. "
+                "For TSP mode, use: solver(locations, tsp_strategy=...). "
+                "For CVRP mode, use: solver(locations, demands, capacity, ...)"
             )
-        
+
+    # Apply preset TSP strategy if not provided
+    if tsp_strategy is None:
+        from .strategies.tsp_strategies import NearestNeighborStrategy
+
+        tsp_strategy = NearestNeighborStrategy()
+
+    # Step 2: Convert inputs to target backend (if needed)
+    # This allows passing NumPy arrays to GPU solver or vice versa
+    if hasattr(locations, "__array_interface__"):  # NumPy array
+        locations = xp.asarray(locations)
+    if demands is not None and hasattr(demands, "__array_interface__"):
+        demands = xp.asarray(demands)
+
+    # Step 3: Validate inputs
+    if len(locations.shape) != 2 or locations.shape[1] != 2:
+        raise ValueError(
+            f"locations must be 2D array with shape (n, 2), got shape {locations.shape}"
+        )
+
+    if is_cvrp:
+        if len(demands.shape) != 1:
+            raise ValueError(f"demands must be 1D array, got shape {demands.shape}")
+
+        if locations.shape[0] != demands.shape[0]:
+            raise ValueError(
+                f"locations and demands length mismatch: {locations.shape[0]} vs {demands.shape[0]}"
+            )
+
+        if xp.any(demands > capacity):
+            raise ValueError(
+                f"Some demands exceed capacity: max demand = {xp.max(demands)}, capacity = {capacity}"
+            )
+
+    # Step 4: Create Problem and ProblemContext (Option B Architecture)
+    # ProblemContext computes distance matrix ONCE and provides get_cpu_*() helpers
+    # This eliminates the anti-pattern of repeated distance matrix computation
+    # and explicit GPU→CPU conversions scattered across strategy implementations
+    problem = Problem(
+        name="synthetic",
+        dimension=len(locations),
+        problem_type="CVRP" if is_cvrp else "TSP",
+        edge_type="EUC_2D",
+        coordinates=locations,
+        distances=None,
+        capacity=int(capacity) if is_cvrp else None,
+        demands=demands if is_cvrp else None,
+    )
+    context = ProblemContext(problem, xp)
+
+    # Step 5: Extract customers (exclude depot at index 0)
+    n_total = len(locations)
+    all_customers = list(range(1, n_total))  # [1, 2, 3, ..., n-1]
+
+    # Step 6: [OPTIONAL] Clustering - partition customers spatially
+    if clustering_strategy is not None:
         # Cluster customers into spatial groups
         # clustering_strategy.cluster() returns List[List[int]] (customer indices per cluster)
         customer_clusters = clustering_strategy.cluster(
-            customer_indices=all_customers, locations=coordinates_cpu, xp=np
+            customer_indices=all_customers, locations=locations, xp=xp
         )
     else:
         # No clustering: treat all customers as a single cluster
         customer_clusters = [all_customers]
 
-    # Step 4: Process each cluster
+    # Step 7: Process each cluster
     all_routes = []
 
     for cluster_customers in customer_clusters:
@@ -216,62 +269,88 @@ def lego_cvrp_solver(
             # Skip empty clusters (shouldn't happen, but defensive)
             continue
 
-        # Step 4a: Extract demands for this cluster
-        # cluster_customers contains indices in [1, n-1] range
-        cluster_demands_list = [
-            demands[customer_idx] for customer_idx in cluster_customers
-        ]
-        cluster_demands = np.array(cluster_demands_list)
+        if is_cvrp:
+            # CVRP Mode: Bin packing → TSP per bin
+            # bin_packing_strategy.pack() uses context.get_cpu_demands() and context.capacity
+            # Pass customer_indices for this cluster to enable flexible composition
+            # Returns List[List[int]] where each bin contains customer indices
+            bins = bin_packing_strategy.pack(context, cluster_customers)
+        else:
+            # TSP Mode: Single tour for all customers (no bin packing)
+            bins = [cluster_customers]
 
-        # Step 4b: Bin Packing - group customers into capacity-constrained bins
-        # bin_packing_strategy.pack() returns List[List[int]]
-        # Each bin is a list of indices into cluster_demands (NOT original customer indices)
-        bins = bin_packing_strategy.pack(
-            demands=cluster_demands, capacity=capacity, xp=np  # Class S - always CPU
-        )
+        # Step 8: Build TSP tour for each bin
+        for bin_customer_indices in bins:
+            # bin_customer_indices are already in original problem space [1, n-1]
+            # Example: [1, 5, 3] means customers 1, 5, 3 from the original problem
 
-        # Step 4c: Build TSP tour for each bin
-        for bin_indices in bins:
-            # bin_indices are indices into cluster_customers
-            # Example: bin_indices = [0, 2] means cluster_customers[0] and cluster_customers[2]
+            # Step 8a: Call TSP strategy to build tour
+            # tsp_strategy.build_tour(context, customers) uses context.get_cpu_distances()
+            # Returns List[int] with depot at start and end
+            # Example: [0, 1, 5, 3, 0] for customers [1, 5, 3]
+            tour = tsp_strategy.build_tour(context, bin_customer_indices)
 
-            # Map bin indices to original customer indices
-            customers_in_bin = [cluster_customers[i] for i in bin_indices]
-
-            # Step 4d: Call TSP strategy to build tour
-            # Pass ProblemContext instead of distances and xp
-            # tsp_strategy.build_tour() returns List[int] with depot at start and end
-            # Example: [0, 5, 3, 7, 0] for customers [5, 3, 7]
-            tour = tsp_strategy.build_tour(context, customers_in_bin)
-
-            # Step 4e: [OPTIONAL] Improve tour with local search
+            # Step 8b: [OPTIONAL] Improve tour with local search
             # If improvement_strategy provided, apply 2-opt or other improvement
             if improvement_strategy is not None:
+                # Improvement strategies accept (context, tour) for Class P operations
                 tour = improvement_strategy.improve_tour(context, tour)
 
-            # Step 4f: Add tour to routes
+            # Step 8c: Add tour to routes
             all_routes.append(tour)
 
-    # Step 5: Clean up GPU memory if using CuPy
-    if hasattr(xp, "get_default_memory_pool"):
-        # CuPy cleanup
-        xp.get_default_memory_pool().free_all_blocks()
-    if hasattr(xp, "get_default_pinned_memory_pool"):
-        xp.get_default_pinned_memory_pool().free_all_blocks()
-
-    # Step 6: Return all routes
+    # Step 9: Return all routes
     return all_routes
 
 
 # ==============================================================================
-# NOTE: Distance matrix computation is now handled by ProblemContext
+# HELPER FUNCTIONS
 # ==============================================================================
-# The _compute_distance_matrix() helper function has been removed because
-# ProblemContext now handles distance matrix precomputation in a more robust way:
-# 1. Supports multiple edge types (EUC_2D, GEO, ATT, EXPLICIT, etc.)
-# 2. Uses the proper distance functions from distances/pairwise.py
-# 3. Caches the result to avoid redundant computation
-# 4. Handles backend-specific memory management
-#
-# Old anti-pattern: compute distance matrix k times (once per route)
-# New pattern: compute once in ProblemContext, reuse via context.distances
+
+
+def _compute_distance_matrix(locations: np.ndarray, xp) -> np.ndarray:
+    """
+    Compute pairwise Euclidean distance matrix.
+
+    This function computes the distance matrix ONCE at the start of solving,
+    eliminating redundant distance computations in TSP strategies.
+
+    Args:
+        locations: (n, 2) array of node coordinates
+        xp: Backend module (NumPy or CuPy)
+
+    Returns:
+        (n, n) symmetric distance matrix
+
+    Performance:
+        - O(n²) computation, done once
+        - Fully vectorized (SIMD on CPU, parallel on GPU)
+        - Result stays on device (no transfers for CuPy)
+
+    Example:
+        >>> locations = np.array([[0, 0], [1, 0], [0, 1]])
+        >>> distances = _compute_distance_matrix(locations, np)
+        >>> distances[0, 1]  # Distance from node 0 to node 1
+        1.0
+    """
+    # Broadcasting: (n, 1, 2) - (1, n, 2) → (n, n, 2)
+    diff = locations[:, None, :] - locations[None, :, :]
+
+    # Euclidean distance: sqrt(dx² + dy²)
+    # Shape: (n, n)
+    distances = xp.sqrt(xp.sum(diff**2, axis=2))
+
+    return distances
+
+
+# ==============================================================================
+# DEPRECATED HELPER FUNCTIONS
+# ==============================================================================
+
+# def _validate_inputs(locations, demands, capacity):
+#     """Validate input arrays and constraints."""
+#     pass
+
+# def _combine_routes(bins, tours):
+#     """Combine bin assignments and tours into final routes."""
+#     pass

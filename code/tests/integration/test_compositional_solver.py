@@ -11,6 +11,8 @@ Test Cases:
     5. Depot handling (all routes start and end at depot)
     6. Edge case: Single customer
     7. Edge case: All customers in one route
+    8. TSP mode: Auto-detection, custom strategy
+    9. Large problem: 30-customer CVRP, 50-node TSP
 
 Dependencies:
     pytest, numpy, cupy (optional)
@@ -18,19 +20,14 @@ Dependencies:
 
 import pytest
 import numpy as np
-from typing import List
 
 # Import strategies and solver
-import sys
-
-sys.path.insert(0, "../..")  # code/tests/integration → code/src
-
-from algorithms.strategies.bin_packing_strategies import FFDStrategy, BFDStrategy
-from algorithms.strategies.tsp_strategies import (
+from src.algorithms.strategies.bin_packing_strategies import FFDStrategy, BFDStrategy
+from src.algorithms.strategies.tsp_strategies import (
     NearestNeighborStrategy,
     ChristofidesStrategy,
 )
-from algorithms.compositional_cvrp_solver import lego_cvrp_solver
+from src.algorithms.compositional_cvrp_solver import lego_cvrp_solver
 
 
 # ==============================================================================
@@ -343,6 +340,243 @@ def test_all_strategy_combinations(small_problem, bin_packing_strategy, tsp_stra
 
 
 # ==============================================================================
+# TSP MODE TESTS (Auto-detection without demands/capacity)
+# ==============================================================================
+
+
+def test_tsp_mode_default_strategy():
+    """Test TSP mode (no demands/capacity) with default strategy."""
+    locations = np.array(
+        [
+            [0.0, 0.0],  # Start
+            [1.0, 0.0],
+            [1.0, 1.0],
+            [0.0, 1.0],
+            [2.0, 2.0],
+        ]
+    )
+
+    # Call without demands/capacity - should auto-detect TSP mode
+    routes = lego_cvrp_solver(
+        locations=locations,
+        xp=np,
+    )
+
+    # TSP mode returns single route wrapped in list
+    assert isinstance(routes, list), "Solver should return list of routes"
+    assert len(routes) == 1, "TSP mode should return exactly one route"
+
+    route = routes[0]
+    assert len(route) == len(locations) + 1, (
+        f"TSP route should visit all {len(locations)} locations and return to start"
+    )
+    assert route[0] == 0 and route[-1] == 0, (
+        "TSP route should start and end at first location"
+    )
+
+    # Validate node coverage: each node should appear correct number of times
+    from collections import Counter
+
+    node_counts = Counter(route)
+
+    # Node 0 (depot) should appear exactly twice (start and end)
+    assert node_counts[0] == 2, (
+        f"Depot (node 0) should appear at start and end, got {node_counts[0]} times"
+    )
+
+    # All other nodes should appear exactly once
+    for node in range(1, len(locations)):
+        assert node_counts[node] == 1, (
+            f"Node {node} should appear exactly once, got {node_counts[node]} times"
+        )
+
+
+def test_tsp_mode_custom_strategy():
+    """Test TSP mode with custom strategy (Christofides)."""
+    locations = np.array(
+        [
+            [0.0, 0.0],
+            [3.0, 0.0],
+            [3.0, 4.0],
+            [0.0, 4.0],
+        ]
+    )
+
+    routes = lego_cvrp_solver(
+        locations=locations,
+        tsp_strategy=ChristofidesStrategy(),  # Custom strategy for TSP mode
+        xp=np,
+    )
+
+    assert isinstance(routes, list), "Solver should return list of routes"
+    assert len(routes) == 1, "TSP mode should return exactly one route"
+
+    route = routes[0]
+    assert route[0] == 0 and route[-1] == 0, "TSP route should form closed tour"
+    assert len(set(route[:-1])) == len(locations), "All locations should be visited"
+
+
+def test_tsp_mode_rejects_bin_packing():
+    """Test that TSP mode rejects bin packing strategy parameter."""
+    locations = np.array([[0, 0], [1, 1], [2, 2]])
+
+    with pytest.raises(
+        ValueError, match="bin_packing_strategy provided but demands/capacity are None"
+    ):
+        lego_cvrp_solver(
+            locations=locations,
+            bin_packing_strategy=FFDStrategy(),  # Invalid for TSP mode
+            xp=np,
+        )
+
+
+# ==============================================================================
+# LARGE PROBLEM TESTS (Scalability)
+# ==============================================================================
+
+
+def test_large_cvrp_problem():
+    """Test scalability with 30 customers (realistic CVRP problem size)."""
+    np.random.seed(42)  # Reproducibility
+
+    n_customers = 30
+    locations = np.random.rand(n_customers + 1, 2) * 100.0  # 30 customers + depot
+    locations[0] = [50.0, 50.0]  # Depot at center
+
+    # Demands: 10-30 units per customer
+    demands = np.concatenate(
+        [
+            [0],  # Depot has 0 demand
+            np.random.randint(10, 31, size=n_customers),
+        ]
+    )
+
+    capacity = 100  # Vehicle capacity
+
+    routes = lego_cvrp_solver(
+        locations=locations,
+        demands=demands,
+        capacity=capacity,
+        bin_packing_strategy=FFDStrategy(),
+        tsp_strategy=NearestNeighborStrategy(),  # Fast heuristic for large problem
+        xp=np,
+    )
+
+    # Validation
+    assert len(routes) > 0, "Should produce at least one route"
+
+    visited = set()
+    for route in routes:
+        # Depot handling
+        assert route[0] == 0 and route[-1] == 0, "Route should start/end at depot"
+
+        # Capacity constraint
+        route_demand = sum(demands[customer] for customer in route[1:-1])
+        assert route_demand <= capacity, (
+            f"Route violates capacity: {route_demand} > {capacity}"
+        )
+
+        # Coverage tracking
+        for customer in route[1:-1]:
+            assert customer not in visited, (
+                f"Customer {customer} visited multiple times"
+            )
+            visited.add(customer)
+
+    # All customers visited
+    expected_customers = set(range(1, n_customers + 1))
+    assert visited == expected_customers, (
+        f"Not all customers visited: {expected_customers - visited} missing"
+    )
+
+
+def test_large_tsp_problem():
+    """Test scalability with 50-node TSP (larger than typical test cases)."""
+    np.random.seed(123)  # Reproducibility
+
+    n_nodes = 50
+    locations = np.random.rand(n_nodes, 2) * 100.0
+
+    routes = lego_cvrp_solver(
+        locations=locations,
+        tsp_strategy=NearestNeighborStrategy(),  # Fast for large problem
+        xp=np,
+    )
+
+    # TSP mode returns single route wrapped in list
+    assert isinstance(routes, list), "Solver should return list of routes"
+    assert len(routes) == 1, "TSP mode should return exactly one route"
+
+    route = routes[0]
+    assert len(route) == n_nodes + 1, f"Should visit all {n_nodes} nodes"
+    assert route[0] == 0 and route[-1] == 0, "Should form closed tour"
+
+    # All nodes visited exactly once
+    visited_count = {}
+    for node in route[:-1]:  # Exclude final depot return
+        visited_count[node] = visited_count.get(node, 0) + 1
+
+    assert len(visited_count) == n_nodes, f"Should visit {n_nodes} unique nodes"
+    assert all(count == 1 for count in visited_count.values()), (
+        "Each node should be visited exactly once"
+    )
+
+
+# ==============================================================================
+# BIN PACKING DEFAULT TEST (Task #13 - bin_packing "necessary" bug fix)
+# ==============================================================================
+
+
+def test_cvrp_uses_default_bin_packing(small_problem):
+    """
+    Test that bin_packing_strategy is OPTIONAL and defaults to FFD.
+
+    This test verifies the fix for the "bin_packing necessary" bug where
+    tests made it appear that bin_packing_strategy was a required parameter,
+    when in fact it should default to FFDStrategy() if not provided.
+
+    Background:
+        - Implementation: compositional_cvrp_solver.py correctly defaults to FFDStrategy()
+        - Bug: ALL 19 existing tests explicitly pass bin_packing_strategy
+        - Result: Users might think bin_packing_strategy is required
+        - Fix: Add this test demonstrating CVRP works without explicit bin_packing
+
+    See Also:
+        - Milestone 1 task breakdown
+        - compositional_cvrp_solver.py lines 183-195
+    """
+    locations, demands, capacity = small_problem
+
+    # Call solver WITHOUT bin_packing_strategy parameter
+    # Should automatically default to FFDStrategy()
+    routes = lego_cvrp_solver(
+        locations=locations,
+        demands=demands,
+        capacity=capacity,
+        tsp_strategy=NearestNeighborStrategy(),
+        xp=np,
+        # NO bin_packing_strategy parameter - should auto-default to FFD
+    )
+
+    # Verify solution is valid
+    assert isinstance(routes, list), "Should return list of routes"
+    assert len(routes) > 0, "Should have at least one route"
+
+    # All routes should be valid
+    for route in routes:
+        assert route[0] == 0 and route[-1] == 0, "Route must start/end at depot"
+
+    # All customers covered exactly once
+    all_customers = set()
+    for route in routes:
+        for node in route[1:-1]:  # Exclude depot
+            all_customers.add(node)
+
+    expected_customers = set(range(1, len(locations)))
+    assert all_customers == expected_customers, "All customers must be visited once"
+
+
+# ==============================================================================
 # NOTES
 # ==============================================================================
 
@@ -352,8 +586,10 @@ def test_all_strategy_combinations(small_problem, bin_packing_strategy, tsp_stra
 # 3. Edge cases: Single customer, all in one route
 # 4. Input validation: Invalid shapes, capacity violations, mismatches
 # 5. Parametrized tests: All 4 strategy combinations
+# 6. TSP mode tests: Auto-detection, custom strategy, parameter validation
+# 7. Large problem tests: 30-customer CVRP, 50-node TSP (scalability)
+# 8. Default bin packing: Verify bin_packing_strategy is optional (defaults to FFD)
 
 # Future Tests (when GPU backend is available):
 # - test_cupy_backend(): Test with xp=cupy
-# - test_large_problem(): Benchmark with 1000+ customers
 # - test_clustering_integration(): Test with optional clustering_strategy
