@@ -13,17 +13,20 @@ Algorithm Overview:
     1. Initialize with greedy solution (nearest neighbor)
     2. Set temperature T = initial_temp
     3. While T > min_temp and iterations < max_iterations:
-        a. Generate neighbor solution (2-opt, swap, or insertion)
+        a. Generate neighbor solution via neighbor_strategy
         b. Calculate delta = new_cost - current_cost
         c. Accept if delta < 0 (improvement)
         d. Accept with probability exp(-delta/T) if delta >= 0
         e. Cool temperature: T = cooling_function(T, iteration)
     4. Return best solution found during search
 
-Neighbor Generation Methods:
-    - 2-opt: Reverse random segment of tour [i+1:j+1]
-    - Swap: Exchange positions of two random cities
-    - Insertion: Remove random city, insert at random position
+Neighbor Generation (Lego Brick Architecture):
+    - Accepts NeighborStrategy instance (RandomSwapStrategy, Random2OptStrategy, etc.)
+    - Strategies are composable and testable independently
+    - Examples:
+        * RandomSwapStrategy: Swap two random cities
+        * RandomInsertionStrategy: Remove city, reinsert elsewhere
+        * Random2OptStrategy: Reverse random tour segment
 
 Cooling Schedules:
     - Geometric: T_new = alpha * T_old (default alpha=0.95)
@@ -37,11 +40,11 @@ Performance Characteristics:
     - GPU acceleration: Future enhancement for batch neighbor evaluation
 
 Hyperparameters:
+    - neighbor_strategy (NeighborStrategy): Strategy for neighbor generation (REQUIRED)
     - initial_temp (float): Starting temperature (default: 1000.0)
     - cooling_rate (float): Geometric cooling factor (default: 0.95)
     - max_iterations (int): Maximum iterations (default: 1000)
     - min_temp (float): Stopping temperature (default: 0.01)
-    - neighbor_method (str): '2-opt', 'swap', or 'insertion' (default: '2-opt')
     - schedule (str): 'geometric', 'linear', or 'adaptive' (default: 'geometric')
 
 Statistics Dictionary:
@@ -58,15 +61,16 @@ Statistics Dictionary:
 
 Example Usage:
     >>> from src.algorithms.metaheuristics import SimulatedAnnealing
+    >>> from src.algorithms.strategies import RandomSwapStrategy
     >>> from src.protocols.problem_context import ProblemContext
     >>>
     >>> # Create problem context
     >>> context = ProblemContext(problem, xp=np)
     >>> customers = list(range(1, problem.dimension))
     >>>
-    >>> # Configure and run SA
-    >>> sa = SimulatedAnnealing()
-    >>> sa.set_params(initial_temp=2000, max_iterations=5000, neighbor_method='2-opt')
+    >>> # Configure and run SA with strategy
+    >>> sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
+    >>> sa.set_params(initial_temp=2000, max_iterations=5000)
     >>> tour, stats = sa.build_tour_with_stats(context, customers)
     >>>
     >>> print(f"Best cost: {stats['best_fitness']:.2f}")
@@ -82,6 +86,8 @@ See Also:
 from typing import List, Dict, Any, Tuple, TYPE_CHECKING, Optional
 import time
 import math
+
+from ...protocols.strategy_protocols import NeighborStrategy
 
 try:
     import cupy as cp
@@ -113,11 +119,17 @@ class SimulatedAnnealing:
         >>> tour, stats = sa.build_tour_with_stats(context, customers)
     """
 
-    def __init__(self, callback: Optional["ProgressCallback"] = None):
+    def __init__(
+        self,
+        neighbor_strategy: NeighborStrategy,
+        callback: Optional["ProgressCallback"] = None,
+    ):
         """
-        Initialize Simulated Annealing with default hyperparameters.
+        Initialize Simulated Annealing with strategy-based neighbor generation.
 
         Args:
+            neighbor_strategy: NeighborStrategy instance (REQUIRED)
+                Examples: RandomSwapStrategy(), Random2OptStrategy(), RandomInsertionStrategy()
             callback: Optional callback for progress tracking (ProgressCallback protocol)
 
         Default configuration:
@@ -125,16 +137,29 @@ class SimulatedAnnealing:
             - cooling_rate: 0.95 (for geometric schedule)
             - max_iterations: 1000
             - min_temp: 0.01
-            - neighbor_method: '2-opt'
             - schedule: 'geometric'
+
+        Example:
+            >>> from code.src.algorithms.strategies import RandomSwapStrategy
+            >>> sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
+            >>> sa.set_params(initial_temp=2000, max_iterations=5000)
+
+        BREAKING CHANGE (M14.3.4):
+            OLD: SimulatedAnnealing(callback=...) with neighbor_method in set_params
+            NEW: SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
+
+        Migration Guide:
+            OLD: sa = SimulatedAnnealing()
+                 sa.set_params(neighbor_method='swap')
+            NEW: sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
         """
+        self.neighbor_strategy = neighbor_strategy
         self._callback = callback
         self._hyperparams = {
             "initial_temp": 1000.0,
             "cooling_rate": 0.95,
             "max_iterations": 1000,
             "min_temp": 0.01,
-            "neighbor_method": "2-opt",  # '2-opt', 'swap', 'insertion'
             "schedule": "geometric",  # 'geometric', 'linear', 'adaptive'
         }
         self._stats = {}
@@ -189,7 +214,6 @@ class SimulatedAnnealing:
         initial_temp = self._hyperparams["initial_temp"]
         max_iterations = self._hyperparams["max_iterations"]
         min_temp = self._hyperparams["min_temp"]
-        neighbor_method = self._hyperparams["neighbor_method"]
         schedule = self._hyperparams["schedule"]
 
         # Start timing
@@ -228,8 +252,10 @@ class SimulatedAnnealing:
         iteration = 0
 
         while temperature > min_temp and iteration < max_iterations:
-            # Generate neighbor
-            neighbor_tour = self._generate_neighbor(current_tour, neighbor_method, xp)
+            # Generate neighbor using strategy (Lego Brick architecture)
+            neighbor_tour = self.neighbor_strategy.generate_neighbor(
+                current_tour, context.problem, xp
+            )
             neighbor_cost = self._compute_tour_cost(neighbor_tour, distances, xp)
 
             # Calculate delta
@@ -367,111 +393,6 @@ class SimulatedAnnealing:
 
         tour.append(0)  # Return to depot
         return tour
-
-    def _generate_neighbor(self, tour: List[int], method: str, xp) -> List[int]:
-        """
-        Generate neighbor solution using specified method.
-
-        Args:
-            tour: Current tour [depot, c1, ..., ck, depot]
-            method: Neighbor generation method ('2-opt', 'swap', 'insertion')
-            xp: Backend module (NumPy or CuPy)
-
-        Returns:
-            Neighbor tour with same structure
-
-        Raises:
-            ValueError: If method is not recognized
-        """
-        n = len(tour) - 1  # Exclude depot at end
-
-        if method == "2-opt":
-            return self._neighbor_2opt(tour, n, xp)
-        elif method == "swap":
-            return self._neighbor_swap(tour, n, xp)
-        elif method == "insertion":
-            return self._neighbor_insertion(tour, n, xp)
-        else:
-            raise ValueError(f"Unknown neighbor method: {method}")
-
-    def _neighbor_2opt(self, tour: List[int], n: int, xp) -> List[int]:
-        """
-        Generate neighbor by reversing a random tour segment (2-opt move).
-
-        Args:
-            tour: Current tour
-            n: Tour length excluding final depot
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Neighbor tour with reversed segment
-        """
-        # Need at least 3 nodes for meaningful 2-opt (depot + 2 customers)
-        if n < 3:
-            return tour.copy()  # Cannot apply 2-opt, return copy
-
-        # Select two random positions (i < j) using backend random
-        i = int(xp.random.randint(0, n - 2))
-        j = int(xp.random.randint(i + 2, n))
-
-        # Create neighbor by reversing tour[i+1:j+1]
-        neighbor = tour.copy()
-        neighbor[i + 1 : j + 1] = neighbor[i + 1 : j + 1][::-1]
-
-        return neighbor
-
-    def _neighbor_swap(self, tour: List[int], n: int, xp) -> List[int]:
-        """
-        Generate neighbor by swapping two random cities.
-
-        Args:
-            tour: Current tour
-            n: Tour length excluding final depot
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Neighbor tour with swapped cities
-        """
-        # Select two random positions (excluding depot) using backend random
-        i = int(xp.random.randint(1, n))
-        j = int(xp.random.randint(1, n))
-
-        while i == j:
-            j = int(xp.random.randint(1, n))
-
-        # Create neighbor by swapping positions i and j
-        neighbor = tour.copy()
-        neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
-
-        return neighbor
-
-    def _neighbor_insertion(self, tour: List[int], n: int, xp) -> List[int]:
-        """
-        Generate neighbor by removing a city and inserting it elsewhere.
-
-        Args:
-            tour: Current tour
-            n: Tour length excluding final depot
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Neighbor tour with relocated city
-        """
-        # Select random city to remove (excluding depot) using backend random
-        remove_pos = int(xp.random.randint(1, n))
-
-        # Select random insertion position
-        insert_pos = int(xp.random.randint(1, n))
-
-        while insert_pos == remove_pos:
-            insert_pos = int(xp.random.randint(1, n))
-
-        # Create neighbor by removing and reinserting city
-        neighbor = tour.copy()
-        city = neighbor.pop(remove_pos)
-        neighbor.insert(insert_pos, city)
-
-        return neighbor
 
     def _compute_tour_cost(self, tour: List[int], distances, xp) -> float:
         """
