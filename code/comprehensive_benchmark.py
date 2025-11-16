@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 
 # Import strategies from src
 from src.algorithms.strategies.bin_packing_strategies import FFDStrategy, BFDStrategy
-from src.algorithms.strategies.tsp_strategies import (
+from code.src.algorithms.strategies.construction_strategies import (
     NearestNeighborStrategy,
     ChristofidesStrategy,
 )

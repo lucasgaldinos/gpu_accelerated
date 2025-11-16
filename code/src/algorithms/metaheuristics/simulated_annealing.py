@@ -5,9 +5,19 @@ This module implements the Simulated Annealing metaheuristic for solving
 routing problems using probabilistic acceptance of moves.
 
 Algorithm Classification:
-    - Class: P-Data (Parallel Data)
+    - Class: S-Task (Sequential Task)
     - Type: Single-trajectory metaheuristic
     - Approach: Probabilistic local search with temperature-based acceptance
+    - Note: P-Data multistart variant planned for M18 (Streaming Architecture)
+
+Future Extensions:
+    - P-Data Variant (M18): Parallel multistart with stream compaction
+      * Launch N independent S-Task trajectories on GPU using CUDA streams
+      * Each stream executes one S-Task SA instance
+      * Collect best solution across all trajectories
+      * Reference: METAHEURISTIC_ARCHITECTURE_DECISIONS.md Section 4 (Streaming)
+      * Hardware Requirements: CUDA streams + unified memory
+      * Benefit: Process multiple independent searches simultaneously
 
 Algorithm Overview:
     1. Initialize with greedy solution (nearest neighbor)
@@ -85,7 +95,7 @@ See Also:
 
 from typing import List, Dict, Any, Tuple, TYPE_CHECKING, Optional
 import time
-import math
+import numpy as np
 
 from ...protocols.strategy_protocols import NeighborStrategy
 
@@ -122,6 +132,7 @@ class SimulatedAnnealing:
     def __init__(
         self,
         neighbor_strategy: NeighborStrategy,
+        improvement_strategy: Optional["TspImprovementStrategy"] = None,
         callback: Optional["ProgressCallback"] = None,
     ):
         """
@@ -130,6 +141,10 @@ class SimulatedAnnealing:
         Args:
             neighbor_strategy: NeighborStrategy instance (REQUIRED)
                 Examples: RandomSwapStrategy(), Random2OptStrategy(), RandomInsertionStrategy()
+            improvement_strategy: Local search operator (e.g., TwoOptSimpleStrategy, NoImprovementStrategy)
+                Optional - defaults to NoImprovementStrategy() if None
+                Applied to accepted moves AFTER acceptance (Option B from literature)
+                Note: Applying to EVERY neighbor would be too expensive (Option A)
             callback: Optional callback for progress tracking (ProgressCallback protocol)
 
         Default configuration:
@@ -139,10 +154,40 @@ class SimulatedAnnealing:
             - min_temp: 0.01
             - schedule: 'geometric'
 
+        Lego Brick Architecture:
+            SA = Neighbor Generation + Acceptance Criterion + [Improvement]
+            - Each component is independently testable
+            - Components are swappable at runtime
+            - Improvement is optional (use NoImprovementStrategy for pure SA)
+
+        Literature Basis (Improvement Timing):
+            - Hoos & Stützle (2005): Hybrid metaheuristics apply local search to accepted solutions
+            - This implementation uses Option B: improve AFTER acceptance
+            - Alternative approaches:
+                * Option A: Improve every neighbor (too expensive)
+                * Option C: Improve only at end (separate post-processing stage)
+
         Example:
             >>> from code.src.algorithms.strategies import RandomSwapStrategy
-            >>> sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
-            >>> sa.set_params(initial_temp=2000, max_iterations=5000)
+            >>> from code.src.algorithms.strategies.improvement_strategies import TwoOptSimpleStrategy
+            >>>
+            >>> # Hybrid SA with local search
+            >>> sa = SimulatedAnnealing(
+            ...     neighbor_strategy=RandomSwapStrategy(),
+            ...     improvement_strategy=TwoOptSimpleStrategy(max_iterations=5),
+            ...     backend="numpy"
+            ... )
+            >>>
+            >>> # Pure SA without improvement
+            >>> sa_pure = SimulatedAnnealing(
+            ...     neighbor_strategy=RandomSwapStrategy(),
+            ...     improvement_strategy=None,  # Defaults to NoImprovementStrategy
+            ...     backend="numpy"
+            ... )
+
+        Backend Configuration:
+            See: Backend Configuration Architecture in M14_M15_DETAILED_TASKS.md
+            Pattern: Hierarchical backend (SA backend != strategy backend is valid)
 
         BREAKING CHANGE (M14.3.4):
             OLD: SimulatedAnnealing(callback=...) with neighbor_method in set_params
@@ -152,8 +197,33 @@ class SimulatedAnnealing:
             OLD: sa = SimulatedAnnealing()
                  sa.set_params(neighbor_method='swap')
             NEW: sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
+
+        P-Data Compatibility (Future M18):
+            The backend="numpy" default is FORWARD-COMPATIBLE with P-Data multistart.
+            When P-Data is implemented, it will instantiate multiple S-Task (SA) objects,
+            each with its own backend parameter:
+
+            Example (M18 future):
+                >>> # P-Data orchestrator creates N parallel S-Tasks
+                >>> class ParallelMultistartSA:
+                ...     def __init__(self, n_starts=10, backend="cupy"):
+                ...         self.workers = [
+                ...             SimulatedAnnealing(strategy=..., backend=backend)
+                ...             for _ in range(n_starts)
+                ...         ]
+
+            No changes to S-Task backend parameter needed when M18 is implemented.
         """
         self.neighbor_strategy = neighbor_strategy
+
+        # Improvement strategy (with default)
+        if improvement_strategy is None:
+            from ..strategies.improvement_strategies import NoImprovementStrategy
+
+            self.improvement_strategy = NoImprovementStrategy()
+        else:
+            self.improvement_strategy = improvement_strategy
+
         self._callback = callback
         self._hyperparams = {
             "initial_temp": 1000.0,
@@ -206,9 +276,14 @@ class SimulatedAnnealing:
         if len(customers) == 0:
             raise ValueError("customers list cannot be empty")
 
-        # Get backend and distances
-        xp = context.xp
-        distances = context.distances  # Uses backend from context (np or cp)
+        # Get CPU-native distance matrix (S-Task: CPU-only operations)
+        # Use context.get_cpu_distances() for efficient access - returns CPU array
+        # without copy if already on CPU, avoiding unnecessary GPU→CPU transfer
+        distances_np = context.get_cpu_distances()
+
+        # Create CPU-native RNG for S-Task operations (modern Generator API)
+        # This ensures all random operations (neighbor, acceptance) are deterministic
+        rng_cpu = np.random.default_rng(context.seed)
 
         # Extract hyperparameters
         initial_temp = self._hyperparams["initial_temp"]
@@ -220,12 +295,20 @@ class SimulatedAnnealing:
         start_time = time.time()
 
         # Generate initial solution (greedy nearest neighbor)
-        current_tour = self._generate_initial_solution(customers, distances, xp)
-        current_cost = self._compute_tour_cost(current_tour, distances, xp)
+        current_tour = self._generate_initial_solution(customers, distances_np)
+        current_cost = self._compute_tour_cost(current_tour, distances_np)
 
         # Track best solution
         best_tour = current_tour.copy()
         best_cost = current_cost
+
+        # Buffer Reuse Pattern (M14.3.4.4): Pre-allocate neighbor buffer
+        # Reduces allocation overhead from O(iterations) to O(1)
+        # Reference: METAHEURISTIC_ARCHITECTURE_DECISIONS.md Section 2.2
+        neighbor_buffer = (
+            current_tour.copy()
+        )  # Reusable buffer for strategies that support it
+        supports_inplace = hasattr(self.neighbor_strategy, "generate_neighbor_inplace")
 
         # Statistics tracking
         convergence_history = [best_cost]
@@ -253,19 +336,40 @@ class SimulatedAnnealing:
 
         while temperature > min_temp and iteration < max_iterations:
             # Generate neighbor using strategy (Lego Brick architecture)
-            neighbor_tour = self.neighbor_strategy.generate_neighbor(
-                current_tour, context.problem, xp
-            )
-            neighbor_cost = self._compute_tour_cost(neighbor_tour, distances, xp)
+            # Buffer Reuse Pattern: Check if strategy supports in-place generation
+            # Backward compatible: falls back to allocation if not supported
+            if supports_inplace:
+                self.neighbor_strategy.generate_neighbor_inplace(
+                    current_tour, neighbor_buffer, context.problem, rng_cpu
+                )
+                neighbor_tour = neighbor_buffer
+            else:
+                # Fallback: allocate new tour (current behavior)
+                # Pass CPU-native RNG for deterministic neighbor generation (S-Task)
+                neighbor_tour = self.neighbor_strategy.generate_neighbor(
+                    current_tour, context.problem, rng_cpu
+                )
+
+            neighbor_cost = self._compute_tour_cost(neighbor_tour, distances_np)
 
             # Calculate delta
             delta = neighbor_cost - current_cost
 
-            # Acceptance decision
-            if self._accept_move(delta, temperature, xp):
+            # Acceptance decision (using CPU RNG for S-Task)
+            if self._accept_move(delta, temperature, rng_cpu):
+                # Accept the move
                 current_tour = neighbor_tour
                 current_cost = neighbor_cost
                 accepted_moves += 1
+
+                # Apply improvement strategy to accepted moves (Option B from literature)
+                # This is the "Lego Brick" composition: SA + Local Search
+                # NOTE: Improvement is applied AFTER acceptance, not to every neighbor
+                current_tour = self.improvement_strategy.improve_tour(
+                    context, current_tour
+                )
+                # Recompute cost after improvement
+                current_cost = self._compute_tour_cost(current_tour, distances_np)
 
                 # Update best if improved
                 if current_cost < best_cost:
@@ -363,21 +467,20 @@ class SimulatedAnnealing:
     # ========== Private Helper Methods ==========
 
     def _generate_initial_solution(
-        self, customers: List[int], distances, xp
+        self, customers: List[int], distances
     ) -> List[int]:
         """
         Generate initial solution using greedy nearest neighbor.
 
         Args:
             customers: List of customer indices
-            distances: Distance matrix (backend-agnostic)
-            xp: Backend module (numpy or cupy)
+            distances: Distance matrix (numpy or cupy array)
 
         Returns:
             Initial tour [depot, c1, c2, ..., ck, depot]
         """
         # Greedy nearest neighbor construction
-        # Keep distances on backend (no forced conversion)
+        # Pure Python loop (S-Task) - works with any array backend
         unvisited = set(customers)
         tour = [0]  # Start at depot
         current = 0
@@ -394,35 +497,34 @@ class SimulatedAnnealing:
         tour.append(0)  # Return to depot
         return tour
 
-    def _compute_tour_cost(self, tour: List[int], distances, xp) -> float:
+    def _compute_tour_cost(self, tour: List[int], distances) -> float:
         """
-        Compute total cost of tour using vectorized operations.
+        Compute total cost of tour using CPU-native NumPy operations.
 
         Args:
             tour: Tour [depot, c1, ..., ck, depot]
-            distances: Distance matrix (backend-agnostic)
-            xp: Backend module (numpy or cupy)
+            distances: Distance matrix (NumPy array on CPU)
 
         Returns:
             Total tour cost (sum of edge weights)
         """
-        # Convert tour to backend array
-        tour_array = xp.array(tour)
+        # Convert tour to numpy array (CPU S-Task operation)
+        tour_array = np.array(tour)
 
-        # Vectorized edge cost computation
+        # Vectorized edge cost computation (NumPy indexing)
         edge_costs = distances[tour_array[:-1], tour_array[1:]]
 
-        # Sum and convert to Python float
-        return float(xp.sum(edge_costs))
+        # Use np.sum() for 100% NumPy operation (no potential GPU kernel launch)
+        return float(np.sum(edge_costs))
 
-    def _accept_move(self, delta: float, temperature: float, xp) -> bool:
+    def _accept_move(self, delta: float, temperature: float, rng_cpu) -> bool:
         """
         Determine whether to accept a move using Metropolis criterion.
 
         Args:
             delta: Cost change (new_cost - current_cost)
             temperature: Current temperature
-            xp: Backend module (numpy or cupy)
+            rng_cpu: NumPy Generator for CPU-native random numbers (S-Task)
 
         Returns:
             True if move should be accepted, False otherwise
@@ -431,9 +533,10 @@ class SimulatedAnnealing:
             # Always accept improvements
             return True
 
-        # Metropolis acceptance criterion using backend operations
-        probability = float(xp.exp(-delta / temperature))
-        return float(xp.random.random()) < probability
+        # Metropolis acceptance criterion (S-Task CPU operation)
+        # Use CPU RNG to avoid GPU overhead (Hybrid Bridge pattern)
+        probability = float(np.exp(-delta / temperature))
+        return float(rng_cpu.random()) < probability
 
     def _cool_temperature(
         self,

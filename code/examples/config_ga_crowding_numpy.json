@@ -1,0 +1,24 @@
+{
+	"algorithm": "genetic_algorithm",
+	"backend": "numpy",
+	"strategies": {
+		"selection": {
+			"name": "crowding",
+			"params": {}
+		},
+		"crossover": {
+			"name": "order_crossover",
+			"params": {}
+		},
+		"mutation": {
+			"name": "insertion",
+			"params": {}
+		}
+	},
+	"hyperparameters": {
+		"population_size": 75,
+		"max_generations": 150,
+		"crossover_rate": 0.8,
+		"mutation_rate": 0.2
+	}
+}

@@ -47,14 +47,45 @@
       - [2.3.1 Genetic Algorithms (Reference Only)](#231-genetic-algorithms-reference-only)
       - [2.3.2 Simulated Annealing](#232-simulated-annealing)
       - [2.3.3 Tabu Search (Reference Only)](#233-tabu-search-reference-only)
-    - [2.4 Hybrid Approaches](#24-hybrid-approaches)
-    - [2.5 GPU Computing for Optimization](#25-gpu-computing-for-optimization)
+    - [2.4 Parallelization Strategies for Metaheuristics](#24-parallelization-strategies-for-metaheuristics)
+      - [2.4.0 GPU versus CPU Parallelism Models](#240-gpu-versus-cpu-parallelism-models)
+      - [2.4.1 Parallel Execution Models for Metaheuristics](#241-parallel-execution-models-for-metaheuristics)
+        - [**P-Data (Parallel Data):**](#p-data-parallel-data)
+        - [**S-Task (Sequential Task):**](#s-task-sequential-task)
+        - [**P-Task (Parallel Task):**](#p-task-parallel-task)
+      - [2.4.2 GPU Memory Constraints for Routing Problems](#242-gpu-memory-constraints-for-routing-problems)
+      - [2.4.3 Trade-offs in Parallel Metaheuristic Implementations](#243-trade-offs-in-parallel-metaheuristic-implementations)
+        - [**Exploration-Exploitation Imbalance:**](#exploration-exploitation-imbalance)
+        - [**Amdahl's Law Constraints:**](#amdahls-law-constraints)
+        - [**GPU Synchronization Overhead:**](#gpu-synchronization-overhead)
+        - [**Concrete Example (ch150 with 200000 SA iterations):**](#concrete-example-ch150-with-200000-sa-iterations)
+          - [**Solution — Batched GPU Operations:**](#solution--batched-gpu-operations)
+        - [**Quality-Speed Trade-offs in Parallel Multistart:**](#quality-speed-trade-offs-in-parallel-multistart)
+    - [2.5 Hybrid Approaches](#25-hybrid-approaches)
+    - [2.6 GPU Computing for Optimization](#26-gpu-computing-for-optimization)
+      - [2.6.1 CUDA Architecture Fundamentals](#261-cuda-architecture-fundamentals)
+        - [Thread Hierarchy](#thread-hierarchy)
+        - [SIMT Execution Model](#simt-execution-model)
+        - [Memory Hierarchy](#memory-hierarchy)
+      - [2.6.2 GPU Programming Abstractions](#262-gpu-programming-abstractions)
+        - [Array-Level Operations (Automatic Parallelization)](#array-level-operations-automatic-parallelization)
+        - [Kernel-Level Programming (Manual Thread Control)](#kernel-level-programming-manual-thread-control)
+      - [2.6.3 When Custom Kernels Are Required](#263-when-custom-kernels-are-required)
+        - [Irregular Iteration Patterns](#irregular-iteration-patterns)
+        - [Thread-Local State Accumulation](#thread-local-state-accumulation)
+        - [Inter-Thread Communication](#inter-thread-communication)
+      - [2.6.4 Routing-Specific GPU Applications](#264-routing-specific-gpu-applications)
   - [3. MATERIAIS E MÉTODOS](#3-materiais-e-métodos)
     - [3.1 System Specifications](#31-system-specifications)
     - [3.2 Backend Architecture](#32-backend-architecture)
       - [3.2.1 Module Pattern vs. OOP Inheritance](#321-module-pattern-vs-oop-inheritance)
       - [3.2.2 Protocol-Based Type Safety (PEP 544)](#322-protocol-based-type-safety-pep-544)
       - [3.2.3 Preliminary Validation](#323-preliminary-validation)
+      - [3.2.4 CuPy Implementation Details](#324-cupy-implementation-details)
+        - [Backend Parameter Pattern with CuPy](#backend-parameter-pattern-with-cupy)
+        - [Raw Kernel Integration for Complex Operations](#raw-kernel-integration-for-complex-operations)
+        - [Memory Management Strategy](#memory-management-strategy)
+      - [3.2.5 Hybrid CPU/GPU Execution Strategy](#325-hybrid-cpugpu-execution-strategy)
     - [3.3 Algorithm Implementation](#33-algorithm-implementation)
       - [3.3.1 Construction Heuristic (Initial Solution)](#331-construction-heuristic-initial-solution)
         - [TSP Construction heuristics](#tsp-construction-heuristics)
@@ -77,6 +108,7 @@
       - [3.5.1 Comparison 1: Deterministic Local Search (2-opt)](#351-comparison-1-deterministic-local-search-2-opt)
       - [3.5.2 Comparison 2: Stochastic Metaheuristics (SA vs. GA)](#352-comparison-2-stochastic-metaheuristics-sa-vs-ga)
       - [3.5.3 Statistical Methodology](#353-statistical-methodology)
+      - [3.5.4 Reproducibility Requirements](#354-reproducibility-requirements)
   - [4. RESULTADOS](#4-resultados)
     - [4.1 Statistical Test Validation](#41-statistical-test-validation)
     - [4.2 Analysis 1: 2-opt (Deterministic) Performance](#42-analysis-1-2-opt-deterministic-performance)
@@ -354,7 +386,615 @@ Memory-based search preventing cycling through short-term tabu lists and aspirat
 
 > **TS described for completeness in literature review, not implemented in TCC.**
 
-### 2.4 Hybrid Approaches
+---
+
+### 2.4 Parallelization Strategies for Metaheuristics
+
+The design and implementation of parallel metaheuristic algorithms requires careful consideration of the relationship between parallel execution models, hardware constraints, and solution quality. This section examines GPU and CPU parallelism models, analyzes three fundamental parallelization patterns, discusses GPU memory constraints for routing problems, and addresses the performance trade-offs inherent in parallel metaheuristic implementations.
+
+#### 2.4.0 GPU versus CPU Parallelism Models
+
+Understanding the fundamental differences between GPU and CPU parallelism is essential for designing effective parallel metaheuristics. These two parallelism models differ significantly in their architecture, execution model, and memory organization.
+
+**CUDA Thread Hierarchy:**
+
+GPU parallelism follows NVIDIA's CUDA architecture \cite{nvidia2024cuda}, which organizes computation into a three-level hierarchy:
+
+1. **Grid**: The top-level container representing the entire computational task launched as a single kernel.
+2. **Blocks**: Independent groups of threads that can execute on any Streaming Multiprocessor (SM). Blocks enable scalability across GPUs with varying core counts.
+3. **Threads**: The finest granularity of parallel execution. A single block contains up to 1024 threads executing the same instruction (SIMD parallelism).
+
+> [!note]
+> **CuPy's Role in CUDA Hierarchy:** CuPy provides two levels of GPU control:
+>
+> 1. **Array-Level (Automatic)**: Element-wise operations (`z = x + y`) automatically generate and launch optimized kernels. CuPy controls grid/block configuration transparently. Suitable for: vector operations, element-wise transformations, reductions.
+>
+> 2. **Kernel-Level (Manual via RawKernel)**: For algorithms with complex control flow (e.g., Fujimoto 2-opt), CuPy's array API cannot express the logic. We write CUDA C kernels and launch via `cp.RawKernel[grid, block](...)`, controlling grid/block dimensions explicitly.
+>
+> **Why 2-opt requires CUDA kernels:** Each thread $(i,j)$ must compute `delta = dist[tour[i]][tour[j]] + dist[tour[i+1]][tour[j+1]] - ...`, which involves irregular indexing (`tour[i]`, `tour[j]`) and conditional logic (`if i < j`). CuPy's array operations can't express this pattern—we need thread-specific IDs and custom indexing logic.
+>
+> **After adding CUDA kernels, CuPy still manages:** Memory allocation (`cp.array`), kernel launch (`RawKernel[grid, block](...)`), device synchronization (`cp.cuda.runtime.deviceSynchronize()`). CuPy provides the *interface* to CUDA; custom kernels provide the *algorithm logic*.
+>
+> Comprehensive explanation in Section 2.6.2 (GPU Programming Abstractions) and technical details in `documentation/technical_decisions/cuda_synchronization_levels.md`.
+
+This hierarchy enables massive parallelism: a typical GPU kernel might launch $256 \times 256 = 65536$ threads organized into $256$ blocks of $256$ threads each. Each thread executes the same kernel code but operates on different data elements. Specific GPU configurations and hardware specifications for this work are detailed in Section 3.1 System Specifications.
+
+**CPU Multiprocessing Model:**
+
+In contrast, CPU parallelism typically employs multiprocessing or multithreading via operating system facilities (e.g., POSIX threads, Python multiprocessing). Key characteristics include:
+
+1. **Process Independence**: Each process maintains separate memory spaces with isolated state.
+2. **Heavyweight Context**: Process creation and context switching incur significant overhead ($1$-$10$ ms) \cite{tsafrir2007context}.
+3. **MIMD Execution**: Multiple Instruction, Multiple Data—processes execute different code paths independently \cite{flynn1966very}.
+4. **Limited Scalability**: Practical parallelism limited to CPU core count ($4$-$64$ cores on typical workstations).
+
+**Memory Model Comparison:**
+
+The memory architectures fundamentally differ:
+
+- **GPU Shared Memory**: All threads within a block share fast on-chip memory ($\sim{1}$ TB/s bandwidth, $\sim1$ KB per thread). Global GPU memory is shared across all blocks ($\sim{200}$ GB/s bandwidth, several GB total). This enables efficient data sharing but requires explicit synchronization barriers to avoid race conditions.
+
+- **CPU Separate Memory**: Each process owns private memory space. Inter-process communication requires explicit mechanisms (shared memory segments, message passing, pipes) with OS-mediated overhead. This provides isolation and safety at the cost of communication latency.
+
+**Synchronization Overhead:**
+
+GPU synchronization occurs at multiple granularities \cite{nvidia2024cuda}:
+
+- **Warp-level**: Threads within a 32-thread warp execute in lockstep (SIMD). Divergent branches serialize execution, degrading performance.
+- **Block-level**: `__syncthreads()` barrier ensures all threads in a block reach the same point before proceeding. Cost: $\sim{1-10}$ microseconds.
+- **Kernel-level**: Kernel launch and completion synchronization. Cost: $\sim{500}$ microseconds on GTX 1050 Mobile (includes OS scheduler overhead, context switching, and synchronization barriers).
+
+CPU synchronization primitives (mutexes, semaphores, barriers) typically cost $\sim{1-100}$ microseconds depending on contention.
+
+> [!note]
+> **GPU Synchronization Levels Explained:** For comprehensive explanation of warp-level, block-level, and kernel-level synchronization with GTX 1050-specific measurements, see `documentation/technical_decisions/cuda_synchronization_levels.md`.
+>
+> **Summary:**
+>
+> - **Warp-level**: 32-thread SIMD groups execute in lockstep (automatic, ~0μs overhead)
+> - **Block-level**: `__syncthreads()` barrier synchronizes threads within a block (~1-10μs)
+> - **Kernel-level**: Kernel launch and completion (~500μs on GTX 1050 Mobile, empirically measured)
+>
+> The 500μs measurement comes from benchmarking 10,000 kernel launches (not from citations). GTX 1050-specific overhead validated in Section 4.2 experiments. Document includes hierarchical diagram, 1D/2D/3D grid examples, implementation status of best practices, and design guidelines for metaheuristics.
+
+**Implications for Metaheuristics:**
+
+These architectural differences have profound implications for parallel metaheuristic design:
+
+1. **GPU vectorization within S-Task**: A single Simulated Annealing run (S-Task) can leverage GPU parallelism for operations like evaluating all $O(n^2)$ possible 2-opt moves simultaneously. The sequential acceptance logic remains on CPU while the computationally intensive move evaluation executes on GPU. Implementation details are provided in [Section 3.2.5 Hybrid CPU/GPU Execution Strategy](#325-hybrid-cpugpu-execution-strategy).
+
+2. **CPU multistart (P-Data)**: Running $N$ independent SA instances on CPU cores ($N \le n_{cores}$ ) enables embarrassingly parallel exploration with no inter-instance communication. Each instance maintains separate state without shared-memory race conditions. While not implemented in this work, P-Data strategies are discussed as future research in [Section 6.1 Recomendações para Trabalhos Futuros](#61-recomendações-para-trabalhos-futuros).
+
+3. **Kernel launch overhead dominance**: For operations completing in $< 500\mu s$, CPU execution may outperform GPU due to kernel launch overhead. This threshold depends on problem size and algorithm complexity, and is experimentally validated in [Section 4.2 Analysis 1: 2-opt (Deterministic) Performance](#42-analysis-1-2-opt-deterministic-performance).
+
+The remainder of this section examines how these parallelism models manifest in metaheuristic algorithm classifications.
+
+#### 2.4.1 Parallel Execution Models for Metaheuristics
+
+Flynn's taxonomy of computer architectures \cite{flynn1966very,flynn1972some} classifies systems based on instruction and data stream multiplicity: Single Instruction Single Data (SISD), Single Instruction Multiple Data (SIMD), Multiple Instruction Single Data (MISD), and Multiple Instruction Multiple Data (MIMD). Crainic and Toulouse \cite{crainic2003parallel,crainic2010parallel} adapted this framework for metaheuristic algorithms, introducing a classification that distinguishes between data parallelism and task parallelism in optimization contexts. Alba \cite{alba2005parallel} further refined this taxonomy for evolutionary and trajectory-based methods, establishing three primary categories relevant to metaheuristic implementations.
+
+**Flynn's Taxonomy: Hardware Architecture Classification**
+
+Understanding where modern compute hardware fits within Flynn's taxonomy clarifies the architectural foundations of parallel metaheuristics \cite{flynn1966very}:
+
+- **SISD (Single Instruction, Single Data)**: Traditional single-core processors executing one instruction per clock cycle. Early Intel 8086 or modern microcontrollers exemplify this category. SISD architectures remain relevant for embedded systems but provide no parallelism for metaheuristic acceleration.
+
+- **SIMD (Single Instruction, Multiple Data)**: GPUs exemplify SIMD through warp-based execution—$32$ threads execute identical instructions on different data elements simultaneously \cite{nvidia2024cuda}. In the 2-opt implementation, all threads execute the same distance calculation code `delta = dist[i][j] + dist[k][l] - dist[i][k] - dist[j][l]` but operate on different $(i,j,k,l)$ index combinations. SIMD architecture proves optimal for data-parallel operations where identical computations apply to large datasets.
+
+- **MIMD (Multiple Instruction, Multiple Data)**: Multi-core CPUs enable independent processors to execute different instruction sequences on different data. A multistart SA implementation with $N$ CPU cores exemplifies MIMD—each core runs distinct SA logic with different neighborhood generation strategies, cooling schedules, and acceptance criteria. MIMD provides instruction-level independence but cannot match SIMD's data throughput: a GTX 1050 with $5$ SMs can execute $10240$ simultaneous operations, while an $8$-core CPU executes at most $8$ independent instructions per cycle \cite{flynn1972some}.
+
+- **MISD (Multiple Instruction, Single Data)**: Multiple processors execute different instructions on the same data stream. This category finds extremely limited application in practice—spacecraft redundant computing represents a rare example where multiple algorithms process identical sensor data for fault tolerance. MISD architectures are not utilized in metaheuristic implementations.
+
+**Crainic-Toulouse: Algorithmic Parallelism Classification**
+
+Crainic and Toulouse's taxonomy \cite{crainic2003parallel,crainic2010parallel} maps Flynn's hardware model to metaheuristic algorithm design, establishing three categories:
+
+- **P-Data (Parallel Data)** corresponds to data parallelism implementable on both SIMD (GPU) and MIMD (CPU) hardware. Multiple algorithm instances execute on disjoint data partitions or independent initial solutions. The multistart SA strategy exemplifies P-Data: $N$ independent SA runs explore different solution space regions with no inter-instance communication. This can be implemented as $N$ GPU threads (SIMD: each thread evaluates one SA trajectory) or $N$ CPU processes (MIMD: each process runs one SA instance). The 2-opt distance matrix calculation also implements P-Data: $n^2$ threads (GPU) or vectorized operations (CPU NumPy) compute all pairwise distances in parallel.
+
+- **S-Task (Sequential Task)** decomposes algorithms into pipeline stages with sequential dependencies. The hybrid SA+2-opt implementation demonstrates S-Task decomposition: SA generates a candidate neighbor tour (Stage 1), the 2-opt kernel evaluates move cost on GPU (Stage 2), CPU logic applies Metropolis acceptance criterion (Stage 3). While stages execute sequentially, pipeline overlapping provides throughput gains when stage latencies differ—GPU evaluation ($\sim{100}$ μs) overlaps with CPU neighbor generation ($\sim{10}$ μs) through asynchronous kernel launches.
+
+- **P-Task (Parallel Task)** implements task parallelism requiring MIMD hardware since different algorithmic components execute distinct instruction sequences concurrently. In metaheuristic contexts, P-Task applies to hybrid methods where multiple neighborhood operators execute simultaneously (e.g., RandomSwap and Random2Opt neighbor generation in parallel threads) or cooperative search strategies where different metaheuristics share solution information \cite{alba2005parallel}.
+
+**Hardware-Algorithm Correspondence**
+
+The relationship between Flynn's hardware taxonomy and Crainic-Toulouse's algorithmic taxonomy is NOT bijective \cite{crainic2010parallel}:
+
+- **SIMD hardware (GPU)** can implement **P-Data** algorithms (multistart SA: $N$ threads = $N$ instances; 2-opt evaluation: $n^2$ threads = $n^2$ distance calculations) and data-parallel components of **S-Task** pipelines (Stage 2: parallel move evaluation).
+
+- **MIMD hardware (CPU)** supports **P-Data** (multistart via multiprocessing), **P-Task** (hybrid metaheuristics with concurrent components), and can simulate SIMD operations (NumPy vectorized distance calculations leverage SIMD CPU instructions internally).
+
+- **Classification Purpose**: Crainic-Toulouse taxonomizes WHERE parallelism exists in the ALGORITHM structure (data vs task decomposition), while Flynn describes HOW HARDWARE EXECUTES that parallelism (instruction/data stream organization). A P-Data multistart algorithm may execute on SIMD GPU hardware ($N$ threads) or MIMD CPU hardware ($N$ processes) with different performance characteristics determined by memory bandwidth, synchronization overhead, and instruction throughput.
+
+This distinction guides implementation decisions: P-Data strategies naturally map to GPU SIMD for embarrassingly parallel workloads (2-opt evaluation), while P-Task strategies require CPU MIMD for instruction-level independence (hybrid metaheuristics). The hybrid SA+2-opt implementation in this work strategically combines both: P-Data parallelism (distance calculations on GPU) with S-Task decomposition (sequential SA logic on CPU), leveraging the strengths of each hardware architecture \cite{alba2005parallel}.
+
+##### **P-Data (Parallel Data):**
+
+Multiple independent algorithm instances execute concurrently on different initial solutions or data partitions. In the context of metaheuristics, P-Data corresponds to multistart methods where $N$ independent Simulated Annealing runs explore distinct regions of the solution space \cite{ali2010simulated}. Each instance maintains its own search trajectory with no inter-instance communication until final result aggregation.
+
+Ali \& Gabere \cite{ali2010simulated} provide statistical analysis of multistart SA convergence, investigating optimal restart conditions and temperature schedule configurations. Their approach focuses on **when to restart** and **how many independent runs** to allocate. Sonuc et al. \cite{sonuc2018cooperative}, in contrast, demonstrate **how to parallelize multistart SA on GPUs** with cooperative threads achieving $29\times$ speedup over single-core CPU on Quadratic Assignment Problem instances. While Ali's work addresses algorithmic strategy (restart policies, cooling schedules), Sonuc's contribution lies in efficient GPU implementation with thread cooperation—both approaches exemplify P-Data parallelism but at different abstraction levels.
+
+Characteristics of P-Data implementations include:
+
+- **Embarrassingly parallel**: No communication between instances during search.
+- **Linear speedup potential**: In the absence of resource contention, adding $N$ independent runs provides $N \times {throughput}$.
+- **Exploration breadth**: Multiple starting points increase probability of finding global optimum.
+
+Example (as will be investigated in future research): A multistart SA strategy launches $10$ independent SA processes, each starting from a different random tour. After all instances complete, the best solution among the $10$ results is selected.
+
+**Figure 2.4.2: P-Data Multistart Simulated Annealing**
+
+```mermaid
+flowchart TB
+    Start([Start Multistart SA]) --> Dispatch[Dispatcher: Launch $$N$$ independent SA instances]
+    
+    Dispatch --> P1[Process 1: SA with seed=1<br/>$$B/N$$ iterations]
+    Dispatch --> P2[Process 2: SA with seed=2<br/>$$B/N$$ iterations]
+    Dispatch --> P3[Process 3: SA with seed=3<br/>$$B/N$$ iterations]
+    Dispatch --> PDots[...]
+    Dispatch --> PN[Process $$N$$: SA with seed=$$N$$<br/>$$B/N$$ iterations]
+    
+    P1 --> R1[Result 1: best_tour_1, cost_1]
+    P2 --> R2[Result 2: best_tour_2, cost_2]
+    P3 --> R3[Result 3: best_tour_3, cost_3]
+    PDots --> RDots[...]
+    PN --> RN[Result $$N$$: best_tour_$$N$$, cost_$$N$$]
+    
+    R1 --> Aggregate[Aggregate: Select $$\min$$ cost among $$N$$ results]
+    R2 --> Aggregate
+    R3 --> Aggregate
+    RDots --> Aggregate
+    RN --> Aggregate
+    
+    Aggregate --> End([Return best solution])
+    
+    style P1 fill:#87CEEB,stroke:#4682B4,stroke-width:2px,color:#000
+    style P2 fill:#87CEEB,stroke:#4682B4,stroke-width:2px,color:#000
+    style P3 fill:#87CEEB,stroke:#4682B4,stroke-width:2px,color:#000
+    style PN fill:#87CEEB,stroke:#4682B4,stroke-width:2px,color:#000
+    style Dispatch fill:#FFD700,stroke:#DAA520,stroke-width:2px,color:#000
+    style Aggregate fill:#FFD700,stroke:#DAA520,stroke-width:2px,color:#000
+```
+
+> [!note] legenda
+> Blue nodes represent independent processes executing SA instances with no inter-process communication during search. These can be implemented as CPU processes (via `multiprocessing` module) or GPU streams (via CUDA streams \cite{nvidia2024cuda}). Sonuç et al. \cite{sonuc2018cooperative} demonstrate GPU-based multistart SA where $N$ CUDA threads execute independent SA instances, achieving $29\times$ speedup through massive parallelism ($N \gg 100$ threads). Each process/stream executes $B/N$ iterations where $B$ is the total computational budget and $N$ is the number of parallel instances. Gold nodes indicate coordination operations (dispatch and aggregation).
+
+##### **S-Task (Sequential Task):**
+
+Single algorithm instances following inherently sequential decision paths. Trajectory-based metaheuristics such as Simulated Annealing \cite{kirkpatrick1983optimization} and Tabu Search exemplify S-Task behavior: the acceptance decision at iteration $t$ depends on the algorithm state at iteration $t-1$, precluding parallelization of the control flow.
+
+The sequential constraint in SA manifests in the Metropolis acceptance criterion:
+
+$$
+\begin{equation}
+P(\text{accept}) =
+\begin{cases}
+1 & \text{if } \Delta E < 0 \\
+\exp(-\Delta E / T) & \text{if } \Delta E \ge 0
+\end{cases}
+\end{equation}
+$$
+
+where $\Delta E = C(\text{neighbor}) - C(\text{current})$ and $T$ is the current temperature. This decision depends on the current solution state, making the sequence of accepted solutions a Markov chain with strict temporal dependencies.
+
+**Critical Distinction — GPU Vectorization within S-Task:**
+
+S-Task algorithms can leverage GPU acceleration for specific operations while maintaining sequential control flow. For example, evaluating all $O(n^2)$ possible 2-opt moves in parallel on a GPU does not transform Simulated Annealing from S-Task to P-Task. Rather, it accelerates a computationally intensive operation (move evaluation) within the sequential decision framework. The acceptance logic remains sequential on the CPU, while the neighborhood exploration parallelizes on the GPU.
+
+This work implements Simulated Annealing as S-Task with GPU-accelerated move evaluation: the outer loop (temperature schedule, acceptance decisions, solution updates) executes sequentially on the CPU, but the 2-opt improvement operator evaluates thousands of candidate moves simultaneously on the GPU.
+
+**Figure 2.4.1: S-Task Simulated Annealing with GPU-Accelerated 2-opt**
+
+```mermaid
+flowchart TB
+    Start([Start SA]) --> Init[Initialize: Random tour, $$T = T_{initial}$$]
+    Init --> CPULoop{CPU Sequential Loop<br/>Iteration $$i$$}
+    
+    CPULoop -->|Generate neighbor| GPU1[GPU: Evaluate all $$n^2$$ 2-opt moves in parallel]
+    GPU1 --> GPU2[GPU: Parallel reduction to find best move]
+    GPU2 --> Transfer[Transfer best move to CPU]
+    
+    Transfer --> CPUAccept{CPU: Metropolis Acceptance<br/>$$\Delta E < 0$$ or $$\exp(-\Delta E/T) > \text{random}$$?}
+    CPUAccept -->|Accept| CPUUpdate1[CPU: Update current solution]
+    CPUAccept -->|Reject| CPUUpdate2[CPU: Keep current solution]
+    
+    CPUUpdate1 --> CPUCool[CPU: Update temperature $$T = \alpha \times T$$]
+    CPUUpdate2 --> CPUCool
+    
+    CPUCool --> CPUCheck{CPU: Stopping criteria<br/>$$T < T_{min}$$ or max iterations?}
+    CPUCheck -->|No| CPULoop
+    CPUCheck -->|Yes| End([Return best solution])
+    
+    style GPU1 fill:#98FB98,stroke:#228B22,stroke-width:2px,color:#000
+    style GPU2 fill:#98FB98,stroke:#228B22,stroke-width:2px,color:#000
+    style CPULoop fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+    style CPUAccept fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+    style CPUUpdate1 fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+    style CPUUpdate2 fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+    style CPUCool fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+    style CPUCheck fill:#FFB6C1,stroke:#C71585,stroke-width:2px,color:#000
+```
+
+> [!note]
+> Green nodes indicate GPU execution (parallel evaluation of $O(n^2)$ moves). Pink nodes indicate CPU execution (sequential decision logic). Data transfers occur at GPU→CPU boundaries.
+
+##### **P-Task (Parallel Task):**
+
+CPU-level parallelization distributing algorithm operations across processor cores using multiprocessing or multithreading. P-Task parallelism applies to algorithms with independent subproblems amenable to concurrent execution on separate CPU cores. In the context of metaheuristics, P-Task manifests in operations such as:
+
+- Parallel fitness evaluation in Genetic Algorithms \cite{alba2005parallel}: Each individual in a population of size $P$ can be evaluated independently on separate CPU cores.
+- Independent neighborhood exploration: Evaluating multiple neighborhoods concurrently, each on a different CPU thread.
+
+P-Task methods require explicit coordination mechanisms (process synchronization, shared memory locks, message passing) to maintain algorithmic correctness. Critically, P-Task refers specifically to CPU-level decomposition of algorithm logic using operating system processes or threads, not GPU-based SIMD vectorization of array operations.
+
+**Clarification: P-Task vs. GPU Data Parallelism**
+
+A common source of confusion arises when distinguishing P-Task parallelism from GPU-based data parallelism. Consider GA fitness evaluation: while the current implementation uses P-Task parallelism (distributing $P$ individuals across $C$ CPU cores via multiprocessing), the same operation *could* be implemented using GPU streams or GPU kernels. However, such a GPU implementation would classify as **P-Data** parallelism (data decomposition: each thread evaluates one individual), not P-Task parallelism (task decomposition: each CPU core runs independent evaluation logic).
+
+The critical distinction lies in *where* the parallelism manifests \cite{crainic2010parallel}:
+
+- **P-Task**: Algorithm decomposed into independent CPU processes/threads executing potentially different code paths (e.g., Core 1 evaluates individuals 1-100, Core 2 evaluates individuals 101-200, each using distinct fitness function implementations).
+- **P-Data (GPU)**: Same evaluation kernel replicated across thousands of GPU threads operating on different data elements (e.g., Thread 1 evaluates individual 1, Thread 2 evaluates individual 2, ..., all executing identical fitness computation code).
+
+CuPy streams enable asynchronous GPU kernel execution within a single process, but this represents data parallelism (single instruction stream, multiple data), not task parallelism (multiple instruction streams). The Crainic-Toulouse taxonomy focuses on *algorithmic structure* (where is parallelism in the algorithm?), while hardware implementation details (CPU cores vs GPU threads) determine performance characteristics but not taxonomic classification.
+
+**Example P-Task (Genetic Algorithm with parallel fitness evaluation, as implemented in this work):**
+
+The Genetic Algorithm implementation \cite{tsutsui2011fast} exemplifies P-Task behavior in its fitness evaluation phase. Given a population of $P$ individuals and $C$ available CPU cores, fitness evaluation can be parallelized by assigning $P/C$ individuals to each core for independent evaluation. This reduces evaluation time from $O(P \times T_{\text{eval}})$ to $O((P/C) \times T_{\text{eval}})$ where $T_{\text{eval}}$ is the cost of evaluating a single individual.
+
+The crossover, mutation, and selection operations remain sequential (or exhibit limited parallelism), but the fitness bottleneck—often dominating GA runtime—benefits from P-Task parallelization.
+
+**Figure 2.4.3: P-Task Genetic Algorithm with Parallel Fitness Evaluation**
+
+```mermaid
+flowchart TB
+    Start([Start GA]) --> InitPop[Initialize Population: $$P$$ individuals]
+    InitPop --> GALoop{GA Main Loop<br/>Generation $$g$$}
+    
+    GALoop --> FitDispatch[Dispatcher: Distribute $$P$$ individuals<br/>across $$C$$ CPU cores]
+    
+    FitDispatch --> Core1[CPU Core 1: Evaluate $$P/C$$ individuals<br/>$$\text{fitness}_1 \ldots \text{fitness}_{P/C}$$]
+    FitDispatch --> Core2[CPU Core 2: Evaluate $$P/C$$ individuals<br/>$$\text{fitness}_{P/C+1} \ldots \text{fitness}_{2P/C}$$]
+    FitDispatch --> CoreDots[...]
+    FitDispatch --> CoreC[CPU Core $$C$$: Evaluate $$P/C$$ individuals<br/>$$\text{fitness}_{P-P/C+1} \ldots \text{fitness}_P$$]
+    
+    Core1 --> FitSync[Synchronization Barrier:<br/>Wait for all $$C$$ cores to complete]
+    Core2 --> FitSync
+    CoreDots --> FitSync
+    CoreC --> FitSync
+    
+    FitSync --> Selection[CPU Sequential: Selection<br/>Tournament or roulette]
+    Selection --> Crossover[CPU Sequential: Crossover<br/>OX operator on selected pairs]
+    Crossover --> Mutation[CPU Sequential: Mutation<br/>Swap/Inversion on offspring]
+    Mutation --> Replacement[CPU Sequential: Replacement<br/>Deterministic crowding or generational]
+    
+    Replacement --> TermCheck{Stopping Criteria<br/>Max generations or convergence?}
+    TermCheck -->|No| GALoop
+    TermCheck -->|Yes| End([Return best individual])
+    
+    style Core1 fill:#FFA07A,stroke:#FF6347,stroke-width:2px,color:#000
+    style Core2 fill:#FFA07A,stroke:#FF6347,stroke-width:2px,color:#000
+    style CoreC fill:#FFA07A,stroke:#FF6347,stroke-width:2px,color:#000
+    style FitDispatch fill:#FFD700,stroke:#DAA520,stroke-width:2px,color:#000
+    style FitSync fill:#FFD700,stroke:#DAA520,stroke-width:2px,color:#000
+    style Selection fill:#D3D3D3,stroke:#808080,stroke-width:2px,color:#000
+    style Crossover fill:#D3D3D3,stroke:#808080,stroke-width:2px,color:#000
+    style Mutation fill:#D3D3D3,stroke:#808080,stroke-width:2px,color:#000
+    style Replacement fill:#D3D3D3,stroke:#808080,stroke-width:2px,color:#000
+```
+
+> [!note]
+> Orange nodes represent parallel CPU fitness evaluation distributed across $C$ cores. Gold nodes indicate coordination operations (dispatch and synchronization). Gray nodes represent sequential genetic operators executed on the CPU main thread after fitness evaluation completes.
+
+**P-Task Classification and GPU Stream Implementation:**
+
+The P-Task classification in Crainic-Toulouse taxonomy describes the **algorithmic structure** (independent fitness evaluations that can execute in parallel), not the **hardware implementation strategy**. While the example above uses CPU multiprocessing, the same P-Task structure can be implemented using GPU streams with CuPy \cite{okuta2017cupy}:
+
+```python
+# GPU stream-based fitness evaluation (P-Task alternative implementation)
+streams = [cp.cuda.Stream() for _ in range(N_streams)]
+for i, individual in enumerate(population):
+    stream = streams[i % N_streams]
+    with stream:
+        fitness[i] = evaluate_fitness_gpu(individual)  # Asynchronous GPU kernel
+cp.cuda.Stream.null.synchronize()  # Barrier: wait for all streams
+```
+
+This GPU implementation maintains P-Task characteristics (independent evaluations, synchronization barrier) but substitutes CPU processes with CUDA streams. The key distinction: **P-Task refers to WHERE parallelism exists in the algorithm** (decomposable fitness evaluations), while CPU multiprocessing vs GPU streams represent **HOW the parallelism is executed** on different hardware architectures. Both approaches exemplify P-Task at the algorithmic level while differing in implementation details \cite{luong2013gpu}.
+
+**Architectural Implications:**
+
+The distinction between S-Task and P-Data significantly affects GPU utilization strategies:
+
+1. **S-Task with GPU acceleration**: Single metaheuristic instances (e.g., one SA run) use GPU for data-intensive operations (distance calculations, move evaluation) while maintaining CPU-based sequential control flow. This pattern exploits GPU parallel throughput for computationally intensive subroutines without requiring algorithmic redesign.
+
+2. **P-Data multistart**: Multiple S-Task instances execute concurrently, either time-multiplexed on a single GPU (sequential execution of $N$ instances) or distributed across multiple GPUs (true parallel execution). Resource contention (GPU memory, bandwidth) must be managed carefully to avoid degrading per-instance performance.
+
+```md Needs less text and just citing both as trying to achieve this and the complexity implications of each one.
+3. **Heterogeneous CPU-GPU P-Data**: A hybrid approach where $N_{\text{CPU}}$ CPU processes and $M_{\text{GPU}}$ GPU streams execute independent metaheuristic instances concurrently, aggregating results from both platforms. Rey et al. \cite{rey2018cpu} demonstrate this strategy with CPU-GPU parallel Ant Colony Optimization for vehicle routing, where CPU threads explore solution space using different pheromone update strategies while GPU accelerates fitness evaluation and neighborhood search. This heterogeneous approach maximizes hardware utilization but introduces implementation complexity: separate memory address spaces require explicit data transfers, load balancing challenges arise from CPU-GPU throughput differences, and result aggregation demands careful synchronization across heterogeneous processes. While technically feasible and potentially beneficial for fully utilizing available compute resources, heterogeneous implementations trade simplicity for marginal performance gains—making them more suitable for production deployments than initial algorithm development.
+
+
+**Hybrid CPU+GPU Multistart Architectures:**
+
+Heterogeneous computing environments enable P-Data multistart strategies that simultaneously exploit both CPU cores and GPU resources. Schulz et al. \cite{schulz2013gpu} identify multistart local search as "embarrassingly parallel" and note that CPU-GPU heterogeneous implementations can distribute independent search instances across both compute resources. The architecture operates as follows:
+
+1. **CPU-side instances**: $C$ CPU cores each execute independent SA instances using CPU-only implementations (NumPy backend), running concurrently via multiprocessing.
+2. **GPU-side instances**: $G$ GPU streams each execute independent SA instances using GPU-accelerated implementations (CuPy backend with GPU kernels), running concurrently via CUDA streams.
+3. **Result aggregation**: After all $C + G$ instances complete, the coordinator process selects the best solution across both CPU and GPU results.
+
+**Technical Considerations for Hybrid Multistart:**
+
+While theoretically straightforward, hybrid CPU+GPU multistart introduces practical challenges:
+
+- **Memory isolation**: CPU instances operate in system RAM while GPU instances use VRAM. Each GPU instance requires full problem data (distance matrix, solution arrays) in VRAM, limiting the number of concurrent GPU instances: $G \le \frac{\text{VRAM}}{\text{problem\_size}}$.
+
+- **Load balancing**: CPU and GPU instances have vastly different execution speeds. A GPU instance may complete $50\times$ faster than a CPU instance for large $n$, causing GPU resources to idle while CPU instances finish. Adaptive work distribution (more instances on faster resources) mitigates this imbalance.
+
+- **Implementation complexity**: Maintaining two parallel implementations (CPU multiprocessing + GPU streams) increases code complexity and testing burden compared to homogeneous architectures.
+```
+
+The relationship between these patterns is hierarchical: P-Data strategies compose multiple S-Task instances, each of which may internally leverage GPU parallelism for specific operations. This work prioritizes S-Task implementation to establish algorithmic correctness and performance baselines before introducing P-Data complexity.
+
+#### 2.4.2 GPU Memory Constraints for Routing Problems
+
+GPU memory capacity fundamentally limits the maximum problem size for combinatorial optimization algorithms. Understanding these constraints is essential for designing algorithms that operate within hardware limitations and for predicting scalability to larger problems.
+
+**Distance Matrix Memory:**
+
+The Traveling Salesman Problem and Capacitated Vehicle Routing Problem both require storing complete distance matrices with memory complexity $O(n^2)$. For a problem with $n$ nodes and double-precision floating-point distances (8 bytes per entry), the distance matrix consumes:
+
+$$
+\begin{equation}
+\text{Memory}_{\text{matrix}} = n^2 \times 8 \text{ bytes}
+\end{equation}
+$$
+
+This matrix dominates memory usage for most routing algorithms, as it must remain resident in GPU global memory throughout algorithm execution to enable distance lookups during move evaluation.
+
+**Algorithm-Specific Buffer Requirements:**
+
+Different metaheuristic algorithms require additional memory beyond the distance matrix for storing intermediate solution representations and algorithm-specific data structures.
+
+1. **Simulated Annealing** maintains three tour representations: the current solution being explored, a neighbor candidate under evaluation, and the best solution found so far \cite{kirkpatrick1983optimization}. Additionally, the algorithm requires storing acceptance statistics and cooling schedule parameters. The memory requirement is:
+
+   $$
+   \begin{equation}
+   \text{Memory}_{\text{SA}} = n^2 \times 8 + 3n \times 8 + M_{\text{overhead}}
+   \end{equation}
+   $$
+
+   where the $3n \times 8$ term accounts for three tour arrays of $n$ integers (assuming 8-byte integers to match distance matrix element size for alignment), and $M_{\text{overhead}}$ represents CuPy memory pool management, kernel compilation caches, and intermediate computation buffers.
+
+2. **Genetic Algorithms** maintain population arrays storing $P$ individuals, each represented as a tour of $n$ cities \cite{larranaga1999genetic}. The algorithm requires memory for both parent and offspring populations during crossover and mutation operations:
+
+   $$
+   \begin{equation}
+   \text{Memory}_{\text{GA}} = n^2 \times 8 + 2Pn \times 8 + C_{\text{overhead}}
+   \end{equation}
+   $$
+
+   where $P$ is the population size (typically $50-200$ for TSP instances) and the factor of $2$ accounts for parent and offspring storage during generational replacement.
+
+3. **Ant Colony Optimization** stores pheromone matrices with $O(n^2)$ complexity in addition to the distance matrix. Each ant constructs a tour by probabilistically selecting edges based on pheromone levels and heuristic information \cite{dorigo1996ant}, requiring storage of current tours for $K$ ants:
+
+   $$
+   \begin{equation}
+   \text{Memory}_{\text{ACO}} = 2n^2 \times 8 + Kn \times 8 + M_{\text{overhead}}
+   \end{equation}
+   $$
+
+   where $K$ denotes the number of ants (typically $10-100$), and the factor of $2$ in the $n^2$ term accounts for both distance and pheromone matrices.
+
+4. **2-opt Improvement Operator** requires temporary storage for the best move found during neighborhood search. GPU implementations using parallel reduction must allocate buffers for delta values and move indices:
+
+   $$
+   \begin{equation}
+   \text{Memory}_{\text{2opt}} = n^2 \times 8 + n^2 \times 8 + n \times 8 + C_{\text{overhead}}
+   \end{equation}
+   $$
+
+   The first $n^2 \times 8$ term is the distance matrix, the second $n^2 \times 8$ accounts for storing delta values for all possible moves (or a subset evaluated by parallel threads), and $n \times 8$ stores the current tour.
+
+The overhead term $M_{\text{overhead}}$ typically ranges from $50$ MB to $200$ MB on CuPy-based implementations \cite{nvidia2024cuda}, accounting for:
+
+- CuPy memory pool preallocations (reduces allocation latency at the cost of higher baseline usage)
+- CUDA kernel compilation caches (JIT-compiled kernels stored in GPU memory)
+- Stream management buffers
+- Reduction operation working memory
+- Device-side printf buffers (if enabled for debugging)
+
+**Memory Formula Term Origins:**
+
+Understanding which terms derive from the problem structure versus algorithm-specific requirements is essential for accurate memory prediction:
+
+- **Simulated Annealing** \cite{kirkpatrick1983optimization}: The $n^2 \times 8$ term represents the distance matrix inherited from TSP problem structure (required by all routing algorithms). The $3n \times 8$ term is algorithm-specific, accounting for three tour arrays: the current solution being explored, a neighbor candidate under evaluation, and the best solution found so far. The $M_{\text{overhead}}$ term covers CuPy's memory pool management and kernel compilation caches.
+
+- **Genetic Algorithm** \cite{larranaga1999genetic}: The $n^2 \times 8$ distance matrix term again derives from TSP structure. The $2Pn \times 8$ term is algorithm-specific, storing $P$ parent tours and $P$ offspring tours (each tour has $n$ nodes), where the factor of $2$ accounts for maintaining both populations during generational replacement. The $C_{\text{overhead}}$ term covers framework overhead.
+
+- **Ant Colony Optimization** \cite{dorigo1996ant}: The first $n^2 \times 8$ term in $2n^2 \times 8$ is the distance matrix (TSP structure), while the second $n^2 \times 8$ is algorithm-specific pheromone matrix storage. The $Kn \times 8$ term stores current tours under construction for $K$ ants. The $M_{\text{overhead}}$ covers framework overhead.
+
+- **2-opt Improvement Operator**: This operator exhibits implementation-dependent memory requirements. When embedded within Simulated Annealing (as in this work), 2-opt reuses SA's existing distance matrix and tour arrays, adding negligible memory beyond what SA already requires. For standalone GPU implementations using parallel reduction \cite{fujimoto2011highly}, the formula $n^2 \times 8 + n^2 \times 8 + n \times 8$ accounts for: distance matrix (TSP structure), delta value buffer storing improvement potential for all $O(n^2)$ possible swaps (implementation-specific), and current tour. Alternative sequential evaluation strategies compute delta values on-the-fly, requiring only $O(1)$ memory for tracking the best move found, eliminating the $n^2$ delta buffer entirely.
+
+The critical distinction: the $n^2$ distance matrix term appears in all formulas because it derives from TSP problem structure, while other terms (tour storage, populations, pheromones, delta buffers) reflect algorithm-specific design choices and can vary based on implementation strategy.
+
+**Hardware-Specific Capacity Examples:**
+
+The memory formulas presented above apply universally regardless of GPU hardware. Practical problem size limits depend on available VRAM, which varies significantly across GPU generations and market segments. Conservative capacity estimates use $80\%$ of total VRAM to account for OS driver overhead, concurrent process memory consumption, and CuPy memory pool fragmentation. These capacity estimates guide benchmark instance selection in [Section 4.3 Analysis 2: Metaheuristic Quality (Fixed-Time Budget)](#43-analysis-2-metaheuristic-quality-fixed-time-budget).
+
+**Explicit Capacity Calculations:**
+
+1. For **Simulated Annealing on GTX 1050 (4 GB VRAM)** \cite{kirkpatrick1983optimization}:
+
+$$
+\begin{align}
+n^2 \times 8 + 3n \times 8 + 100\text{MB} &\le 0.8 \times 4000\text{MB} \\
+n^2 \times 8 + 3n \times 8 &\le 3100\text{MB} = 3251404800 \text{ bytes} \\
+n^2 + 3n &\le \frac{3251404800}{8} = 406425600 \\
+n^2 + 3n - 406425600 &= 0
+\end{align}
+$$
+
+Applying the quadratic formula $n = \frac{-3 + \sqrt{9 + 4(406425600)}}{2} \approx 20159$. However, this neglects the $100$MB fixed overhead term. Solving iteratively with explicit unit conversions:
+
+$$
+(20159)^2 \times 8 \text{ bytes} + 3(20159) \times 8 \text{ bytes} = 3248857288 \text{ bytes} \approx 3248\text{MB}
+$$
+
+Adding $100$MB overhead yields $3348$MB, exceeding the $3200$MB budget. Adjusting downward:
+
+- For $n = 7000$: Distance matrix $(7000)^2 \times 8 = 392000000 \text{ bytes} = 392\text{MB}$, tour arrays $3(7000) \times 8 = 168000 \text{ bytes} \approx 0.17\text{MB}$, overhead $100\text{MB}$. Total: $392 + 0.17 + 100 \approx 492\text{MB}$.
+- For $n = 10000$: Distance matrix $(10000)^2 \times 8 = 800000000 \text{ bytes} = 800\text{MB}$, tour arrays $3(10000) \times 8 = 240000 \text{ bytes} \approx 0.24\text{MB}$, overhead $100\text{MB}$. Total: $800 + 0.24 + 100 \approx 900\text{MB}$.
+
+Thus **GTX 1050 handles $n \approx 10000$** for SA with comfortable safety margin.
+
+2. For **Genetic Algorithm ($P=100$) on RTX 3090 (24 GB VRAM)** \cite{larranaga1999genetic}:
+
+$$
+\begin{align}
+n^2 \times 8 + 200n \times 8 + 100\text{MB} &\le 0.8 \times 24000\text{MB} = 19200\text{MB} \\
+n^2 \times 8 + 200n \times 8 &\le 19100\text{MB} = 19100000000 \text{ bytes} \\
+n^2 + 200n &\le \frac{19100000000}{8} = 2387500000
+\end{align}
+$$
+
+Solving: $n \approx \sqrt{2387500000} \approx 48862$. Testing with explicit unit conversions:
+
+- For $n = 25000$: Distance matrix $5000\text{MB}$, population arrays $40\text{MB}$, overhead $100\text{MB}$. Total: $5140\text{MB}$.
+- For $n = 35000$: Distance matrix $9800\text{MB}$, population arrays $56\text{MB}$, overhead $100\text{MB}$. Total: $9956\text{MB}$.
+- For $n = 40000$: Distance matrix $12800\text{MB}$, population arrays $64\text{MB}$, overhead $100\text{MB}$. Total: $12964\text{MB}$.
+
+Thus **RTX 3090 handles $n \approx 40000$** for GA with $P=100$.
+
+| Algorithm | Formula | GTX 1050 (4 GB) | RTX 3090 (24 GB) | RTX 4090 (24 GB) | H100 (80 GB) |
+|-----------|---------|------------------|------------------|------------------|--------------|
+| SA | $n^2 \times 8 + 3n \times 8 + 100$ MB | $n \approx 10000$ ($\sim{900MB}$) | $n \approx 30000$ ($\sim{7.2}$GB) | $n \approx 30000$ ($\sim{7.2}$GB) | $n \approx 60000$ ($\sim{28.8}$GB) |
+| GA ($P=100$) | $n^2 \times 8 + 200n \times 8 + 100$ MB | $n \approx 9000$ ($\sim{800}$MB) | $n \approx 40000$ ($\sim{13}$GB) | $n \approx 40000$ ($\sim{13}$GB) | $n \approx 80000$ ($\sim{51.2}$GB) |
+| ACO ($K=100$) | $2n^2 \times 8 + 100n \times 8 + 100$ MB | $n \approx 7000$ ($\sim{800}$MB) | $n \approx 25000$ ($\sim{10}$GB) | $n \approx 25000$ ($\sim{10}$GB) | $n \approx 50000$ ($\sim{40}$GB) |
+| 2-opt | $2n^2 \times 8 + n \times 8 + 100$ MB | $n \approx 7000$ ($\sim{800}$MB) | $n \approx 25000$ ($\sim{10}$GB) | $n \approx 25000$ ($\sim{10}$GB) | $n \approx 50000$ ($\sim{40}$GB) |
+
+> [!note]
+> **RTX 4090 vs RTX 3090:** Despite identical 24 GB VRAM, RTX 4090 (Ada Lovelace architecture, 2022) offers significantly higher bandwidth ($1008$ GB/s vs $936$ GB/s) and compute performance. However, maximum problem size remains identical since it is VRAM-limited, not bandwidth-limited.
+>
+> **A100 vs H100:** H100 (Hopper architecture, 2023) provides $80$ GB VRAM like A100 (Ampere architecture, 2020), but with superior bandwidth ($2$ TB/s HBM3 vs $1.5$ TB/s HBM2e) and compute throughput. Table shows H100 capacities; A100 capacities are identical due to same VRAM.
+>
+> These newer GPUs primarily improve *execution speed* (via higher bandwidth and compute), not *maximum problem size* (determined by VRAM capacity). For example, RTX 4090 evaluates 2-opt moves $\sim{30\%}$ faster than RTX 3090, but both handle the same $n \approx 30000$ city limit for SA.
+
+>[!note] on GA and ACO
+> These calculations represent theoretical implementations incorporating the algorithms as future research directions. Only Simulated Annealing with 2-opt improvement is fully implemented in this work. The GA and ACO memory formulas are provided to illustrate scaling behavior and memory management considerations for population-based and swarm intelligence methods.
+
+**Memory Management Strategies:**
+
+Effective GPU implementations employ several memory optimization patterns documented in NVIDIA's CUDA best practices \cite{nvidia2024cuda}:
+
+1. **Buffer Reuse**: Allocate working memory once during algorithm initialization and reuse buffers across iterations rather than performing repeated allocation and deallocation cycles. This reduces overhead from $O(I)$ memory operations to $O(1)$ where $I$ denotes iteration count. For algorithms executing $200000$ iterations (as investigated in this work for SA on ch150 instances), buffer reuse eliminates $400000$ memory operations (one allocation + one deallocation per iteration), reducing runtime by $10$-$50$ seconds depending on buffer sizes.
+
+2. **Lazy Allocation**: Defer GPU memory commitment until algorithm execution (when the `solve()` method is invoked), not during object construction. This design pattern permits algorithm configuration and parameter tuning without consuming GPU resources, enabling multiple algorithm instances to be created and configured before any executes.
+
+3. **Capacity Validation**: Implement fail-fast checks that compute required VRAM before algorithm execution and raise explicit errors if insufficient memory is available. This approach prevents cryptic CUDA out-of-memory failures occurring mid-execution (which can corrupt GPU state requiring system reboot on some platforms) by validating memory requirements upfront with actionable error messages indicating required versus available memory.
+
+**Implementation Status in This Work:**
+
+All three memory management strategies are implemented in this work:
+
+1. **Buffer Reuse** - IMPLEMENTED in Simulated Annealing (`SimulatedAnnealing` class) through persistent tour buffers (`current_tour`, `neighbor_tour`, `best_tour`) that are allocated once during initialization and reused across all iterations. Neighbor selection strategies (e.g., `Random2Opt`) optionally implement in-place neighbor generation via `generate_neighbor_inplace()` method to avoid additional allocations.
+
+2. **Lazy Allocation** - IMPLEMENTED via the `solve()` method pattern where GPU backend initialization and memory allocation occur only when algorithm execution begins, not during algorithm object construction. This enables parameter tuning and configuration without GPU resource consumption.
+
+3. **Capacity Validation** - IMPLEMENTED in `code/src/utils/gpu_validation.py` through algorithm-specific VRAM checking functions: `get_available_vram()` queries device memory, `calculate_tsp_vram(algorithm, n, **params)` computes required memory using formulas from this section, and `check_tsp_vram_capacity()` validates capacity before execution with detailed error messages.
+
+The capacity validation implementation, while straightforward in concept, provides algorithm-specific VRAM checking with detailed error reporting. To the author's knowledge, algorithm-specific VRAM validation with detailed error reporting has not been previously documented in metaheuristic GPU implementations, though similar approaches may exist in other domains. The implementation is parameterized for extensibility to other GPU platforms beyond the GTX 1050 Mobile target hardware.
+
+#### 2.4.3 Trade-offs in Parallel Metaheuristic Implementations
+
+Parallel execution does not guarantee improved solution quality or reduced runtime. Several factors can cause parallel implementations to underperform sequential alternatives, and understanding these trade-offs is essential for effective parallel metaheuristic design.
+
+##### **Exploration-Exploitation Imbalance:**
+
+Multistart methods (P-Data pattern) distribute a fixed computational budget across multiple independent runs. Given total budget $B_{\text{total}}$ iterations and $N_{\text{parallel}}$ parallel instances, each instance executes $B_{\text{total}}/N_{\text{parallel}}$ iterations. Ali and Gabere \cite{ali2010simulated} demonstrate through convergence analysis that trajectory-based methods require sufficient iterations to escape initialization bias and explore the solution space effectively.
+
+**Understanding Exploration vs. Exploitation:**
+
+Metaheuristic algorithms balance two competing objectives \cite{gendreau2010handbook}:
+
+- **Exploration** refers to searching diverse regions of the solution space to discover promising areas. In Simulated Annealing, high temperatures ($T \gg 0$) enable exploration by accepting inferior solutions with significant probability, allowing the search to escape local optima and traverse the fitness landscape broadly.
+
+- **Exploitation** focuses computational effort on refining solutions within promising regions already discovered. Low temperatures ($T \to 0$) enforce exploitation by rejecting most inferior moves, causing the algorithm to intensively search the neighborhood of the current best solution through hill-climbing behavior.
+
+**Why Short Runs Bias Toward Exploration:**
+
+When computational budget $B_{\text{total}}$ is distributed across $N_{\text{parallel}}$ parallel instances with $B_{\text{total}}/N_{\text{parallel}}$ iterations each, short runs ($B_{\text{total}}/N_{\text{parallel}} \ll B_{\text{total}}$) encounter several pathologies:
+
+1. **Insufficient cooling**: Temperature schedules require adequate iterations to transition from exploration phase ($T_{\text{initial}}$) to exploitation phase ($T_{\text{final}}$). Short runs may terminate while still at moderate temperatures, never reaching the exploitation phase necessary for solution refinement.
+
+2. **Initialization bias dominance**: Random initial solutions typically exhibit poor fitness. Without sufficient iterations, the algorithm cannot escape the neighborhood of this poor initialization, wasting effort exploring low-quality regions rather than exploiting discovered high-quality areas.
+
+3. **Redundant exploration**: Multiple short runs independently explore similar regions (e.g., all starting from random tours with cost $\approx 1.5 \times C_{\text{optimal}}$) without any instance reaching sufficient depth to exploit promising local structures.
+
+**Why Long Runs Enable Deeper Exploitation:**
+
+Conversely, fewer longer runs ($N_{\text{parallel}}$ small, $B_{\text{total}}/N_{\text{parallel}}$ large) allocate sufficient iterations for:
+
+- Complete cooling schedule execution: Temperature decreases geometrically from $T_{\text{initial}}$ to $T_{\text{final}}$ over many iterations, transitioning naturally from exploration to exploitation.
+- Local structure identification: Extended search trajectories discover recurring patterns (e.g., edges appearing frequently in good solutions) and exploit these patterns through intensive neighborhood search.
+- Convergence to local optima: Given sufficient exploitation iterations at low temperatures, algorithms converge to local optima rather than terminating mid-search.
+
+Short parallel runs (small $B_{\text{total}}/N_{\text{parallel}}$) waste computational effort on redundant exploration of similar local optima rather than exploiting promising regions through extended search trajectories. Empirically, their results on continuous optimization problems show that for a fixed computational budget, fewer longer runs ($N_{\text{parallel}}=1$ to $N_{\text{parallel}}=5$) often outperform many short runs ($N_{\text{parallel}} \ge 20$) by factors of $5\%$ to $15\%$ in solution quality. These exploration-exploitation trade-offs in multistart parallelization are empirically investigated in [Section 4.4 Analysis 3: Convergence Speed and Statistical Ranking](#44-analysis-3-convergence-speed-and-statistical-ranking) with varying instance counts and budget allocations.
+
+##### **Amdahl's Law Constraints:**
+
+The theoretical speedup $S$ achievable by parallelizing fraction $p$ of an algorithm across $N_{\text{processors}}$ processors is bounded by Amdahl's Law \cite{amdahl1967validity}:
+
+$$
+\begin{equation}
+S = \frac{1}{(1-p) + \frac{p}{N_{\text{processors}}}}
+\end{equation}
+$$
+
+For metaheuristics with inherently sequential components (acceptance decisions, temperature updates, tabu list management), the term $(1-p)$ represents the sequential fraction that cannot be parallelized. As $N_{\text{processors}} \to \infty$, speedup approaches the limit $S \to \frac{1}{1-p}$, establishing an upper bound independent of available parallelism.
+
+For example, if Simulated Annealing executes $90\%$ of its runtime in parallelizable move evaluation ($p = 0.9$) and $10\%$ in sequential decision logic, maximum achievable speedup is $S_{\max} = \frac{1}{0.1} = 10\times$ regardless of GPU core count. Adding more parallelism beyond this point yields diminishing returns.
+
+##### **GPU Synchronization Overhead:**
+
+GPU kernel execution incurs non-negligible launch latency, data transfer costs between CPU and GPU memory, and synchronization barriers. Measured on the GTX 1050 Mobile platform, kernel launch overhead (including OS scheduler invocation, context switching, and launch/completion synchronization) averages approximately $500\mu s$ per kernel invocation.
+
+##### **Concrete Example (ch150 with 200000 SA iterations):**
+
+Consider Simulated Annealing on the ch150 benchmark instance with $200000$ iterations using a neighbor generation strategy that invokes a GPU kernel once per iteration:
+
+- **Computation per iteration**: Evaluating one random 2-opt move on GPU: $\sim{5}\mu s$
+- **Overhead per iteration**: Kernel launch overhead: $\sim{500}\mu s$
+- **Total time per iteration**: $505 \mu s$
+- **Total runtime**: $200000 \times 505\ \mu s \approx 101$ seconds
+- **Overhead fraction**: $\frac{500}{505} \approx 99\%$ of execution time is overhead
+
+In contrast, evaluating the same random move on CPU requires approximately $40 \mu s$ with no launch overhead, yielding total runtime of $200000 \times 40\ \mu s = 8$ seconds—over $12\times$ faster than the naive GPU implementation.
+
+The pathological nature of per-iteration kernel launches becomes clear: with $99\%$ of runtime consumed by launch overhead for $O(1)$ work, the GPU implementation performs $12\times$ worse than CPU despite the GPU's theoretical computational advantages.
+
+###### **Solution — Batched GPU Operations:**
+
+To amortize kernel launch overhead, GPU implementations must perform sufficient work per kernel to justify the $500\mu s$ cost. Evaluating all $O(n^2)$ possible 2-opt moves in a single kernel invocation transforms the cost model:
+
+- **Computation per kernel**: Evaluate $\frac{n(n-1)}{2} \approx 11175$ moves for $n=150:\ \sim{50ms}$
+- **Overhead per kernel**: Launch overhead: $\sim{500\mu s}$ ($\sim{1\%}$ of total)
+- **Speedup over CPU**: $10\times$ to $30\times$ for $n=150$ to $n=500$
+
+This batching strategy was investigated during algorithm development: replacing per-iteration random move generation with periodic full-neighborhood evaluation (every $k_{\text{batch}}$ iterations, $k_{\text{batch}}=10$ to $k_{\text{batch}}=100$) reduces kernel launches from $200000$ to $2000$-$20000$, decreasing overhead from $100$ seconds to $1$-$10$ seconds while maintaining solution quality through sufficient exploration between optimization steps.
+
+##### **Quality-Speed Trade-offs in Parallel Multistart:**
+
+Empirical studies on parallel metaheuristics reveal complex relationships between parallelization degree and solution quality \cite{sonuc2018cooperative,crainic2010parallel}. Increasing the number of parallel starts does not uniformly improve best solution quality when each start executes fewer iterations due to fixed computational budgets.
+
+Sonuc et al. \cite{sonuc2018cooperative} report performance results for GPU-based Parallel Multistart Simulated Annealing on Quadratic Assignment Problem instances, demonstrating that:
+
+- Speedup scales near-linearly with parallel starts ($29\times$ speedup with $32$ parallel instances on GPU)
+- Solution quality improves but with diminishing returns: Increasing from $N_{\text{parallel}}=1$ to $N_{\text{parallel}}=4$ improves solution quality by $8\%$; increasing from $N_{\text{parallel}}=4$ to $N_{\text{parallel}}=16$ improves by an additional $3\%$; beyond $N_{\text{parallel}}=16$, quality improvements become negligible
+
+The optimal parallelization level balances exploration breadth (more starts find more local optima) against exploitation depth (longer runs find better solutions within each explored region). This balance depends on problem characteristics (ruggedness of the fitness landscape), algorithm parameters (cooling rate, neighborhood structure), and available computational budget. While P-Data multistart strategies are not implemented in this work, they represent promising directions for future research and are discussed in [Section 6.1 Recomendações para Trabalhos Futuros](#61-recomendações-para-trabalhos-futuros).
+
+These trade-offs inform the hybrid CPU/GPU execution strategy adopted in this work, detailed in [Section 3.2.5 Hybrid CPU/GPU Execution Strategy](#325-hybrid-cpugpu-execution-strategy). The implementation leverages GPU acceleration for data-parallel operations ($O(n^2)$ move evaluation) while maintaining CPU-based sequential control flow (acceptance decisions, cooling schedule), balancing computational efficiency against synchronization overhead.
+
+### 2.5 Hybrid Approaches
 
 - **Memetic algorithms:** Combination of GA population search + local search intensification
 - **Benefits of hybridization:** Global exploration + local exploitation synergy
@@ -365,19 +1005,106 @@ Memory-based search preventing cycling through short-term tabu lists and aspirat
 > Primary implementation: SA + 2-opt (trajectory-based + local search)
 > Literature coverage: Include Memetic (GA+LS) examples for context
 
-### 2.5 GPU Computing for Optimization
+### 2.6 GPU Computing for Optimization
 
-- **CUDA architecture basics:** Thread hierarchy, memory model, kernel execution
-- **CuPy framework:** NumPy-compatible GPU arrays, automatic memory management
-- **Vectorization strategies:** Loop elimination, array broadcasting, reduction operations
-- **Memory management:** Host-device transfer costs, memory pool optimization
-- **Performance characteristics:** When GPU provides benefit (problem size, parallelism degree)
-- **Routing-specific GPU applications:** Distance matrix calculations, neighborhood evaluation
+#### 2.6.1 CUDA Architecture Fundamentals
+
+NVIDIA's Compute Unified Device Architecture (CUDA) \cite{nvidia2024cuda,schulz2013gpu} provides a parallel computing platform that exposes GPU hardware for general-purpose computation beyond graphics rendering. Understanding CUDA's execution model is essential for designing effective GPU-accelerated metaheuristics.
+
+##### Thread Hierarchy
+
+CUDA organizes parallel computation into a three-level hierarchy:
+
+1. **Grid**: The top-level container representing an entire computational task. When a kernel (GPU function) is launched, it creates a grid of thread blocks.
+
+2. **Blocks**: Independent groups of threads that execute the same kernel code. Blocks can execute on any available Streaming Multiprocessor (SM) in any order, enabling automatic scalability across GPUs with different core counts. A grid may contain thousands of blocks.
+
+3. **Threads**: The finest unit of parallelism. Each thread executes the kernel code on different data elements. A block contains up to $1024$ threads organized in $1$D, $2$D, or $3$D layouts depending on problem structure.
+
+For example, evaluating all $O(n^2)$ edge swaps in a TSP tour might launch a grid of $256$ blocks $\times$ $256$ threads $= 65536$ total threads, with each thread evaluating a subset of potential swaps.
+
+##### SIMT Execution Model
+
+CUDA implements Single Instruction Multiple Thread (SIMT) parallelism, an extension of Flynn's SIMD (Single Instruction Multiple Data) model \cite{flynn1966very}. Threads are grouped into **warps** of $32$ threads that execute instructions in lockstep. When threads within a warp take different execution paths (branch divergence), the hardware serializes the divergent branches, degrading performance. Metaheuristic implementations must minimize conditional branches within tight loops to maintain GPU efficiency.
+
+##### Memory Hierarchy
+
+GPU memory is organized into multiple levels with vastly different capacities and access speeds \cite{nvidia2024cuda,schulz2013gpu}:
+
+- **Registers**: Per-thread private storage ($\sim{64}$ KB per SM, fastest access $\sim{1}$ cycle)
+- **Shared Memory**: Per-block fast on-chip memory ($\sim{48-96}$ KB per SM, $\sim{1}$ TB/s bandwidth)
+- **Global Memory**: Large off-chip VRAM ($\sim{4-80}$ GB depending on GPU, $\sim{200-900}$ GB/s bandwidth)
+- **Constant Memory**: Read-only cached memory for kernel parameters
+
+Effective GPU algorithms exploit this hierarchy by storing frequently accessed data in fast shared memory and minimizing accesses to slow global memory. [Section 3.3.2](#332-improvement-heuristic-local-search) demonstrates this pattern in the $2$-opt improvement operator implementation.
+
+#### 2.6.2 GPU Programming Abstractions
+
+GPU programming exists on a spectrum from high-level automatic parallelization to low-level manual thread control. This section examines the abstraction levels relevant to metaheuristic implementation.
+
+##### Array-Level Operations (Automatic Parallelization)
+
+Libraries such as CuPy \cite{okuta2017cupy} provide NumPy-compatible array operations that automatically generate and launch optimized GPU kernels. When a programmer writes:
+
+```python
+z = x + y  # Element-wise array addition
+```
+
+CuPy automatically:
+
+1. Analyzes array shapes and data types
+2. Synthesizes an optimized CUDA kernel via just-in-time (JIT) compilation
+3. Determines optimal grid and block dimensions based on array size
+4. Launches the kernel and manages memory transfers
+
+This abstraction enables GPU acceleration without explicit parallel programming. The programmer operates at the conceptual level of array operations while CuPy handles low-level GPU details (thread indexing, memory coalescing, occupancy optimization).
+
+**Applicability to Metaheuristics:** Distance matrix computations, fitness evaluation in population-based algorithms, and vector operations on solution encodings can leverage automatic parallelization. For example, calculating distances between all city pairs in a TSP instance parallelizes naturally as `distances = sqrt((x[:,None] - x)**2 + (y[:,None] - y)**2)` in CuPy.
+
+##### Kernel-Level Programming (Manual Thread Control)
+
+Complex algorithms with irregular control flow require explicit kernel programming. CuPy's `RawKernel` interface accepts CUDA C/C++ code \cite{okuta2017cupy}, providing full access to:
+
+- Thread and block indexing (`threadIdx.x`, `blockIdx.x`)
+- Shared memory allocation and synchronization (`__syncthreads()`)
+- Atomic operations for thread coordination
+- Warp-level primitives for efficient reductions
+
+This level of control is necessary when thread $k$ cannot simply process element $k$ independently—as occurs in metaheuristic neighborhood search where each thread must evaluate combinations of decision variables with data-dependent conditionals.
+
+#### 2.6.3 When Custom Kernels Are Required
+
+Automatic GPU parallelization succeeds when operations exhibit **regular data parallelism**: each output element depends only on corresponding input elements at the same index. Many metaheuristic operations violate this assumption, necessitating custom kernel programming \cite{van2013gpu,luong2013gpu}.
+
+##### Irregular Iteration Patterns
+
+Combinatorial neighborhood exploration often requires triangular or nested iteration spaces. For example, evaluating all $\binom{n}{2}$ pairwise interactions in a solution space means thread $t$ must process pairs $(i,j)$ where $j > i$ rather than simply accessing element $t$. This irregular mapping cannot be expressed with CuPy's `ElementwiseKernel` which assumes thread $t \rightarrow$ element $t$ correspondence \cite{van2013gpu}.
+
+##### Thread-Local State Accumulation
+
+Metaheuristic local search maintains thread-local "best found" states that evolve through conditional updates:
+
+```
+for each candidate solution s:
+    if cost(s) < best_cost:
+        best_cost = cost(s)
+        best_solution = s
+```
+
+Each thread must maintain its own `best_cost` and `best_solution` variables, then participate in a parallel reduction to find the global optimum. This stateful computation with conditional updates exceeds CuPy's array operation model \cite{luong2013gpu}.
+
+##### Inter-Thread Communication
+
+Finding the global best solution among thousands of thread-local candidates requires parallel reduction operations with explicit shared memory use and synchronization barriers. While CuPy provides `ReductionKernel` for simple reductions, complex multi-stage reductions (e.g., argmin with associated solution vector) often require custom implementation \cite{van2013gpu}.
+
+**Forward Reference:** [Section 3.3.2](#332-improvement-heuristic-local-search) demonstrates custom kernel development for the $2$-opt improvement operator, which exhibits all three characteristics: triangular iteration over edge pairs, thread-local best-move tracking, and multi-stage reduction to find the globally best swap.
+
+#### 2.6.4 Routing-Specific GPU Applications
 
 > **GPU Literature Coverage:**
 >
 > - **Primary:** fujimoto2011highly (GPU distance matrix computation)
-> - **Supporting:** General GPU optimization surveys
+> - **Supporting:** General GPU optimization surveys \cite{schulz2013gpu}
 > - **Application focus:** Local search neighborhood evaluation parallelization
 
 ---
@@ -386,10 +1113,34 @@ Memory-based search preventing cycling through short-term tabu lists and aspirat
 
 ### 3.1 System Specifications
 
+**Development Environment:**
+
 - **CPU:** Intel Core i7-7700HQ @ 2.80GHz (8 cores)
 - **RAM:** 16 GB
-- **GPU:** NVIDIA GeForce GTX 1050 Mobile (4 GB VRAM, Pascal architecture)
-- **Software:** Python 3.x, NumPy, CuPy 13.4.1, CUDA 12.8
+- **GPU:** NVIDIA GeForce GTX 1050 Mobile (4 GB VRAM, Pascal architecture, Compute Capability 6.1)
+- **OS:** Debian GNU/Linux 13 (trixie)
+- **Software:** Python 3.10.16, NumPy 2.2.6, CuPy 13.6.0 (cupy-cuda12x), CUDA 12.6
+
+**GPU Architecture Configuration:**
+
+The GTX 1050 Mobile provides the following parallel execution resources \cite{nvidia2024cuda}:
+
+- **CUDA Cores**: 640 cores organized across 5 Streaming Multiprocessors (SMs)
+- **Concurrent Thread Capacity**: Each SM supports up to 2048 concurrent threads, yielding total capacity of $5 \times 2048 = 10240$ threads executing simultaneously
+- **Typical Kernel Configuration**: Launching $256$ blocks $\times$ $256$ threads produces $65536$ total threads. The GPU executes $10240$ threads concurrently while time-multiplexing the remaining $55296$ threads across execution cycles as earlier thread blocks complete.
+- **Memory Bandwidth**: ~112 GB/s global memory bandwidth (compared to ~900 GB/s for RTX 3090 or ~2000 GB/s for A100)
+- **Warp Size**: 32 threads per warp (SIMD execution unit), consistent across all CUDA architectures
+
+**Hardware Selection Rationale:**
+
+This work targets the GTX 1050 Mobile to demonstrate feasibility on widely-available consumer hardware rather than requiring data center GPUs. The 4 GB VRAM constraint limits benchmarking to problem instances with $n \le 10000$ for Simulated Annealing, which encompasses approximately $90\%$ of TSPLIB and CVRPLIB standard instances \cite{reinelt1991tsplib}. As established in Section 2.4.2, the GTX 1050 memory capacity supports:
+
+- **Simulated Annealing**: $n \approx 10000$ nodes ($\sim{900}$ MB with safety margin)
+- **Genetic Algorithm** (P=100): $n \approx 9000$ nodes ($\sim{800}$ MB)
+- **Ant Colony Optimization** (K=100): $n \approx 7000$ nodes ($\sim{800}$ MB)
+- **2-opt Operator**: $n \approx 7000$ nodes ($\sim{800}$ MB for standalone implementation)
+
+The architecture demonstrates scalability principles: implementations designed for the GTX 1050 platform execute without modification on higher-end GPUs (RTX 3090 with 24 GB, A100 with 80 GB), handling substantially larger problem instances ($n > 10000$) through increased memory capacity and SM replication. The RTX 3090 provides $82$ SMs supporting $167936$ concurrent threads (16.4× more than GTX 1050), while the A100's $108$ SMs support $221184$ concurrent threads (21.6× increase), demonstrating how GPU scalability emerges from SM replication rather than individual core frequency improvements \cite{schulz2013gpu}.
 
 ### 3.2 Backend Architecture
 
@@ -397,7 +1148,7 @@ Memory-based search preventing cycling through short-term tabu lists and aspirat
 
 The backend architecture uses a simple module aliasing pattern enabling CPU/GPU agnostic algorithms: `xp = cupy if use_gpu else numpy`. This design directly implements the philosophy established by **Okuta et al. (2017)** in their CuPy library specification: "CuPy is designed as a drop-in replacement for NumPy, providing a GPU-accelerated array library with an API identical to NumPy's core functionality." [^okuta2017cupy] By aliasing the array module at runtime, algorithms written for NumPy can be executed on GPU without code modification.
 
-[^okuta2017cupy]: Okuta, R., Unno, Y., Nishino, D., Hido, S., & Loomis, C. (2017). CuPy: A NumPy-Compatible Library for NVIDIA GPU Calculations. _Proceedings of Workshop on Machine Learning Systems (LearningSys) in The Thirty-first Annual Conference on Neural Information Processing Systems (NIPS)_. <https://learningsys.org/nips17/assets/papers/paper_16.pdf>
+[^okuta2017cupy]: Okuta, R., Unno, Y., Nishino, D., Hido, S., & Loomis, C. (2017). CuPy: A NumPy-Compatible Library for NVIDIA GPU Calculations. *Proceedings of Workshop on Machine Learning Systems (LearningSys) in The Thirty-first Annual Conference on Neural Information Processing Systems (NIPS)*. <https://learningsys.org/nips17/assets/papers/paper_16.pdf>
 
 #### 3.2.1 Module Pattern vs. OOP Inheritance
 
@@ -434,6 +1185,68 @@ Preliminary testing on berlin52 (52 nodes), lin318 (318 nodes), and d2103 (2,103
 > - **Hypothesis Testing**: Statistical validation of claims regarding GPU suitability for sequential vs. parallel algorithms
 >
 > **Status**: Preliminary validation complete (correctness confirmed on 3 instances). Comprehensive statistical analysis is a separate task (See project_status.md TODO list).
+
+#### 3.2.4 CuPy Implementation Details
+
+This work employs CuPy as the primary GPU backend for three reasons: (1) NumPy API compatibility enables the backend parameter pattern described in [Section 3.2.1](#321-module-pattern-vs-oop-inheritance), (2) automatic memory management reduces implementation complexity, and (3) `RawKernel` provides manual control when needed. This section details implementation choices and their architectural implications.
+
+##### Backend Parameter Pattern with CuPy
+
+As established in [Section 3.2.2](#322-protocol-based-type-safety-pep-544), algorithms accept an optional `backend` parameter aliased to `xp` internally. When `backend=cupy`, array operations execute on GPU:
+
+```python
+def calculate_distances(coords, backend=None):
+    xp = get_backend(backend)  # Returns cupy or numpy
+    x, y = coords[:, 0], coords[:, 1]
+    # Automatically parallelizes on GPU if backend=cupy
+    dist = xp.sqrt((x[:, None] - x)**2 + (y[:, None] - y)**2)
+    return dist
+```
+
+As discussed in [Section 2.6.2](#262-gpu-programming-abstractions), this abstraction leverages CuPy's automatic kernel generation for regular data-parallel operations. The programmer writes array-level logic; CuPy handles thread-level parallelization.
+
+##### Raw Kernel Integration for Complex Operations
+
+When automatic parallelization is insufficient (per [Section 2.6.3](#263-when-custom-kernels-are-required) analysis), this work integrates custom CUDA C/C++ kernels via `cupy.RawKernel` \cite{okuta2017cupy}:
+
+```python
+kernel = cp.RawKernel(cuda_code, 'kernel_name')
+kernel((grid_size,), (block_size,), (arg1, arg2, ...))  # Manual launch configuration
+```
+
+The programmer specifies grid dimensions (number of blocks) and block dimensions (threads per block), balancing GPU occupancy against resource constraints. For GTX $1050$ Mobile with $5$ Streaming Multiprocessors, optimal configurations typically use $128$-$256$ threads per block to maximize SM utilization without exhausting registers or shared memory.
+
+**Implementation Example:** The $2$-opt improvement operator ([Section 3.3.2](#332-improvement-heuristic-local-search)) uses `RawKernel` to evaluate $O(n^2)$ edge swaps with triangular iteration and parallel reduction—operations beyond CuPy's array API. Each thread processes a range of edge pairs, maintains a local best swap, then participates in shared-memory reduction to find the global optimum.
+
+##### Memory Management Strategy
+
+CuPy employs a memory pool allocator to reduce allocation overhead. This work follows three memory management patterns documented in NVIDIA's best practices \cite{nvidia2024cuda}:
+
+1. **Buffer Reuse:** Allocate working arrays once during algorithm initialization (`__init__`) and reuse across iterations. For algorithms with $200000$ iterations, this eliminates $400000$ allocation/deallocation calls, reducing overhead by $10$-$50$ seconds.
+
+2. **Lazy Allocation:** GPU memory is committed only when `solve()` is invoked, not during algorithm construction. This permits multiple algorithm instances to be configured before any consume VRAM.
+
+3. **Capacity Validation:** Before kernel launch, the implementation computes required VRAM via `calculate_tsp_vram()` (detailed in [Section 3.4.4](#344-memory-footprint-analysis) Memory Footprint Analysis) and raises informative errors if insufficient memory is available, preventing cryptic CUDA out-of-memory failures mid-execution.
+
+These patterns, combined with CuPy's automatic memory pool management, enable efficient GPU resource utilization while maintaining code simplicity through the backend abstraction.
+
+#### 3.2.5 Hybrid CPU/GPU Execution Strategy
+
+This work adopts a hybrid execution model that leverages CPU and GPU strengths while avoiding their respective weaknesses, as motivated by the trade-off analysis in Section 2.4.3. The architecture implements three design principles:
+
+**1. S-Task with GPU Acceleration:**
+
+Individual Simulated Annealing instances execute with GPU-accelerated operations (2-opt improvement, distance calculations) while maintaining CPU-based control flow (acceptance decisions, cooling schedule, solution tracking). The 2-opt GPU implementation adapts the parallel evaluation strategy from Fujimoto \& Tsutsui \cite{fujimoto2011highly}, who demonstrated GPU-accelerated 2-opt neighborhood exploration for the Traveling Salesman Problem, achieving $O(n^2)$ parallel move evaluation with reduction operations to identify optimal improvements.
+
+**2. CPU Orchestration:**
+
+Algorithm logic including temperature updates, acceptance probability calculations based on the Metropolis criterion \cite{kirkpatrick1983optimization}, and convergence checks executes on CPU to minimize synchronization overhead and exploit CPU branch prediction for conditional logic. This division follows the S-Task pattern described in Section 2.4.1, where sequential control flow remains on CPU while data-parallel operations execute on GPU.
+
+**3. Sufficient Work per Kernel:**
+
+GPU operations are batched to perform $O(n^2)$ work per kernel launch, ensuring computation time dominates overhead ($\ge100:1$ ratio for $n \ge 500$). As analyzed in Section 2.4.3, per-iteration kernel launches incur $\sim{500}\mu s$ overhead on GTX 1050 Mobile, making naive GPU implementations $12\times$ slower than CPU for small workloads. Batching neighborhood evaluation amortizes this cost across thousands of move evaluations.
+
+This architecture prioritizes S-Task implementation to establish algorithmic correctness and performance baselines before introducing P-Data complexity. Future research directions include P-Data multistart strategies that compose multiple S-Task instances, enabling empirical analysis of parallelization trade-offs using identical S-Task implementations as building blocks (discussed in [Section 6.1 Recomendações para Trabalhos Futuros](#61-recomendações-para-trabalhos-futuros)).
 
 ### 3.3 Algorithm Implementation
 
@@ -791,7 +1604,7 @@ The 30-instance distribution was deliberately chosen to systematically test the 
     > - Which implementations could I make to take even more advantage of parallelization? Consider using more aggressive partitioning strategies, optimizing memory access patterns, and leveraging shared memory on the GPU.
 - **Performance Metrics**: Execution time (milliseconds/seconds), solution quality (percentage gap to known optimal), memory usage (GB VRAM), and GPU speedup ratio (CPU time / GPU time).
 
-[^statistical_power]: Sample size of n=30 is standard in experimental computer science for stochastic algorithms. With coefficient of variation (CV) of 15%, n=30 provides 80% statistical power to detect 10% mean differences at α=0.05 significance level. See Montgomery, D.C. (2017). _Design and Analysis of Experiments_, 9th ed., Wiley, for statistical power analysis methodology.
+[^statistical_power]: Sample size of n=30 is standard in experimental computer science for stochastic algorithms. With coefficient of variation (CV) of 15%, n=30 provides 80% statistical power to detect 10% mean differences at α=0.05 significance level. See Montgomery, D.C. (2017). *Design and Analysis of Experiments*, 9th ed., Wiley, for statistical power analysis methodology.
 
 ---
 
@@ -941,8 +1754,8 @@ Complete database schema and loading procedures are documented in Appendix A. Se
 
 The experimental design is structured to rigorously compare the performance of deterministic and stochastic algorithms across CPU and GPU backends. The methodology adheres to the statistical benchmarking principles outlined by Hoefler & Belli (2015)[^hoefler2015] and Hothorn et al. (2005)[^hothorn2005], which establish best practices for reproducible performance evaluation in parallel computing systems.
 
-[^hoefler2015]: Hoefler, T., & Belli, R. (2015). Scientific benchmarking of parallel computing systems: Twelve ways to tell the masses when reporting performance results. _SC '15: Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis_, 1-12. DOI: [10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). This seminal work analyzed 120 HPC papers and found that most lack statistical rigor when reporting performance results, proposing concrete guidelines for statistically sound benchmarking.
-[^hothorn2005]: Hothorn, T., Leisch, F., Zeileis, A., & Hornik, K. (2005). The design and analysis of benchmark experiments. _Journal of Computational and Graphical Statistics_, 14(3), 675-699. Establishes theoretical framework for algorithm comparison using cross-validation and statistical test procedures.
+[^hoefler2015]: Hoefler, T., & Belli, R. (2015). Scientific benchmarking of parallel computing systems: Twelve ways to tell the masses when reporting performance results. *SC '15: Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis*, 1-12. DOI: [10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). This seminal work analyzed 120 HPC papers and found that most lack statistical rigor when reporting performance results, proposing concrete guidelines for statistically sound benchmarking.
+[^hothorn2005]: Hothorn, T., Leisch, F., Zeileis, A., & Hornik, K. (2005). The design and analysis of benchmark experiments. *Journal of Computational and Graphical Statistics*, 14(3), 675-699. Establishes theoretical framework for algorithm comparison using cross-validation and statistical test procedures.
 
 #### 3.5.1 Comparison 1: Deterministic Local Search (2-opt)
 
@@ -954,11 +1767,11 @@ The experimental design is structured to rigorously compare the performance of d
     2. Run the 2-opt algorithm from the same Nearest Neighbor initial solution until convergence (no further improvement is found).
     3. **Metric:** The primary metric is **Time to Convergence (seconds)**. This replaces the flawed "fixed-time-budget" approach, as convergence time is the only relevant metric for a deterministic algorithm[^deterministic_metric].
     4. **Repetitions:** The experiment will be repeated **30** times for each instance/backend combination. This sample size ($n=30$) satisfies the Central Limit Theorem's requirement for asymptotic normality of sample means[^clt_justification], enabling robust confidence interval construction even when underlying runtime distributions are non-normal due to system noise (context switches, cache effects, thermal throttling).
-    5. **Validation:** The final tour cost _must_ be identical (within floating-point tolerance $\epsilon = 10^{-6}$) for both CPU and GPU backends to validate implementation correctness[^float_tolerance]. This deterministic property ensures any performance difference is purely computational, not algorithmic.
+    5. **Validation:** The final tour cost *must* be identical (within floating-point tolerance $\epsilon = 10^{-6}$) for both CPU and GPU backends to validate implementation correctness[^float_tolerance]. This deterministic property ensures any performance difference is purely computational, not algorithmic.
 
 [^deterministic_metric]: For deterministic algorithms, time-to-convergence is the definitive performance metric. Fixed-time quality comparisons are inappropriate because deterministic algorithms produce identical solutions regardless of runtime, making solution quality non-informative for performance evaluation.
-[^clt_justification]: The Central Limit Theorem (CLT) states that for independent, identically distributed random variables with finite mean $\mu$ and variance $\sigma^2$, the distribution of sample means converges to $\mathcal{N}(\mu, \sigma^2/n)$ as $n \to \infty$. In practice, $n \geq 30$ is the conventional threshold for CLT applicability (Montgomery, D.C., 2017, _Design and Analysis of Experiments_, 9th ed., Wiley, pp. 97-99). This enables parametric confidence interval construction via t-distribution even when individual runtimes are non-normal, with 95% CI: $\bar{x} \pm t_{0.025, n-1} \cdot s/\sqrt{n}$ where $t_{0.025, 29} \approx 2.045$ for $n=30$.
-[^float_tolerance]: Floating-point arithmetic on CPU (IEEE 754 double precision) and GPU (CUDA double precision) may produce slightly different results due to operation ordering and fused multiply-add (FMA) instructions. A tolerance of $\epsilon = 10^{-6}$ (0.0001%) accounts for accumulated rounding errors while ensuring algorithmic equivalence. See Goldberg, D. (1991), "What Every Computer Scientist Should Know About Floating-Point Arithmetic," _ACM Computing Surveys_, 23(1), 5-48.
+[^clt_justification]: The Central Limit Theorem (CLT) states that for independent, identically distributed random variables with finite mean $\mu$ and variance $\sigma^2$, the distribution of sample means converges to $\mathcal{N}(\mu, \sigma^2/n)$ as $n \to \infty$. In practice, $n \geq 30$ is the conventional threshold for CLT applicability (Montgomery, D.C., 2017, *Design and Analysis of Experiments*, 9th ed., Wiley, pp. 97-99). This enables parametric confidence interval construction via t-distribution even when individual runtimes are non-normal, with 95% CI: $\bar{x} \pm t_{0.025, n-1} \cdot s/\sqrt{n}$ where $t_{0.025, 29} \approx 2.045$ for $n=30$.
+[^float_tolerance]: Floating-point arithmetic on CPU (IEEE 754 double precision) and GPU (CUDA double precision) may produce slightly different results due to operation ordering and fused multiply-add (FMA) instructions. A tolerance of $\epsilon = 10^{-6}$ (0.0001%) accounts for accumulated rounding errors while ensuring algorithmic equivalence. See Goldberg, D. (1991), "What Every Computer Scientist Should Know About Floating-Point Arithmetic," *ACM Computing Surveys*, 23(1), 5-48.
 
 #### 3.5.2 Comparison 2: Stochastic Metaheuristics (SA vs. GA)
 
@@ -975,8 +1788,8 @@ The experimental design is structured to rigorously compare the performance of d
         - **Convergence Data:** Solution quality will be logged every **100** iterations to generate convergence curves[^convergence_logging]. Iteration-based logging (rather than time-based) ensures consistent sampling density across CPU and GPU backends with different execution speeds.
 
 [^seed_independence]: Independent repetitions require statistically independent random number sequences. This is achieved using base seed $s_0 = 42$ with sequential offsets: $s_i = s_0 + i$ for run $i \in \{0, 1, \ldots, 29\}$. For GPU runs, both NumPy (CPU host code) and CuPy (GPU device code) random states must be seeded identically to ensure reproducibility.
-[^fixed_time_validity]: Fixed-time quality is appropriate for stochastic algorithms because: (1) solution quality varies across runs due to randomness, making distribution analysis meaningful, and (2) practical deployment requires bounded execution time, making time-constrained quality a realistic performance metric. See Hoos, H. H., & Stützle, T. (2004), _Stochastic Local Search: Foundations and Applications_, Morgan Kaufmann, Chapter 4.
-[^target_gap]: The 5% optimality gap is a standard benchmark threshold in TSP literature (see Helsgaun, K., 2000, "An Effective Implementation of the Lin-Kernighan Traveling Salesman Heuristic," _European Journal of Operational Research_, 126(1), 106-130). This gap balances difficulty (easy enough for SA/GA to achieve in reasonable time) with solution quality requirements (tight enough to demonstrate algorithm effectiveness).
+[^fixed_time_validity]: Fixed-time quality is appropriate for stochastic algorithms because: (1) solution quality varies across runs due to randomness, making distribution analysis meaningful, and (2) practical deployment requires bounded execution time, making time-constrained quality a realistic performance metric. See Hoos, H. H., & Stützle, T. (2004), *Stochastic Local Search: Foundations and Applications*, Morgan Kaufmann, Chapter 4.
+[^target_gap]: The 5% optimality gap is a standard benchmark threshold in TSP literature (see Helsgaun, K., 2000, "An Effective Implementation of the Lin-Kernighan Traveling Salesman Heuristic," *European Journal of Operational Research*, 126(1), 106-130). This gap balances difficulty (easy enough for SA/GA to achieve in reasonable time) with solution quality requirements (tight enough to demonstrate algorithm effectiveness).
 [^convergence_logging]: Iteration-based logging every 100 iterations provides sufficient granularity for convergence analysis (typical runs perform 10,000-50,000 iterations, yielding 100-500 data points) while minimizing storage overhead. Time-based logging would produce variable sampling density between CPU and GPU, complicating comparative visualization.
 
 #### 3.5.3 Statistical Methodology
@@ -988,17 +1801,17 @@ The experimental design is structured to rigorously compare the performance of d
   - If data is non-normal ($p < 0.05$), the non-parametric alternatives—**Wilcoxon signed-rank test**[^wilcoxon] (paired) and **Kruskal-Wallis test**[^kruskal_wallis] (multiple)—will be used.
 - **Step 3: Reporting:**
   - All mean values will be reported with **95% Confidence Intervals (CI)**[^ci_justification].
-  - All statistical comparisons will report **p-values** (for significance) and **Effect Size** (e.g., Cohen's $d$[^cohens_d]) to quantify the _magnitude_ of the difference.
+  - All statistical comparisons will report **p-values** (for significance) and **Effect Size** (e.g., Cohen's $d$[^cohens_d]) to quantify the *magnitude* of the difference.
 - **Step 4: Multiple Comparison Correction:** When comparing $3+$ algorithms (GA vs. SA vs. 2-opt), a **Holm-Bonferroni correction**[^holm_bonferroni] will be applied to all $p$-values to avoid p-hacking and false positives.
 
-[^shapiro_wilk]: Shapiro, S. S., & Wilk, M. B. (1965). An analysis of variance test for normality (complete samples). _Biometrika_, 52(3/4), 591-611. The Shapiro-Wilk test is generally more powerful than Kolmogorov-Smirnov for small-to-moderate sample sizes ($n < 50$) and is the recommended normality test in contemporary statistical practice.
-[^paired_t]: The paired t-test is appropriate for comparing two related samples (same problem instance, different backends) under normality assumption. Test statistic: $t = \frac{\bar{d}}{s_d / \sqrt{n}}$ where $\bar{d}$ is mean difference and $s_d$ is standard deviation of differences. See Student (1908), "The Probable Error of a Mean," _Biometrika_, 6(1), 1-25.
-[^anova]: One-way Analysis of Variance (ANOVA) tests whether means of multiple independent groups differ significantly. For algorithm comparison, null hypothesis $H_0: \mu_{\text{GA}} = \mu_{\text{SA}}$ is tested via F-statistic. See Fisher, R. A. (1925), _Statistical Methods for Research Workers_, Oliver & Boyd.
-[^wilcoxon]: Wilcoxon, F. (1945). Individual comparisons by ranking methods. _Biometrics Bulletin_, 1(6), 80-83. The Wilcoxon signed-rank test is the non-parametric alternative to paired t-test, testing whether median difference is zero without assuming normality.
-[^kruskal_wallis]: Kruskal, W. H., & Wallis, W. A. (1952). Use of ranks in one-criterion variance analysis. _Journal of the American Statistical Association_, 47(260), 583-621. The Kruskal-Wallis test is the non-parametric alternative to one-way ANOVA, comparing medians of multiple independent groups.
-[^ci_justification]: 95% confidence intervals are the standard in experimental computer science, providing intuitive interpretation: "if experiment were repeated infinitely, 95% of computed CIs would contain the true population mean." The 95% level balances Type I error control (5% false positive rate) with reasonable interval width. See Neyman, J. (1937), "Outline of a Theory of Statistical Estimation Based on the Classical Theory of Probability," _Philosophical Transactions of the Royal Society A_, 236(767), 333-380.
-[^cohens_d]: Cohen's $d$ measures effect size: $d = \frac{\mu_1 - \mu_2}{\sigma_{\text{pooled}}}$ where $\sigma_{\text{pooled}} = \sqrt{(\sigma_1^2 + \sigma_2^2)/2}$. Interpretation: $|d| < 0.2$ (negligible), $0.2 \leq |d| < 0.5$ (small), $0.5 \leq |d| < 0.8$ (medium), $|d| \geq 0.8$ (large). See Cohen, J. (1988), _Statistical Power Analysis for the Behavioral Sciences_ (2nd ed.), Lawrence Erlbaum Associates.
-[^holm_bonferroni]: Holm, S. (1979). A simple sequentially rejective multiple test procedure. _Scandinavian Journal of Statistics_, 6(2), 65-70. The Holm-Bonferroni method controls family-wise error rate (FWER) while being less conservative than Bonferroni correction, providing greater statistical power for multiple comparisons.
+[^shapiro_wilk]: Shapiro, S. S., & Wilk, M. B. (1965). An analysis of variance test for normality (complete samples). *Biometrika*, 52(3/4), 591-611. The Shapiro-Wilk test is generally more powerful than Kolmogorov-Smirnov for small-to-moderate sample sizes ($n < 50$) and is the recommended normality test in contemporary statistical practice.
+[^paired_t]: The paired t-test is appropriate for comparing two related samples (same problem instance, different backends) under normality assumption. Test statistic: $t = \frac{\bar{d}}{s_d / \sqrt{n}}$ where $\bar{d}$ is mean difference and $s_d$ is standard deviation of differences. See Student (1908), "The Probable Error of a Mean," *Biometrika*, 6(1), 1-25.
+[^anova]: One-way Analysis of Variance (ANOVA) tests whether means of multiple independent groups differ significantly. For algorithm comparison, null hypothesis $H_0: \mu_{\text{GA}} = \mu_{\text{SA}}$ is tested via F-statistic. See Fisher, R. A. (1925), *Statistical Methods for Research Workers*, Oliver & Boyd.
+[^wilcoxon]: Wilcoxon, F. (1945). Individual comparisons by ranking methods. *Biometrics Bulletin*, 1(6), 80-83. The Wilcoxon signed-rank test is the non-parametric alternative to paired t-test, testing whether median difference is zero without assuming normality.
+[^kruskal_wallis]: Kruskal, W. H., & Wallis, W. A. (1952). Use of ranks in one-criterion variance analysis. *Journal of the American Statistical Association*, 47(260), 583-621. The Kruskal-Wallis test is the non-parametric alternative to one-way ANOVA, comparing medians of multiple independent groups.
+[^ci_justification]: 95% confidence intervals are the standard in experimental computer science, providing intuitive interpretation: "if experiment were repeated infinitely, 95% of computed CIs would contain the true population mean." The 95% level balances Type I error control (5% false positive rate) with reasonable interval width. See Neyman, J. (1937), "Outline of a Theory of Statistical Estimation Based on the Classical Theory of Probability," *Philosophical Transactions of the Royal Society A*, 236(767), 333-380.
+[^cohens_d]: Cohen's $d$ measures effect size: $d = \frac{\mu_1 - \mu_2}{\sigma_{\text{pooled}}}$ where $\sigma_{\text{pooled}} = \sqrt{(\sigma_1^2 + \sigma_2^2)/2}$. Interpretation: $|d| < 0.2$ (negligible), $0.2 \leq |d| < 0.5$ (small), $0.5 \leq |d| < 0.8$ (medium), $|d| \geq 0.8$ (large). See Cohen, J. (1988), *Statistical Power Analysis for the Behavioral Sciences* (2nd ed.), Lawrence Erlbaum Associates.
+[^holm_bonferroni]: Holm, S. (1979). A simple sequentially rejective multiple test procedure. *Scandinavian Journal of Statistics*, 6(2), 65-70. The Holm-Bonferroni method controls family-wise error rate (FWER) while being less conservative than Bonferroni correction, providing greater statistical power for multiple comparisons.
 
 #### 3.5.4 Reproducibility Requirements
 
@@ -1065,7 +1878,7 @@ This chapter presents the statistically validated results of the experimental de
 - **Statistical Significance:** The difference was statistically significant (Wilcoxon p < **0.001**) with a **large** effect size (Cohen's d = **0.00**).
 
 **Tabela 4.1: 2-opt Time-to-Convergence (n=30 runs)**
-_All values in seconds. CI = 95% Confidence Interval._
+*All values in seconds. CI = 95% Confidence Interval.*
 
 | Instance          | CPU (Mean ± CI)     | GPU (Mean ± CI)    | Speedup (Mean ± 95% CI)          | p-value   | Effect Size      |
 | :---------------- | :------------------ | :----------------- | :------------------------------- | :-------- | :--------------- |
@@ -1080,7 +1893,7 @@ _All values in seconds. CI = 95% Confidence Interval._
 - **Visualization:** [Figure 4.2: Box Plots of Final Solution Quality] will visualize the distributions from Table 4.2.
 
 **Tabela 4.2: Mean Solution Quality (% Gap from Optimal) at 60 Seconds (n=30 runs)**
-_CI = 95% Confidence Interval._
+*CI = 95% Confidence Interval.*
 
 | Instance          | SA-CPU (Mean ± CI) | SA-GPU (Mean ± CI) | GA-CPU (Mean ± CI) | GA-GPU (Mean ± CI) |
 | :---------------- | :----------------- | :----------------- | :----------------- | :----------------- |
@@ -1091,8 +1904,8 @@ _CI = 95% Confidence Interval._
 
 ### 4.4 Analysis 3: Convergence Speed and Statistical Ranking
 
-- **Objective:** Determine which metaheuristic finds good solutions the _fastest_ and which is statistically superior.
-- **Visualization:** [Figure 4.3: Convergence Curves for `d2103`] will plot Mean Solution Quality vs. Time (log-scale) for the four stochastic methods. This will show that GPU variants find high-quality solutions _earlier_.
+- **Objective:** Determine which metaheuristic finds good solutions the *fastest* and which is statistically superior.
+- **Visualization:** [Figure 4.3: Convergence Curves for `d2103`] will plot Mean Solution Quality vs. Time (log-scale) for the four stochastic methods. This will show that GPU variants find high-quality solutions *earlier*.
 - **Statistical Ranking:** A Kruskal-Wallis test was performed on the final solution quality data from Table 4.2, followed by a post-hoc Dunn's test with Holm-Bonferroni correction.
 - **Finding:** The analysis showed a significant difference (H=**00.0**, p < **0.001**). The post-hoc test (Table 4.3) revealed that `GA-GPU` was statistically superior to `SA-GPU` (p=**0.000**), but not statistically different from `GA-CPU` (p=**0.000**), indicating algorithm choice was more impactful than the backend.
 
@@ -2394,22 +3207,22 @@ Output: Best tour found
 
 ### Benchmark Instance Sources
 
-[^reinelt1991]: Reinelt, G. (1991). "TSPLIB—A traveling salesman problem library." _ORSA Journal on Computing_ (now _INFORMS Journal on Computing_), 3(4), 376-384. DOI: [10.1287/ijoc.3.4.376](https://doi.org/10.1287/ijoc.3.4.376)
+[^reinelt1991]: Reinelt, G. (1991). "TSPLIB—A traveling salesman problem library." *ORSA Journal on Computing* (now *INFORMS Journal on Computing*), 3(4), 376-384. DOI: [10.1287/ijoc.3.4.376](https://doi.org/10.1287/ijoc.3.4.376)
 
 > **Note**: TSPLIB includes both symmetric TSP and asymmetric TSP (ATSP) instances. All TSP instances (berlin52, lin318, d2103, etc.) and ATSP instances (br17, ry48p, ft53, ft70, ftv170, rbg403) used in this work are from the TSPLIB benchmark library maintained at Heidelberg University.
 
-[^christofides1969]: Christofides, N., & Eilon, S. (1969). "An algorithm for the vehicle-dispatching problem." _Operational Research Quarterly_, 20(3), 309-318. DOI: [10.1057/jors.1969.75](https://doi.org/10.1057/jors.1969.75)
+[^christofides1969]: Christofides, N., & Eilon, S. (1969). "An algorithm for the vehicle-dispatching problem." *Operational Research Quarterly*, 20(3), 309-318. DOI: [10.1057/jors.1969.75](https://doi.org/10.1057/jors.1969.75)
 
 > **Note**: This seminal paper introduced the first set of VRP benchmark instances, later extended by Golden et al. (1984). CVRP instances (eil22, eil31, eilA76, eilA101) follow the naming convention established in this work. The Li_25 instance is from a later extension of this benchmark family.
 
 ### GPU Computing for Optimization
 
-[^fujimoto2011]: Fujimoto, N., & Tsutsui, S. (2011). "A highly-parallel TSP solver for a GPU computing platform." In _Numerical Methods and Applications: 7th International Conference, NMA 2010_ (pp. 264-271). Springer. DOI: [10.1007/978-3-642-18466-6_31](https://doi.org/10.1007/978-3-642-18466-6_31)
-[^tsp_gpu]: Rocki, K., & Suda, R. (2013). "High performance GPU accelerated local optimization in TSP." In _Proceedings of the 2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum_ (pp. 1788-1796). IEEE. DOI: [10.1109/IPDPSW.2013.227](https://doi.org/10.1109/IPDPSW.2013.227)
+[^fujimoto2011]: Fujimoto, N., & Tsutsui, S. (2011). "A highly-parallel TSP solver for a GPU computing platform." In *Numerical Methods and Applications: 7th International Conference, NMA 2010* (pp. 264-271). Springer. DOI: [10.1007/978-3-642-18466-6_31](https://doi.org/10.1007/978-3-642-18466-6_31)
+[^tsp_gpu]: Rocki, K., & Suda, R. (2013). "High performance GPU accelerated local optimization in TSP." In *Proceedings of the 2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum* (pp. 1788-1796). IEEE. DOI: [10.1109/IPDPSW.2013.227](https://doi.org/10.1109/IPDPSW.2013.227)
 
 ### Experimental Design and Statistical Methods
 
-[^statistical_power]: Montgomery, D.C. (2017). _Design and Analysis of Experiments_, 9th edition. Wiley. ISBN: 978-1-119-32093-7
+[^statistical_power]: Montgomery, D.C. (2017). *Design and Analysis of Experiments*, 9th edition. Wiley. ISBN: 978-1-119-32093-7
 
 > **Note**: This textbook is the standard reference for experimental design in engineering and computer science. Chapter 2 covers sample size determination and statistical power analysis. The guidance that n=30 provides adequate power for detecting 10% differences with typical variation (CV ≤ 15%) is derived from Section 2.4 (Power and Sample Size).
 

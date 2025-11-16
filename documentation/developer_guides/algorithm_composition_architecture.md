@@ -50,7 +50,10 @@
     - [7.2 Adding New Improvement Heuristics](#72-adding-new-improvement-heuristics)
     - [7.3 Adding New Metaheuristics](#73-adding-new-metaheuristics)
   - [8. Questions \& Considerations](#8-questions--considerations)
-    - [8.1 Open Questions](#81-open-questions)
+    - [8.1 Architectural Decisions](#81-architectural-decisions)
+      - [Decision 1: Unified Callback Architecture (Q1, Q2, Q5 Resolution)](#decision-1-unified-callback-architecture-q1-q2-q5-resolution)
+      - [Decision 2: CVRP Representation - Giant Tour Approach (Q3 Resolution)](#decision-2-cvrp-representation---giant-tour-approach-q3-resolution)
+      - [Decision 3: GPU-16 Algorithm Factory Pattern - Status Restoration](#decision-3-gpu-16-algorithm-factory-pattern---status-restoration)
     - [8.2 Design Decisions Summary](#82-design-decisions-summary)
     - [8.3 Next Steps](#83-next-steps)
   - [9. Appendix: Complete Function Signatures](#9-appendix-complete-function-signatures)
@@ -58,6 +61,7 @@
     - [Improvement Heuristics](#improvement-heuristics-1)
     - [Metaheuristics](#metaheuristics-1)
     - [Shared Utilities](#shared-utilities)
+  - [9. References](#9-references)
 
 ---
 

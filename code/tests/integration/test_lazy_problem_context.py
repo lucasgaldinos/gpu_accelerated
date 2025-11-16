@@ -23,7 +23,9 @@ from unittest.mock import patch
 
 from src.data_models.problem import Problem
 from src.protocols.problem_context import ProblemContext
-from src.algorithms.strategies.tsp_strategies import NearestNeighborStrategy
+from code.src.algorithms.strategies.construction_strategies import (
+    NearestNeighborStrategy,
+)
 
 
 class TestLazyProblemContext:

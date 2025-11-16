@@ -332,6 +332,17 @@ abstract = {In this paper we introduce the vehicle routing problem with simultan
   publisher={INFORMS}
 }
 
+@article{dorigo1996ant,
+  title={Ant system: optimization by a colony of cooperating agents},
+  author={Dorigo, Marco and Maniezzo, Vittorio and Colorni, Alberto},
+  journal={IEEE Transactions on Systems, Man, and Cybernetics, Part B (Cybernetics)},
+  volume={26},
+  number={1},
+  pages={29--41},
+  year={1996},
+  publisher={IEEE}
+}
+
 @inproceedings{rey2018cpu,
   title={A CPU-GPU parallel ant colony optimization solver for the vehicle routing problem},
   author={Rey, Ant{\'o}n and Prieto, Manuel and G{\'o}mez, Jos{\'e} Ignacio and Tenllado, Christian and Hidalgo, J Ignacio},
@@ -443,6 +454,34 @@ doi = {10.1145/3377930.3390159}
   address={Pittsburgh, PA}
 }
 
+@techreport{harris2007optimizing,
+  title={Optimizing Parallel Reduction in CUDA},
+  author={Harris, Mark},
+  year={2007},
+  institution={NVIDIA Corporation},
+  note={NVIDIA Developer Technology},
+  url={https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf}
+}
+
+@book{kirk2010programming,
+  title={Programming Massively Parallel Processors: A Hands-on Approach},
+  author={Kirk, David B and Hwu, Wen-mei W},
+  year={2010},
+  publisher={Morgan Kaufmann},
+  edition={1st},
+  isbn={978-0123814722}
+}
+
+@inproceedings{rocki2013high,
+  title={High Performance GPU Accelerated Local Optimization in TSP},
+  author={Rocki, Kamil and Suda, Reiji},
+  booktitle={2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum (IPDPSW)},
+  pages={1788--1796},
+  year={2013},
+  organization={IEEE},
+  doi={10.1109/IPDPSW.2013.45}
+}
+
 @article{clarke1964scheduling,
   title={Scheduling of vehicles from a central depot to a number of delivery points},
   author={Clarke, Geoff and Wright, John W},
@@ -513,6 +552,38 @@ doi = {10.1145/3377930.3390159}
   publisher={Springer}
 }
 
+@article{lima2018hybrid,
+  title={A hybrid approach based on genetic algorithm and nearest neighbor heuristic for solving the capacitated vehicle routing problem},
+  author={Lima, Samuel J{\'u}nior Alves and Ara{\'u}jo, S{\'e}rgio Andr{\'e} de Ara{\'u}jo and Schimit, Pedro Henrique Triguis},
+  journal={Acta Scientiarum. Technology},
+  volume={40},
+  pages={e36708},
+  year={2018},
+  publisher={Universidade Estadual de Maring{\'a}},
+  doi={10.4025/actascitechnol.v40i1.36708},
+  note={Hybrid GA-NN approach for CVRP with pop=1200, gen=5000, crossover=80\%, mutation=1\%. Achieved GAP < 5\% on 62.5\% of instances.}
+}
+
+@book{eiben2015introduction,
+  title={Introduction to Evolutionary Computing},
+  author={Eiben, Agoston E and Smith, James E},
+  edition={2nd},
+  year={2015},
+  publisher={Springer},
+  isbn={978-3-662-44873-1},
+  doi={10.1007/978-3-662-44874-8},
+  note={Comprehensive treatment of evolutionary algorithms including parameter tuning and adaptive parameter control.}
+}
+
+@book{goldberg1989genetic,
+  title={Genetic Algorithms in Search, Optimization, and Machine Learning},
+  author={Goldberg, David Edward},
+  year={1989},
+  publisher={Addison-Wesley},
+  isbn={0-201-15767-5},
+  note={Foundational work on GA theory including population sizing formula and building block hypothesis.}
+}
+
 @article{siarry2002enhanced,
   title={Enhanced simulated annealing for globally minimizing functions of many-continuous variables},
   author={Siarry, Patrick and Berthiau, G{\'e}rard and Durdin, Fran{\c{c}}ois and Haussy, Jacques},
@@ -579,4 +650,180 @@ doi = {10.1145/3377930.3390159}
   year = {2001},
   doi = {10.1023/A:1011336210524},
   note = {Proposes hybrid approach combining FFD/BFD with repack operations to reduce bin count}
+}
+
+% ========================================
+% Section 2.4 Citations (Parallelization Strategies)
+% ========================================
+
+@article{flynn1966very,
+  author = {Flynn, Michael J.},
+  title = {Very High-Speed Computing Systems},
+  journal = {Proceedings of the IEEE},
+  volume = {54},
+  number = {12},
+  pages = {1901--1909},
+  year = {1966},
+  doi = {10.1109/PROC.1966.5273},
+  note = {Original Flynn's taxonomy classifying computer architectures by instruction and data stream multiplicity (SISD, SIMD, MISD, MIMD)}
+}
+
+@article{flynn1972some,
+  author = {Flynn, Michael J.},
+  title = {Some Computer Organizations and Their Effectiveness},
+  journal = {IEEE Transactions on Computers},
+  volume = {C-21},
+  number = {9},
+  pages = {948--960},
+  year = {1972},
+  doi = {10.1109/TC.1972.5009071},
+  note = {Extended Flynn's taxonomy with detailed SIMD subcategories including array processors}
+}
+
+@incollection{crainic2003parallel,
+  author = {Crainic, Teodor Gabriel and Toulouse, Michel},
+  title = {Parallel Strategies for Meta-Heuristics},
+  booktitle = {Handbook of Metaheuristics},
+  editor = {Glover, Fred and Kochenberger, Gary A.},
+  publisher = {Springer},
+  address = {Boston, MA},
+  pages = {475--513},
+  year = {2003},
+  doi = {10.1007/0-306-48056-5_17},
+  note = {State-of-the-art survey of parallel meta-heuristic strategies, introducing P-Data/S-Task/P-Task taxonomy adapted from Flynn}
+}
+
+@article{crainic2010parallel,
+  author = {Crainic, Teodor Gabriel and Toulouse, Michel},
+  title = {Parallel Meta-Heuristics},
+  journal = {Handbook of Metaheuristics, International Series in Operations Research \& Management Science},
+  volume = {146},
+  pages = {497--541},
+  year = {2010},
+  publisher = {Springer},
+  doi = {10.1007/978-1-4419-1665-5_17},
+  note = {Updated parallel metaheuristics survey with design principles and implementation strategies for distributed and shared-memory systems}
+}
+
+@book{alba2005parallel,
+  author = {Alba, Enrique},
+  title = {Parallel Metaheuristics: A New Class of Algorithms},
+  publisher = {John Wiley \& Sons},
+  year = {2005},
+  isbn = {978-0-471-67806-9},
+  note = {Comprehensive treatment of parallel metaheuristic algorithms covering genetic algorithms, evolutionary strategies, and trajectory-based methods}
+}
+
+@article{kirkpatrick1983optimization,
+  author = {Kirkpatrick, Scott and Gelatt, C. Daniel and Vecchi, Mario P.},
+  title = {Optimization by Simulated Annealing},
+  journal = {Science},
+  volume = {220},
+  number = {4598},
+  pages = {671--680},
+  year = {1983},
+  doi = {10.1126/science.220.4598.671},
+  note = {Seminal paper introducing Simulated Annealing algorithm inspired by statistical mechanics and metallurgical annealing processes}
+}
+
+@article{ali2010simulated,
+  author = {Ali, M. Montaz and Gabere, Mthulisi N.},
+  title = {A Simulated Annealing Driven Multi-start Algorithm for Bound Constrained Global Optimization},
+  journal = {Journal of Computational and Applied Mathematics},
+  volume = {233},
+  number = {10},
+  pages = {2661--2674},
+  year = {2010},
+  doi = {10.1016/j.cam.2009.11.013},
+  note = {Analyzes convergence properties of multistart SA, demonstrating that sufficient iterations per start are necessary to escape initialization bias}
+}
+
+@article{sonuc2018cooperative,
+  author = {Sonuc, Emrullah and Sen, Baha and Bayir, Safak},
+  title = {A Cooperative GPU-based Parallel Multistart Simulated Annealing Algorithm for Quadratic Assignment Problem},
+  journal = {Engineering Science and Technology, an International Journal},
+  volume = {21},
+  number = {5},
+  pages = {843--849},
+  year = {2018},
+  doi = {10.1016/j.jestch.2018.08.002},
+  note = {Implements parallel multistart SA on GPU with thread cooperation, demonstrating 29x speedup for QAP instances with n > 500}
+}
+
+@inproceedings{tsutsui2011fast,
+  author = {Tsutsui, Shigeyoshi and Fujimoto, Noriyuki},
+  title = {Fast QAP Solving by ACO with 2-opt Local Search on a GPU},
+  booktitle = {Proceedings of the 13th Annual Conference on Genetic and Evolutionary Computation},
+  series = {GECCO '11},
+  pages = {1547--1554},
+  year = {2011},
+  publisher = {ACM},
+  doi = {10.1145/2001576.2001785},
+  note = {Implements hybrid ACO with 2-opt local search on GPU, discussing parallel hybrid genetic algorithms with GPU-accelerated neighborhood operators}
+}
+
+> [!warning] repeated entry
+> same as fujimoto's. Fujimoto also has two entries, but for different articles.
+
+@manual{nvidia2024cuda,
+  author = {{NVIDIA Corporation}},
+  title = {CUDA C++ Best Practices Guide},
+  year = {2024},
+  note = {Version 13.0. Official NVIDIA documentation covering GPU memory management patterns, kernel optimization, and performance tuning strategies},
+  url = {https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/},
+}
+
+@article{reinelt1991tsplib,
+  author = {Reinelt, Gerhard},
+  title = {TSPLIB—A Traveling Salesman Problem Library},
+  journal = {ORSA Journal on Computing},
+  volume = {3},
+  number = {4},
+  pages = {376--384},
+  year = {1991},
+  doi = {10.1287/ijoc.3.4.376},
+  note = {Introduces TSPLIB benchmark library with standardized TSP instances for algorithm validation and comparison}
+}
+
+@article{amdahl1967validity,
+  author = {Amdahl, Gene M.},
+  title = {Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities},
+  journal = {Proceedings of the April 18-20, 1967, Spring Joint Computer Conference},
+  pages = {483--485},
+  year = {1967},
+  doi = {10.1145/1465482.1465560},
+  note = {Establishes Amdahl's Law quantifying theoretical speedup limits based on the fraction of parallelizable code}
+}
+
+@article{van2013gpu,
+  author = {Van Luong, Thé and Melab, Nouredine and Talbi, El-Ghazali},
+  title = {GPU Computing for Parallel Local Search Metaheuristic Algorithms},
+  journal = {IEEE Transactions on Computers},
+  volume = {62},
+  number = {1},
+  pages = {173--185},
+  year = {2013},
+  doi = {10.1109/TC.2011.206},
+  note = {Guideline for implementing local search metaheuristics on GPU, addressing irregular iteration patterns and thread-local state management}
+}
+
+@inproceedings{luong2013gpu,
+  author = {Luong, Thé Van and Melab, Nouredine and Talbi, El-Ghazali},
+  title = {GPU-based island model for evolutionary algorithms},
+  booktitle = {Proceedings of the 15th annual conference on Genetic and evolutionary computation},
+  pages = {1089--1096},
+  year = {2013},
+  doi = {10.1145/2463372.2463516},
+  note = {Demonstrates GPU-based parallel evolutionary algorithms with focus on inter-thread communication patterns and reduction operations}
+}
+
+@inproceedings{tsafrir2007context,
+  author = {Tsafrir, Dan},
+  title = {The Context-Switch Overhead Inflicted by Hardware Interrupts (and the Enigma of Do-Nothing Loops)},
+  booktitle = {Proceedings of the 2007 Workshop on Experimental Computer Science (ExpCS)},
+  year = {2007},
+  month = {June},
+  publisher = {USENIX Association},
+  address = {San Diego, CA, USA},
+  note = {Measures context switch overhead in Linux: 0.5-1.5\% at 1000 Hz interrupt frequency, demonstrates millisecond-range process switching costs}
 }

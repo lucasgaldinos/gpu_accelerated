@@ -27,7 +27,11 @@ See Also:
 
 # Export implemented strategies
 from .bin_packing_strategies import FFDStrategy, BFDStrategy
-from .tsp_strategies import NearestNeighborStrategy, ChristofidesStrategy
+from .construction_strategies import (
+    RandomConstructionStrategy,
+    NearestNeighborStrategy,
+    ChristofidesStrategy,
+)
 
 # Clustering strategies not yet implemented
 # from .clustering_strategies import KMeansStrategy, DBSCANStrategy
@@ -37,6 +41,7 @@ __all__ = [
     "FFDStrategy",
     "BFDStrategy",
     # TSP Construction Strategies
+    "RandomConstructionStrategy",
     "NearestNeighborStrategy",
     "ChristofidesStrategy",
     # Clustering Strategies (Future)

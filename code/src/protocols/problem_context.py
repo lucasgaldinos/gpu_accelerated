@@ -1,22 +1,29 @@
 """
-ProblemContext: Backend-Specific Problem Data Holder with Distance Matrix Caching.
+ProblemContext: Backend-Specific Problem Data Holder with Lazy Distance Matrix Caching.
 
 ⚠️ ARCHITECTURAL NOTE ⚠️
 This module is placed in `protocols/` for organizational consistency with other
 strategy protocols, but ProblemContext is NOT a Protocol (PEP 544) interface.
 It is a concrete class that wraps the immutable Problem dataclass and adds
-backend-specific cached computation of distance matrices.
+backend-specific lazy computation of distance matrices.
 
 The ProblemContext solves a critical performance anti-pattern identified in
 flaws.md: sequential algorithms calling compute_distance_matrix() repeatedly
 inside Python loops, causing O(n³) complexity instead of O(n²).
 
+**CRITICAL: Fully Lazy Loading (Phase 5 Cleanup)**
+- `__init__` stores problem and xp but DOES NOT allocate matrices
+- All caches (_distances_cpu, _distances_gpu, etc.) start as None
+- No eager @property accessors - forces explicit method calls
+- Use `get_cpu_distances()` or `get_gpu_distances()` explicitly
+- This prevents 14.4GB allocation crashes on large problems (n=30,000)
+
 Design Philosophy:
 - Single Responsibility: Holds all backend-specific problem data
 - Immutability: Based on frozen Problem dataclass, computed data cached
 - Performance: Distance matrix computed ONCE on target backend
-- Class S vs Class P Separation: Provides helpers for both CPU-only and
-  parallelizable algorithms
+- Lazy Loading: NO allocation until first explicit access
+- Hybrid Bridge Compatible: Supports both CPU-only (S-Task) and GPU (P-Task)
 
 Example:
     >>> from src.data_models.problem import Problem
@@ -27,22 +34,21 @@ Example:
     >>> with DatabaseLoader() as loader:
     ...     problem = loader.load('berlin52')
     >>>
-    >>> # Create CPU context (Class S algorithms)
-    >>> cpu_context = ProblemContext(problem, xp=np)
-    >>> cpu_context.distances  # Computed once, cached
+    >>> # Create context (NO allocation yet - fully lazy)
+    >>> context = ProblemContext(problem, xp=np, seed=42)
     >>>
-    >>> # Create GPU context (Class P algorithms - requires CuPy)
-    >>> try:
-    ...     import cupy as cp
-    ...     gpu_context = ProblemContext(problem, xp=cp)
-    ...     gpu_context.distances  # Computed once on GPU, stays in VRAM
-    ... except ImportError:
-    ...     print("CuPy not available - GPU acceleration unavailable")
+    >>> # S-Task algorithm: Use CPU distances explicitly
+    >>> distances_cpu = context.get_cpu_distances()  # Allocated here
+    >>>
+    >>> # P-Task algorithm: Use GPU distances explicitly
+    >>> if CUPY_AVAILABLE:
+    ...     distances_gpu = context.get_gpu_distances()  # Transfers to GPU
 
 References:
     - flaws.md: Documents the distance matrix recomputation anti-pattern
     - flaw_analysis.md: Explains Class S (sequential) vs Class P (parallel)
     - architectural-decisions-and-questions.md: ProblemContext design rationale
+    - Phase 5 Cleanup: Removed eager @property accessors (distances, demands, coordinates)
 """
 
 import numpy as np
@@ -104,7 +110,12 @@ class ProblemContext:
         >>> # Distance matrix stays in VRAM, zero transfer overhead
     """
 
-    def __init__(self, problem: Problem, xp: BackendModule):
+    def __init__(
+        self,
+        problem: Problem,
+        xp: BackendModule,
+        seed: Optional[int | list[int]] = None,
+    ):
         """
         Initialize ProblemContext with lazy computation strategy.
 
@@ -116,6 +127,10 @@ class ProblemContext:
         Args:
             problem: Immutable Problem instance from database loader
             xp: Backend module (numpy or cupy) - preferred backend hint
+            seed: Random seed for RNG (int, list of ints, or None).
+                  If None, OS entropy is used. For parallel execution,
+                  use sequence of integers: [worker_id, root_seed].
+                  See NumPy docs on "Parallel random number generation".
 
         Raises:
             ImportError: If xp is CuPy but CuPy is not installed/available
@@ -125,6 +140,10 @@ class ProblemContext:
             force eager computation on that backend. Actual computation
             happens lazily when get_cpu_*() or get_gpu_*() is called.
 
+            RNG Strategy: Uses NumPy's "Sequence of integer seeds" pattern
+            for parallel safety. RandomState accepts both single integers
+            and sequences, providing cross-backend compatibility (NumPy/CuPy).
+
         Example:
             >>> # Create GPU context (no computation yet)
             >>> import cupy as cp
@@ -132,6 +151,11 @@ class ProblemContext:
             >>> # Class S algorithm calls get_cpu_distances()
             >>> # → Computes on CPU directly (no GPU transfer waste)
             >>> distances_cpu = context.get_cpu_distances()
+
+            >>> # Parallel execution with independent RNG (SAFE)
+            >>> context = ProblemContext(problem, xp=np, seed=[worker_id, root_seed])
+            >>> # Each worker gets independent RNG stream
+            >>> random_value = context.rng.random()
 
             >>> # CuPy not available - clear error
             >>> context = ProblemContext(problem, xp=cp)  # Raises ImportError
@@ -150,6 +174,18 @@ class ProblemContext:
         self.problem = problem
         self.dimension = problem.dimension
         self.capacity = problem.capacity
+
+        # Create independent RNG instance (NumPy "Sequence of integer seeds" pattern)
+        # RandomState works with both NumPy and CuPy for cross-backend compatibility
+        if seed is not None:
+            # Accepts both int and sequence of ints (e.g., [worker_id, root_seed])
+            self.rng = xp.random.RandomState(seed)
+        else:
+            # Use OS entropy (non-deterministic)
+            self.rng = xp.random.RandomState()
+
+        # Store seed for debugging/reproducibility
+        self.seed = seed
 
         # Lazy computation cache (all None until first access)
         self._cpu_distances = None
@@ -338,50 +374,6 @@ class ProblemContext:
                 # Transfer from problem data
                 self._gpu_coordinates = self.xp.asarray(self.problem.coordinates)
         return self._gpu_coordinates
-
-    # Backward compatibility properties
-    @property
-    def distances(self):
-        """
-        Distance matrix on preferred backend (backward compatibility property).
-
-        This property maintains compatibility with existing code that accesses
-        context.distances directly. It returns distances on the backend
-        specified by self.xp (CPU for NumPy, GPU for CuPy).
-
-        Returns:
-            Distance matrix on backend specified by xp
-        """
-        if self.xp == np:
-            return self.get_cpu_distances()
-        else:
-            return self.get_gpu_distances()
-
-    @property
-    def demands(self):
-        """
-        Demands on preferred backend (backward compatibility property).
-
-        Returns:
-            Demands on backend specified by xp, or None
-        """
-        if self.xp == np:
-            return self.get_cpu_demands()
-        else:
-            return self.get_gpu_demands()
-
-    @property
-    def coordinates(self):
-        """
-        Coordinates on preferred backend (backward compatibility property).
-
-        Returns:
-            Coordinates on backend specified by xp, or None
-        """
-        if self.xp == np:
-            return self.get_cpu_coordinates()
-        else:
-            return self.get_gpu_coordinates()
 
     def __repr__(self) -> str:
         """String representation showing problem and backend."""

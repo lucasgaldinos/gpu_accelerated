@@ -405,3 +405,117 @@ def get_backend_name(xp):
         return f'Unknown ({xp.__name__})'
 ```
 """
+
+
+# ==============================================================================
+# Backend Utility Functions (Lego Bricks for Backend Configuration)
+# ==============================================================================
+
+import numpy as np
+
+try:
+    import cupy as cp
+
+    CUPY_AVAILABLE = True
+except ImportError:
+    CUPY_AVAILABLE = False
+
+
+def get_backend(backend: str) -> Any:
+    """
+    Get backend module by name (lego brick for backend configuration).
+
+    Enables explicit backend selection in algorithms instead of relying
+    on implicit backend from ProblemContext.
+
+    Args:
+        backend: Backend name string
+            - "numpy": NumPy (CPU) - safe default for all problem sizes
+            - "cupy": CuPy (GPU) - requires CUDA, best for large problems (n>1000)
+
+    Returns:
+        Backend module (numpy or cupy)
+
+    Raises:
+        ValueError: If backend name invalid
+        RuntimeError: If cupy requested but not installed
+
+    Example:
+        >>> xp = get_backend("numpy")  # CPU
+        >>> xp = get_backend("cupy")   # GPU
+        >>> arr = xp.array([1, 2, 3])
+
+    Note:
+        Numba JIT acceleration is NOT a backend option here because Numba
+        operates at the strategy/function level via @jit decorators, not
+        at the array module level. For Numba acceleration, implement
+        Numba-decorated strategy classes (e.g., Numba2OptStrategy).
+        > In fact, numba is not an option anywhere this repo, for now.
+
+    Reference:
+        Backend Configuration Architecture (M14_M15_DETAILED_TASKS.md)
+        METAHEURISTIC_ARCHITECTURE_DECISIONS.md Section 2.1
+    """
+    if backend == "numpy":
+        return np
+    elif backend == "cupy":
+        if not CUPY_AVAILABLE:
+            raise RuntimeError(
+                "Backend 'cupy' requested but CuPy not installed.\n"
+                "Install with: pip install cupy-cuda12x (for CUDA 12.x)\n"
+                "Or: pip install cupy-cuda11x (for CUDA 11.x)"
+            )
+        return cp
+    else:
+        raise ValueError(f"Invalid backend '{backend}'. Valid options: 'numpy', 'cupy'")
+
+
+def get_backend_name(xp) -> str:
+    """
+    Get human-readable backend name.
+
+    Args:
+        xp: Backend module (numpy or cupy)
+
+    Returns:
+        Human-readable name: "NumPy (CPU)", "CuPy (GPU)", or "Unknown"
+
+    Example:
+        >>> import numpy as np
+        >>> get_backend_name(np)
+        'NumPy (CPU)'
+    """
+    if xp.__name__ == "cupy":
+        return "CuPy (GPU)"
+    elif xp.__name__ == "numpy":
+        return "NumPy (CPU)"
+    else:
+        return f"Unknown ({xp.__name__})"
+
+
+def is_gpu_array(arr) -> bool:
+    """
+    Check if array is CuPy array (on GPU).
+
+    Args:
+        arr: Array to check
+
+    Returns:
+        True if CuPy array, False otherwise
+    """
+    if CUPY_AVAILABLE:
+        return isinstance(arr, cp.ndarray)
+    return False
+
+
+def is_cpu_array(arr) -> bool:
+    """
+    Check if array is NumPy array (on CPU).
+
+    Args:
+        arr: Array to check
+
+    Returns:
+        True if NumPy array, False otherwise
+    """
+    return isinstance(arr, np.ndarray)

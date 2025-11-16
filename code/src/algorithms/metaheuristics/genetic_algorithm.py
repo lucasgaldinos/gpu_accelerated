@@ -53,10 +53,11 @@ Hyperparameters:
     - crossover_rate (float): Probability of crossover (default: 0.9)
     - mutation_rate (float): Probability of mutation (default: 0.1)
     - use_2opt (bool): Apply 2-opt after crossover (default: True)
-    - selection_method (str): 'crowding', 'tournament', 'roulette' (default: 'crowding')
-    - mutation_method (str): 'swap', 'inversion', 'insertion' (default: 'swap')
-    - tournament_size (int): Size for tournament selection (default: 3)
     - elitism_count (int): Number of elite solutions to preserve (default: 1)
+
+Note:
+    Selection, crossover, and mutation strategies are now injected via __init__ (Task 4.5).
+    String-based configuration ("selection_method", "mutation_method") has been removed.
 
 Statistics Dictionary:
     Required keys:
@@ -96,6 +97,7 @@ See Also:
 
 from typing import List, Dict, Any, Tuple, TYPE_CHECKING, Optional
 import time
+import numpy as np
 
 try:
     import cupy as cp
@@ -108,6 +110,14 @@ except ImportError:
 if TYPE_CHECKING:
     from src.protocols.problem_context import ProblemContext
     from src.protocols.callback_protocol import ProgressCallback, ProgressEvent
+    from src.protocols.strategy_protocols import (
+        CrossoverStrategy,
+        MutationOperator,
+        SelectionStrategy,
+    )
+
+# Phase 3.5: GA is CPU-only (NumPy), improvement strategies bridge to GPU
+# Removed get_backend import - no longer needed
 
 
 class GeneticAlgorithm:
@@ -130,35 +140,127 @@ class GeneticAlgorithm:
         >>> tour, stats = ga.build_tour_with_stats(context, customers)
     """
 
-    def __init__(self, callback: Optional["ProgressCallback"] = None):
+    def __init__(
+        self,
+        crossover_strategy: "CrossoverStrategy",
+        mutation_strategy: "MutationOperator",
+        selection_strategy: "SelectionStrategy",
+        improvement_strategy: Optional["TspImprovementStrategy"] = None,
+        construction_strategy: Optional["TspConstructionStrategy"] = None,
+        callback: Optional["ProgressCallback"] = None,
+    ):
         """
-        Initialize Genetic Algorithm with default hyperparameters.
+        Initialize Genetic Algorithm with pluggable strategies.
+
+        Phase 3.5 Hybrid Bridge Architecture:
+            - S-Task operations (selection, crossover, mutation) ALWAYS run on CPU (NumPy)
+            - P-Task operations (improvement strategies) handle their own GPU transfers
+            - No backend parameter - GA is CPU-only by design
 
         Args:
+            crossover_strategy: Crossover operator (e.g., OrderCrossover, PMXCrossover)
+            mutation_strategy: Mutation operator (e.g., SwapMutation, InversionMutation)
+            selection_strategy: Selection operator (e.g., TournamentSelection, RouletteWheelSelection)
+            improvement_strategy: Local search operator (e.g., TwoOptSimpleStrategy, TwoOptGPUStrategy)
+                Optional - defaults to NoImprovementStrategy() if None
+                Applied to offspring AFTER crossover and mutation
+                GPU improvement strategies (e.g., TwoOptGPUStrategy) handle GPU transfers internally
+            construction_strategy: Initial tour construction (e.g., NearestNeighborStrategy, ChristofidesStrategy)
+                Optional - defaults to RandomConstructionStrategy() if None
+                Applied during population initialization for better starting quality
             callback: Optional callback for progress tracking (ProgressCallback protocol)
 
-        Default configuration:
-            - population_size: 60 (Fujimoto's recommendation)
-            - max_generations: 1000
-            - crossover_rate: 0.9
-            - mutation_rate: 0.1
-            - use_2opt: True (apply local search to offspring)
-            - selection_method: 'crowding' (deterministic crowding)
-            - mutation_method: 'swap'
-            - tournament_size: 3
-            - elitism_count: 1
+        Design Pattern:
+            Strategy Pattern with Dependency Injection
+            - Strategies passed as objects (not string configuration)
+            - Type-safe (mypy validates protocol conformance)
+            - Composable (any valid strategy combination works)
+            - S-Task strategies (selection, crossover, mutation) use NumPy internally
+            - P-Task strategies (improvement) handle their own backend internally
+
+        Lego Brick Architecture:
+            GA = Construction + Selection + Crossover + Mutation + [Improvement]
+            - Each component is independently testable
+            - Components are swappable at runtime
+            - Improvement is optional (use NoImprovementStrategy for pure GA)
+            - Construction provides better initial population (vs random)
+
+        Example (CPU-only GA):
+            >>> from code.src.algorithms.strategies.crossover_strategies import OrderCrossover
+            >>> from code.src.algorithms.strategies.mutation_strategies import SwapMutation
+            >>> from code.src.algorithms.strategies.selection_strategies import TournamentSelection
+            >>> from code.src.algorithms.strategies.improvement_strategies import TwoOptSimpleStrategy
+            >>> from code.src.algorithms.strategies.construction_strategies import NearestNeighborStrategy
+            >>>
+            >>> # Hybrid GA with NN initialization and CPU 2-opt
+            >>> ga = GeneticAlgorithm(
+            ...     crossover_strategy=OrderCrossover(),
+            ...     mutation_strategy=SwapMutation(),
+            ...     selection_strategy=TournamentSelection(tournament_size=3),
+            ...     construction_strategy=NearestNeighborStrategy(),
+            ...     improvement_strategy=TwoOptSimpleStrategy(max_iterations=10)
+            ... )
+            >>> ga.set_params(population_size=100, max_generations=500)
+            >>> tour, stats = ga.build_tour_with_stats(context, customers)
+
+        Example (GPU improvement via bridge):
+            >>> from code.src.algorithms.strategies.improvement_strategies import TwoOptGPUStrategy
+            >>>
+            >>> # GA with GPU 2-opt improvement (bridge pattern)
+            >>> ga = GeneticAlgorithm(
+            ...     crossover_strategy=OrderCrossover(),
+            ...     mutation_strategy=SwapMutation(),
+            ...     selection_strategy=TournamentSelection(tournament_size=3),
+            ...     improvement_strategy=TwoOptGPUStrategy(max_iterations=10)  # GPU bridge
+            ... )
+            >>> # S-Task operations on CPU, P-Task improvement bridges to GPU
+
+        Breaking Change (Phase 3.5):
+            Removed backend parameter - GA is now CPU-only for S-Task operations.
+            Old: GeneticAlgorithm(..., backend="cupy")
+            New: GeneticAlgorithm(..., improvement_strategy=TwoOptGPUStrategy())
+
+            GPU acceleration now via improvement strategies, not global backend parameter.
+
+        Deprecation:
+            The `use_2opt` hyperparameter is DEPRECATED. Use improvement_strategy instead:
+            - Old: ga.set_params(use_2opt=True)
+            - New: ga = GeneticAlgorithm(..., improvement_strategy=TwoOptSimpleStrategy())
         """
+        # Store strategies
+        self.crossover_strategy = crossover_strategy
+        self.mutation_strategy = mutation_strategy
+        self.selection_strategy = selection_strategy
+
+        # Improvement strategy (with default)
+        if improvement_strategy is None:
+            from ..strategies.improvement_strategies import NoImprovementStrategy
+
+            self.improvement_strategy = NoImprovementStrategy()
+        else:
+            self.improvement_strategy = improvement_strategy
+
+        # Construction strategy (with default)
+        if construction_strategy is None:
+            from ..strategies.construction_strategies import RandomConstructionStrategy
+
+            self.construction_strategy = RandomConstructionStrategy()
+        else:
+            self.construction_strategy = construction_strategy
+
+        # Callback for progress tracking
         self._callback = callback
+
+        # Hyperparameters (default values)
+        # NOTE: Removed string-based config: "selection_method", "mutation_method", "crossover_method"
+        # NOTE: Removed "use_2opt" - now controlled via improvement_strategy
+        # NOTE: Removed "backend" - S-Task operations always use NumPy (Phase 3.5)
         self._hyperparams = {
-            "population_size": 60,
+            "population_size": 60,  # Fujimoto's recommendation
             "max_generations": 1000,
             "crossover_rate": 0.9,
             "mutation_rate": 0.1,
-            "use_2opt": True,
-            "selection_method": "crowding",  # 'crowding', 'tournament', 'roulette'
-            "mutation_method": "swap",  # 'swap', 'inversion', 'insertion'
-            "tournament_size": 3,
-            "elitism_count": 1,
+            "elitism_count": 1,  # Number of elite solutions to preserve
         }
         self._stats = {}
 
@@ -169,23 +271,55 @@ class GeneticAlgorithm:
         Args:
             **hyperparameters: Keyword arguments for configuration.
                 Valid keys: population_size, max_generations, crossover_rate,
-                mutation_rate, use_2opt, selection_method, mutation_method,
-                tournament_size, elitism_count
+                mutation_rate, tournament_size, elitism_count
+
+        Deprecated Parameters:
+            use_2opt (bool): DEPRECATED - Use improvement_strategy in __init__ instead
+                If provided, will issue warning and auto-configure improvement strategy
 
         Example:
+            >>> ga = GeneticAlgorithm(...)
             >>> ga.set_params(population_size=100, max_generations=500)
-            >>> ga.set_params(use_2opt=False, mutation_rate=0.2)
         """
+        # Handle deprecated use_2opt parameter
+        if "use_2opt" in hyperparameters:
+            import warnings
+
+            use_2opt = hyperparameters.pop("use_2opt")
+            warnings.warn(
+                "Parameter 'use_2opt' is deprecated. "
+                "Use improvement_strategy in GeneticAlgorithm.__init__() instead:\n"
+                "  Old: ga.set_params(use_2opt=True)\n"
+                "  New: ga = GeneticAlgorithm(..., improvement_strategy=TwoOptSimpleStrategy())",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+            # Auto-configure improvement strategy for backward compatibility
+            if use_2opt:
+                from ..strategies.improvement_strategies import TwoOptSimpleStrategy
+
+                self.improvement_strategy = TwoOptSimpleStrategy(max_iterations=10)
+            else:
+                from ..strategies.improvement_strategies import NoImprovementStrategy
+
+                self.improvement_strategy = NoImprovementStrategy()
+
         self._hyperparams.update(hyperparameters)
 
     def build_tour_with_stats(
         self, context: "ProblemContext", customers: List[int]
     ) -> Tuple[List[int], Dict[str, Any]]:
         """
-        Solve TSP/CVRP using Genetic Algorithm.
+        Solve TSP/CVRP using Genetic Algorithm (CPU-only for S-Task operations).
+
+        Phase 3.5 Hybrid Bridge Architecture:
+            - S-Task operations (selection, crossover, mutation) run on CPU with NumPy
+            - P-Task operations (improvement strategies) may bridge to GPU internally
+            - No GPU VRAM check needed - GA is CPU-only by design
 
         Args:
-            context: ProblemContext with distances and backend
+            context: ProblemContext with distances (may be NumPy or CuPy)
             customers: List of customer indices (excluding depot 0)
 
         Returns:
@@ -194,7 +328,6 @@ class GeneticAlgorithm:
                 - statistics: Dictionary with convergence and performance metrics
 
         Raises:
-            ValueError: If context backend is invalid
             ValueError: If customers list is empty
 
         Example:
@@ -205,34 +338,38 @@ class GeneticAlgorithm:
         if len(customers) == 0:
             raise ValueError("customers list cannot be empty")
 
-        # Get backend and distances (Class P-Data: backend-agnostic)
-        xp = context.xp
-        distances = context.distances  # Uses backend from context (np or cp)
-
-        # Extract hyperparameters
+        # Phase 3.5: S-Task operations ALWAYS use NumPy (CPU-only)
         pop_size = self._hyperparams["population_size"]
         max_gen = self._hyperparams["max_generations"]
         crossover_rate = self._hyperparams["crossover_rate"]
         mutation_rate = self._hyperparams["mutation_rate"]
-        use_2opt = self._hyperparams["use_2opt"]
-        selection = self._hyperparams["selection_method"]
+
+        # Stage 4: Create GPU-aware fitness calculator
+        # Eliminates premature GPU→CPU transfers (6.6× slowdown fix)
+        from ..fitness_calculators import GACostCalculatorGPU
+
+        fitness_calculator = GACostCalculatorGPU(context)
 
         # Start timing
         start_time = time.time()
 
-        # Initialize population
-        population = self._initialize_population(customers, pop_size, xp)
+        # Initialize population (using construction strategy)
+        # Stage 4: Returns NumPy array directly (efficient initialization)
+        population = self._initialize_population(context, customers, pop_size)
 
-        # Vectorized fitness evaluation (Class P-Data)
-        fitness = self._compute_batch_fitness(population, distances, xp)
+        # Stage 4: Use GPU-aware fitness calculator
+        # Calculator performs efficient bulk transfer if CuPy backend
+        # Returns NumPy array (CPU) regardless of backend
+        fitness = fitness_calculator.compute_batch_fitness(population)
 
-        # Track statistics
-        best_idx = int(xp.argmin(fitness))
+        # Track statistics (all CPU operations - fitness is NumPy array)
+        best_idx = int(np.argmin(fitness))
         best_tour = population[best_idx].copy()
         best_cost = float(fitness[best_idx])
 
         convergence_history = [best_cost]
-        diversity_history = [len(set(map(tuple, population)))]
+        # Diversity: Convert numpy array rows to tuples for set uniqueness check
+        diversity_history = [len(set(map(tuple, population.tolist())))]
         crossover_count = 0
         mutation_count = 0
 
@@ -250,64 +387,81 @@ class GeneticAlgorithm:
 
         # Main GA loop
         for generation in range(max_gen):
+            # Vectorized parent selection (Task 4.5: Strategy pattern)
+            # Select pop_size parent indices using strategy
+            # Phase 3.5: Strategies use NumPy internally (no xp parameter)
+            # Stage 4: Pass numpy arrays directly (protocol uses Any types, converts internally)
+            parent_indices = self.selection_strategy.select(
+                population=population, fitness=fitness, n_select=pop_size
+            )
+
             # Generate offspring
             offspring = []
 
             for i in range(pop_size):
-                # Select second parent (not i) - using xp.random for backend compatibility
-                j = int(xp.random.randint(0, pop_size))
-                while j == i:
-                    j = int(xp.random.randint(0, pop_size))
+                # Get parents using strategy-based selection
+                parent1 = population[i]
+                parent2 = population[parent_indices[i]]
 
-                # Crossover
-                if float(xp.random.random()) < crossover_rate:
-                    child = self._order_crossover(population[i], population[j], xp)
+                # Crossover using strategy (Task 4.5: Strategy pattern)
+                # Phase 3.5: Strategies use NumPy internally (no xp parameter)
+                if float(context.rng.rand()) < crossover_rate:
+                    child = self.crossover_strategy.crossover(
+                        parent1=parent1, parent2=parent2, problem=None
+                    )
                     crossover_count += 1
                 else:
-                    child = population[i].copy()
+                    child = parent1.copy()
 
-                # Mutation
-                if float(xp.random.random()) < mutation_rate:
-                    child = self._mutate(
-                        child, self._hyperparams["mutation_method"], xp
-                    )
+                # Apply mutation strategy (Phase 3.5: NumPy internally)
+                if float(context.rng.rand()) < mutation_rate:
+                    child = self.mutation_strategy.mutate(tour=child, problem=None)
                     mutation_count += 1
-
-                # Optional 2-opt local search
-                if use_2opt:
-                    child = self._apply_2opt(child, distances, xp)
 
                 offspring.append(child)
 
-            # Vectorized fitness evaluation for all offspring (Class P-Data)
-            offspring_fitness = self._compute_batch_fitness(offspring, distances, xp)
-
-            # Selection (deterministic crowding by default)
-            if selection == "crowding":
-                # Compare each offspring with its corresponding parent
-                for i in range(pop_size):
-                    if offspring_fitness[i] < fitness[i]:
-                        population[i] = offspring[i]
-                        fitness[i] = offspring_fitness[i]
+            # Apply improvement strategy (e.g., 2-opt local search)
+            # Phase 3: Use batch API if available (GPU parallel processing)
+            # Otherwise fallback to sequential (CPU or strategies without batch API)
+            if hasattr(self.improvement_strategy, "improve_batch"):
+                # Batch improvement: Process all offspring in parallel (Class P-Data)
+                offspring = self.improvement_strategy.improve_batch(context, offspring)
             else:
-                # Combine populations and select best
-                combined_pop = population + offspring
-                combined_fit = xp.concatenate([fitness, offspring_fitness])
-                indices = xp.argsort(combined_fit)[:pop_size]
-                # Convert indices to Python ints for list indexing
-                indices_list = [int(idx) for idx in indices]
-                population = [combined_pop[i] for i in indices_list]
-                fitness = combined_fit[indices]
+                # Sequential improvement: Process one at a time (fallback)
+                for i in range(len(offspring)):
+                    offspring[i] = self.improvement_strategy.improve_tour(
+                        context, offspring[i]
+                    )
+
+            # Stage 4 Fix: Convert offspring to NumPy array for efficient GPU transfer
+            # Enables bulk transfer (NumPy → CuPy) instead of slow List → CuPy
+            offspring_array = np.array(offspring, dtype=np.int32)
+
+            # Stage 4: Use GPU-aware fitness calculator for offspring
+            # Calculator performs efficient bulk transfer if CuPy backend
+            # Returns NumPy array (CPU) regardless of backend
+            offspring_fitness = fitness_calculator.compute_batch_fitness(offspring_array)
+
+            # Survival selection: Combine populations and select best
+            # Stage 4 Fix: Work with numpy arrays throughout
+            combined_pop = np.vstack([population, offspring_array])
+            combined_fit = np.concatenate([fitness, offspring_fitness])
+            
+            # Select best pop_size individuals
+            indices = np.argsort(combined_fit)[:pop_size]
+            population = combined_pop[indices]
+            fitness = combined_fit[indices]
 
             # Update best solution
-            gen_best_idx = int(xp.argmin(fitness))
+            gen_best_idx = int(np.argmin(fitness))
             if fitness[gen_best_idx] < best_cost:
                 best_tour = population[gen_best_idx].copy()
                 best_cost = float(fitness[gen_best_idx])
 
             # Track statistics
             convergence_history.append(best_cost)
-            diversity_history.append(len(set(map(tuple, population))))
+            # Diversity: Convert numpy array rows to tuples for set uniqueness check
+            diversity_history.append(len(set(map(tuple, population.tolist()))))
 
             # Lifecycle: ITERATION
             if self._callback:
@@ -316,7 +470,7 @@ class GeneticAlgorithm:
                 event: ProgressEvent = {
                     "iteration": generation + 1,  # 1-indexed for user clarity
                     "best_cost": best_cost,
-                    "current_cost": float(xp.mean(fitness)),
+                    "current_cost": float(np.mean(fitness)),
                     "elapsed_time": time.time() - start_time,
                 }
                 self._callback.on_iteration(event)
@@ -331,7 +485,7 @@ class GeneticAlgorithm:
             event: ProgressEvent = {
                 "iteration": max_gen,
                 "best_cost": best_cost,
-                "current_cost": float(xp.mean(fitness)),
+                "current_cost": float(np.mean(fitness)),
                 "elapsed_time": runtime,
             }
             self._callback.on_complete(event)
@@ -339,7 +493,7 @@ class GeneticAlgorithm:
         # Compile statistics
         self._stats = {
             "best_fitness": float(best_cost),
-            "final_fitness": float(xp.mean(fitness)),
+            "final_fitness": float(np.mean(fitness)),
             "iterations": max_gen,
             "convergence_history": convergence_history,
             "runtime_seconds": runtime,
@@ -375,260 +529,38 @@ class GeneticAlgorithm:
 
     # ========== Private Helper Methods ==========
 
-    def _compute_batch_fitness(self, population: List[List[int]], distances, xp):
-        """
-        Vectorized fitness evaluation for entire population.
-
-        This is the KEY optimization for Class P-Data classification.
-        Replaces O(pop_size * N) sequential loop with O(1) vectorized operation.
-
-        Args:
-            population: List of tours to evaluate
-            distances: Distance matrix (backend-agnostic)
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Array of fitness values (one per tour)
-
-        Performance:
-            - Sequential: O(pop_size * N) = 60 * 100 = 6,000 operations
-            - Vectorized: O(1) fancy indexing operation
-            - Expected GPU speedup: 10-100x
-        """
-        # Convert population to backend array
-        # Shape: (pop_size, tour_length)
-        pop_array = xp.array(population)
-
-        # Fancy indexing: get all edge costs at once
-        # For each tour, get costs between consecutive nodes
-        # Shape: (pop_size, tour_length - 1)
-        edge_costs = distances[pop_array[:, :-1], pop_array[:, 1:]]
-
-        # Sum across each tour
-        # Shape: (pop_size,)
-        return xp.sum(edge_costs, axis=1)
-
     def _initialize_population(
-        self, customers: List[int], pop_size: int, xp
-    ) -> List[List[int]]:
+        self, context: "ProblemContext", customers: List[int], pop_size: int
+    ) -> np.ndarray:
         """
-        Initialize population with random tours.
+        Initialize population using construction strategy.
+
+        Stage 4 Update: Returns NumPy array directly for efficiency.
 
         Args:
+            context: ProblemContext with distance matrix and backend
             customers: List of customer indices
             pop_size: Population size
-            xp: Backend module (numpy or cupy)
 
         Returns:
-            List of random tours, each [depot, c1, ..., ck, depot]
-        """
-        population = []
-        # Convert customers to array for permutation
-        customers_array = xp.array(customers)
+            NumPy array of tours, shape (pop_size, tour_length)
+                - Each row: [depot, c1, ..., ck, depot]
+                - dtype: int32
 
+        Notes:
+            Uses injected construction_strategy (RandomConstructionStrategy by default,
+            or NearestNeighborStrategy/Christofides for better quality).
+
+            For diversity, each tour is constructed independently (strategy may use
+            randomness internally, e.g., random nearest-neighbor tie-breaking).
+        """
+        population_list = []
         for _ in range(pop_size):
-            # Random permutation of customers (using backend's random)
-            tour_interior = xp.random.permutation(customers_array)
-            # Convert to list for easier manipulation in crossover/mutation
-            if hasattr(tour_interior, "get"):
-                tour_interior = tour_interior.get().tolist()
-            else:
-                tour_interior = tour_interior.tolist()
-            tour = [0] + tour_interior + [0]
-            population.append(tour)
-        return population
+            # Use construction strategy to build each tour
+            tour = self.construction_strategy.build_tour(context, customers)
+            population_list.append(tour)
+        
+        # Convert to numpy array once (efficient bulk conversion)
+        return np.array(population_list, dtype=np.int32)
 
-    def _order_crossover(self, parent1: List[int], parent2: List[int], xp) -> List[int]:
-        """
-        OX (Order Crossover) operator from Davis (1985).
 
-        Implementation follows Fujimoto & Tsutsui (2011):
-        1. Select two random cut points [cut1, cut2)
-        2. Copy segment parent2[cut1:cut2] to offspring
-        3. Fill remaining positions with cities from parent1 in order
-
-        Args:
-            parent1: First parent tour [depot, c1, ..., ck, depot]
-            parent2: Second parent tour [depot, c1, ..., ck, depot]
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Offspring tour with same structure
-        """
-        # Exclude depots for crossover
-        p1_interior = parent1[1:-1]
-        p2_interior = parent2[1:-1]
-        n = len(p1_interior)
-
-        # Edge case: single customer
-        if n < 2:
-            return parent1.copy()  # Cannot perform meaningful crossover
-
-        # Select two random cut points (using backend's random)
-        cut_points = xp.random.choice(n, size=2, replace=False)
-        if hasattr(cut_points, "get"):
-            cut_points = cut_points.get()
-        cut1, cut2 = sorted(cut_points)
-
-        # Initialize offspring
-        offspring_interior = [None] * n
-
-        # Copy segment from parent2
-        offspring_interior[cut1:cut2] = p2_interior[cut1:cut2]
-        copied_cities = set(p2_interior[cut1:cut2])
-
-        # Fill remaining positions from parent1 in order
-        p1_idx = 0
-        for i in range(n):
-            if offspring_interior[i] is None:
-                # Find next city from parent1 not in copied segment
-                while p1_interior[p1_idx] in copied_cities:
-                    p1_idx += 1
-                offspring_interior[i] = p1_interior[p1_idx]
-                p1_idx += 1
-
-        # Add depots
-        return [0] + offspring_interior + [0]
-
-    def _mutate(self, tour: List[int], method: str, xp) -> List[int]:
-        """
-        Apply mutation operator to tour.
-
-        Args:
-            tour: Tour [depot, c1, ..., ck, depot]
-            method: Mutation method ('swap', 'inversion', 'insertion')
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Mutated tour
-        """
-        if method == "swap":
-            return self._mutation_swap(tour, xp)
-        elif method == "inversion":
-            return self._mutation_inversion(tour, xp)
-        elif method == "insertion":
-            return self._mutation_insertion(tour, xp)
-        else:
-            raise ValueError(f"Unknown mutation method: {method}")
-
-    def _mutation_swap(self, tour: List[int], xp) -> List[int]:
-        """Swap two random cities (excluding depot)."""
-        mutated = tour.copy()
-        n = len(tour) - 1  # Exclude last depot
-        interior_size = n - 1  # Exclude first depot too
-        # Edge case: less than 2 customers to swap
-        if interior_size < 2:
-            return mutated
-        indices = xp.random.choice(range(1, n), size=2, replace=False)
-        if hasattr(indices, "get"):
-            indices = indices.get()
-        i, j = indices
-        mutated[i], mutated[j] = mutated[j], mutated[i]
-        return mutated
-
-    def _mutation_inversion(self, tour: List[int], xp) -> List[int]:
-        """Reverse random segment of tour."""
-        mutated = tour.copy()
-        n = len(tour) - 1  # Exclude last depot
-        interior_size = n - 1  # Exclude first depot too
-        # Edge case: less than 2 customers to invert
-        if interior_size < 2:
-            return mutated
-        indices = xp.random.choice(range(1, n), size=2, replace=False)
-        if hasattr(indices, "get"):
-            indices = indices.get()
-        i, j = sorted(indices)
-        mutated[i : j + 1] = mutated[i : j + 1][::-1]
-        return mutated
-
-    def _mutation_insertion(self, tour: List[int], xp) -> List[int]:
-        """Remove city and reinsert at different position."""
-        mutated = tour.copy()
-        n = len(tour) - 1  # Exclude last depot
-        interior_size = n - 1  # Exclude first depot too
-        # Edge case: less than 2 customers for meaningful insertion
-        if interior_size < 2:
-            return mutated
-
-        remove_pos = int(xp.random.randint(1, n))
-        insert_pos = int(xp.random.randint(1, n))
-
-        while insert_pos == remove_pos:
-            insert_pos = int(xp.random.randint(1, n))
-
-        city = mutated.pop(remove_pos)
-        mutated.insert(insert_pos, city)
-        return mutated
-
-    def _apply_2opt(self, tour: List[int], distances, xp) -> List[int]:
-        """
-        Apply 2-opt local search to tour.
-
-        Uses simplified first-improvement 2-opt for efficiency.
-
-        Args:
-            tour: Tour to improve
-            distances: Distance matrix (backend-agnostic)
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Improved tour
-        """
-        n = len(tour) - 1
-        improved = True
-        current = tour.copy()
-
-        # Limit iterations to avoid excessive time
-        max_iterations = 10
-        iteration = 0
-
-        while improved and iteration < max_iterations:
-            improved = False
-
-            for i in range(n - 1):
-                for j in range(i + 2, n):
-                    # Check 2-opt move
-                    node_i = current[i]
-                    node_i1 = current[i + 1]
-                    node_j = current[j]
-                    node_j1 = current[(j + 1) % (n + 1)]
-
-                    # Current edges: (i, i+1) and (j, j+1)
-                    # New edges: (i, j) and (i+1, j+1)
-                    old_cost = distances[node_i, node_i1] + distances[node_j, node_j1]
-                    new_cost = distances[node_i, node_j] + distances[node_i1, node_j1]
-
-                    # Convert to float for comparison (handles both np and cp)
-                    if float(new_cost) < float(old_cost):
-                        # Apply 2-opt move
-                        current[i + 1 : j + 1] = current[i + 1 : j + 1][::-1]
-                        improved = True
-                        break
-
-                if improved:
-                    break
-
-            iteration += 1
-
-        return current
-
-    def _compute_tour_cost(self, tour: List[int], distances, xp) -> float:
-        """
-        Compute total cost of tour using vectorized operations.
-
-        Args:
-            tour: Tour [depot, c1, ..., ck, depot]
-            distances: Distance matrix (backend-agnostic)
-            xp: Backend module (numpy or cupy)
-
-        Returns:
-            Total tour cost (sum of edge weights)
-        """
-        # Convert tour to backend array
-        tour_array = xp.array(tour)
-
-        # Vectorized edge cost computation
-        edge_costs = distances[tour_array[:-1], tour_array[1:]]
-
-        # Sum and convert to Python float
-        return float(xp.sum(edge_costs))

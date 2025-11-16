@@ -199,7 +199,7 @@ def lego_cvrp_solver(
 
     # Apply preset TSP strategy if not provided
     if tsp_strategy is None:
-        from .strategies.tsp_strategies import NearestNeighborStrategy
+        from .strategies.construction_strategies import NearestNeighborStrategy
 
         tsp_strategy = NearestNeighborStrategy()
 

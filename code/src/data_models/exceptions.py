@@ -1,24 +1,27 @@
 """
-Custom exception hierarchy for problem loading errors.
+Custom exception hierarchy for the TSP solver.
 
 This module defines domain-specific exceptions that provide clear error
-messages and enable precise error handling throughout the problem loader
-implementation.
+messages and enable precise error handling throughout the codebase.
 
 Exception Hierarchy:
     Exception (built-in)
-    └── ProblemLoaderError (base for all problem loader errors)
-        ├── InstanceNotFoundError (instance doesn't exist in database)
-        ├── InvalidEdgeTypeError (unsupported edge_weight_type)
-        └── MissingCoordinatesError (coordinates required but NULL)
+    ├── ProblemLoaderError (base for all problem loader errors)
+    │   ├── InstanceNotFoundError (instance doesn't exist in database)
+    │   ├── InvalidEdgeTypeError (unsupported edge_weight_type)
+    │   ├── MissingCoordinatesError (coordinates required but NULL)
+    │   ├── DatabaseConnectionError (database connection failed)
+    │   └── InvalidProblemDataError (data integrity violation)
+    └── VRAMInsufficientError (GPU lacks sufficient VRAM for operation)
 
 Design Philosophy:
 - Explicit error types enable targeted exception handling
 - Custom __init__ methods provide context-rich error messages
-- All errors inherit from ProblemLoaderError for catch-all handling
+- All loader errors inherit from ProblemLoaderError for catch-all handling
 - Error messages guide users toward solutions
 
 Example Usage:
+    >>> # Problem loading errors
     >>> try:
     ...     with DatabaseLoader() as loader:
     ...         problem = loader.load('nonexistent')
@@ -26,6 +29,15 @@ Example Usage:
     ...     print(f"Instance not found: {e.instance_name}")
     ... except ProblemLoaderError as e:
     ...     print(f"General loader error: {e}")
+
+    >>> # GPU/VRAM errors
+    >>> try:
+    ...     strategy = TwoOptGPUStrategy()
+    ...     strategy.improve_batch(context, large_population)
+    ... except VRAMInsufficientError as e:
+    ...     print(f"Insufficient VRAM: {e}")
+    ...     # Fallback to CPU strategy
+    ...     strategy = TwoOptSimpleStrategy()
 """
 
 
@@ -183,3 +195,121 @@ class InvalidProblemDataError(ProblemLoaderError):
         self.instance_name = instance_name
         self.reason = reason
         super().__init__(f"Invalid data for instance '{instance_name}': {reason}")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GPU/VRAM Exceptions
+# ═══════════════════════════════════════════════════════════════════
+
+
+class VRAMInsufficientError(RuntimeError):
+    """
+    Raised when GPU operation requires more VRAM than available.
+
+    This exception prevents GPU crashes and memory allocation failures
+    by validating VRAM capacity before attempting large batch operations.
+
+    Phase 3.5 Bridge Pattern:
+        - S-Task operations (selection, crossover, mutation) run on CPU
+        - P-Task operations (improvement strategies) require VRAM validation
+        - This exception enables graceful fallback to CPU strategies
+
+    Attributes:
+        required_bytes (int): VRAM required for operation (bytes)
+        available_bytes (int): VRAM currently available (bytes)
+        message (str): Human-readable error description
+
+    Error Recovery Strategies:
+        1. Reduce batch size (e.g., pop_size=210 → 50)
+        2. Fallback to CPU strategy (TwoOptSimpleStrategy)
+        3. Process population in chunks (split batch)
+        4. Use smaller problem subset (reduce n)
+
+    Example:
+        >>> # Detect insufficient VRAM early
+        >>> strategy = TwoOptGPUStrategy()
+        >>> try:
+        ...     # n=10000, pop_size=210 requires ~518 MB
+        ...     strategy.improve_batch(context, population)
+        ... except VRAMInsufficientError as e:
+        ...     print(f"VRAM Error: {e}")
+        ...     print(f"Required: {e.required_bytes / 1e9:.2f} GB")
+        ...     print(f"Available: {e.available_bytes / 1e9:.2f} GB")
+        ...
+        ...     # Fallback: Reduce batch size
+        ...     reduced_pop = population[:50]
+        ...     strategy.improve_batch(context, reduced_pop)
+
+    Academic Relevance:
+        Large TSP instances (n > 5000) often exceed consumer GPU VRAM:
+            - Consumer GPU (GTX 1650): 4 GB
+            - Mid-tier GPU (RTX 3060): 12 GB
+            - High-end GPU (RTX 4090): 24 GB
+            - Professional GPU (A100): 80 GB
+
+        This exception enables researchers to:
+            1. Identify hardware limitations early
+            2. Benchmark CPU vs GPU performance fairly
+            3. Design hybrid CPU/GPU algorithms
+            4. Report VRAM requirements in publications
+    """
+
+    def __init__(
+        self, message: str, required_bytes: int = None, available_bytes: int = None
+    ):
+        """
+        Initialize VRAMInsufficientError with capacity details.
+
+        Args:
+            message: Human-readable error description
+            required_bytes: VRAM required for operation (bytes, optional)
+            available_bytes: VRAM currently available (bytes, optional)
+
+        Example:
+            >>> raise VRAMInsufficientError(
+            ...     "Insufficient VRAM for n=10000 problem",
+            ...     required_bytes=518_000_000,
+            ...     available_bytes=4_000_000_000
+            ... )
+        """
+        super().__init__(message)
+        self.required_bytes = required_bytes
+        self.available_bytes = available_bytes
+        self.message = message
+
+    def __str__(self) -> str:
+        """
+        Format error message with capacity details if available.
+
+        Returns:
+            Formatted error string with VRAM requirements
+
+        Example Output:
+            "Insufficient VRAM: need 0.52GB, have 4.00GB available"
+        """
+        if self.required_bytes is not None and self.available_bytes is not None:
+            required_gb = self.required_bytes / 1e9
+            available_gb = self.available_bytes / 1e9
+            return (
+                f"{self.message} "
+                f"(required: {required_gb:.2f}GB, "
+                f"available: {available_gb:.2f}GB)"
+            )
+        return self.message
+
+    def __repr__(self) -> str:
+        """
+        Developer-friendly representation with all attributes.
+
+        Returns:
+            String with constructor-style representation
+
+        Example Output:
+            "VRAMInsufficientError('...', required_bytes=518000000, available_bytes=4000000000)"
+        """
+        return (
+            f"VRAMInsufficientError("
+            f"'{self.message}', "
+            f"required_bytes={self.required_bytes}, "
+            f"available_bytes={self.available_bytes})"
+        )

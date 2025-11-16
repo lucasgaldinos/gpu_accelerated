@@ -1,0 +1,24 @@
+{
+	"algorithm": "genetic_algorithm",
+	"backend": "cupy",
+	"strategies": {
+		"selection": {
+			"name": "roulette_wheel",
+			"params": {}
+		},
+		"crossover": {
+			"name": "partially_mapped_crossover",
+			"params": {}
+		},
+		"mutation": {
+			"name": "inversion",
+			"params": {}
+		}
+	},
+	"hyperparameters": {
+		"population_size": 100,
+		"max_generations": 200,
+		"crossover_rate": 0.85,
+		"mutation_rate": 0.15
+	}
+}

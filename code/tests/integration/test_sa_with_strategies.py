@@ -81,10 +81,14 @@ def test_sa_with_swap_strategy(problem_context, customers, small_tsp_problem):
     tour, stats = sa.build_tour_with_stats(problem_context, customers)
 
     # Verify tour validity
-    assert len(tour) == small_tsp_problem.dimension + 1, "Tour should include all cities plus return to depot"
+    assert len(tour) == small_tsp_problem.dimension + 1, (
+        "Tour should include all cities plus return to depot"
+    )
     assert tour[0] == 0, "Tour should start at depot"
     assert tour[-1] == 0, "Tour should end at depot"
-    assert set(tour[:-1]) == set(range(small_tsp_problem.dimension)), "Tour should visit all cities exactly once"
+    assert set(tour[:-1]) == set(range(small_tsp_problem.dimension)), (
+        "Tour should visit all cities exactly once"
+    )
 
     # Verify stats structure
     assert "best_fitness" in stats
@@ -100,7 +104,9 @@ def test_sa_with_swap_strategy(problem_context, customers, small_tsp_problem):
     # Verify convergence (best should be <= initial)
     convergence = stats["convergence_history"]
     assert len(convergence) > 0
-    assert convergence[-1] <= convergence[0], "Solution should not get worse (or stay same)"
+    assert convergence[-1] <= convergence[0], (
+        "Solution should not get worse (or stay same)"
+    )
 
 
 def test_sa_with_2opt_strategy(problem_context, customers, small_tsp_problem):
@@ -169,7 +175,9 @@ def test_different_strategies_produce_different_results(
     np.random.seed(123)
     sa_insert = SimulatedAnnealing(neighbor_strategy=RandomInsertionStrategy())
     sa_insert.set_params(max_iterations=50, initial_temp=500)
-    tour_insert, stats_insert = sa_insert.build_tour_with_stats(problem_context, customers)
+    tour_insert, stats_insert = sa_insert.build_tour_with_stats(
+        problem_context, customers
+    )
 
     # All should produce valid tours
     for tour in [tour_swap, tour_2opt, tour_insert]:
@@ -177,13 +185,19 @@ def test_different_strategies_produce_different_results(
         assert tour[0] == 0 and tour[-1] == 0
 
     # At least one pair should have different costs (strategies explore differently)
-    costs = [stats_swap["best_fitness"], stats_2opt["best_fitness"], stats_insert["best_fitness"]]
+    costs = [
+        stats_swap["best_fitness"],
+        stats_2opt["best_fitness"],
+        stats_insert["best_fitness"],
+    ]
     # Note: With same seed but different strategies, results might still differ
     # This is a weak test - just verify all are reasonable
     assert all(c > 0 for c in costs), "All strategies should produce valid solutions"
 
 
-def test_strategy_integration_with_longer_run(problem_context, customers, small_tsp_problem):
+def test_strategy_integration_with_longer_run(
+    problem_context, customers, small_tsp_problem
+):
     """Longer run should show clear improvement with any strategy."""
     # Test with swap strategy and more iterations
     sa = SimulatedAnnealing(neighbor_strategy=RandomSwapStrategy())
@@ -198,10 +212,14 @@ def test_strategy_integration_with_longer_run(problem_context, customers, small_
 
     # Should improve by at least 5% (SA should do better than random walk)
     improvement_ratio = (initial_cost - final_cost) / initial_cost
-    assert improvement_ratio >= 0.0, f"Should improve or stay same, got {improvement_ratio:.2%}"
+    assert improvement_ratio >= 0.0, (
+        f"Should improve or stay same, got {improvement_ratio:.2%}"
+    )
 
     # Verify acceptance rate is reasonable (not accepting everything or nothing)
     acceptance_rate = stats.get("acceptance_rate", 0.0)
     # Typical SA acceptance rates: 10-60% depending on schedule
     # With our cooling, should be in reasonable range
-    assert 0.0 <= acceptance_rate <= 1.0, f"Acceptance rate should be valid probability: {acceptance_rate}"
+    assert 0.0 <= acceptance_rate <= 1.0, (
+        f"Acceptance rate should be valid probability: {acceptance_rate}"
+    )

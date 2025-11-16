@@ -1,0 +1,15 @@
+{
+	"algorithm": "simulated_annealing",
+	"backend": "cupy",
+	"strategies": {
+		"improvement": {
+			"name": "RandomSwapStrategy"
+		}
+	},
+	"hyperparameters": {
+		"initial_temperature": 1000.0,
+		"cooling_rate": 0.995,
+		"max_iterations_per_temp": 100,
+		"min_temperature": 0.01
+	}
+}
