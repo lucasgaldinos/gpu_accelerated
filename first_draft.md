@@ -50,7 +50,6 @@
     - [2.4 Parallelization Strategies for Metaheuristics](#24-parallelization-strategies-for-metaheuristics)
       - [2.4.0 GPU versus CPU Parallelism Models](#240-gpu-versus-cpu-parallelism-models)
       - [2.4.1 Parallel Execution Models for Metaheuristics](#241-parallel-execution-models-for-metaheuristics)
-        - [**P-Data (Parallel Data):**](#p-data-parallel-data)
         - [**S-Task (Sequential Task):**](#s-task-sequential-task)
         - [**P-Task (Parallel Task):**](#p-task-parallel-task)
       - [2.4.2 GPU Memory Constraints for Routing Problems](#242-gpu-memory-constraints-for-routing-problems)
@@ -485,41 +484,43 @@ Understanding where modern compute hardware fits within Flynn's taxonomy clarifi
 
 - **MISD (Multiple Instruction, Single Data)**: Multiple processors execute different instructions on the same data stream. This category finds extremely limited application in practice—spacecraft redundant computing represents a rare example where multiple algorithms process identical sensor data for fault tolerance. MISD architectures are not utilized in metaheuristic implementations.
 
-**Crainic-Toulouse: Algorithmic Parallelism Classification**
+    **Crainic-Toulouse: Algorithmic Parallelism Classification**
 
-Crainic and Toulouse's taxonomy \cite{crainic2003parallel,crainic2010parallel} maps Flynn's hardware model to metaheuristic algorithm design, establishing three categories:
+    Crainic and Toulouse's taxonomy \cite{crainic2003parallel,crainic2010parallel} maps Flynn's hardware model to metaheuristic algorithm design, establishing three categories:
 
-- **P-Data (Parallel Data)** corresponds to data parallelism implementable on both SIMD (GPU) and MIMD (CPU) hardware. Multiple algorithm instances execute on disjoint data partitions or independent initial solutions. The multistart SA strategy exemplifies P-Data: $N$ independent SA runs explore different solution space regions with no inter-instance communication. This can be implemented as $N$ GPU threads (SIMD: each thread evaluates one SA trajectory) or $N$ CPU processes (MIMD: each process runs one SA instance). The 2-opt distance matrix calculation also implements P-Data: $n^2$ threads (GPU) or vectorized operations (CPU NumPy) compute all pairwise distances in parallel.
+  - **P-Data (Parallel Data)** corresponds to data parallelism implementable on both SIMD (GPU) and MIMD (CPU) hardware. Multiple algorithm instances execute on disjoint data partitions or independent initial solutions. The multistart SA strategy exemplifies P-Data: $N$ independent SA runs explore different solution space regions with no inter-instance communication. This can be implemented as $N$ GPU threads (SIMD: each thread evaluates one SA trajectory) or $N$ CPU processes (MIMD: each process runs one SA instance). The 2-opt distance matrix calculation also implements P-Data: $n^2$ threads (GPU) or vectorized operations (CPU NumPy) compute all pairwise distances in parallel.
 
-- **S-Task (Sequential Task)** decomposes algorithms into pipeline stages with sequential dependencies. The hybrid SA+2-opt implementation demonstrates S-Task decomposition: SA generates a candidate neighbor tour (Stage 1), the 2-opt kernel evaluates move cost on GPU (Stage 2), CPU logic applies Metropolis acceptance criterion (Stage 3). While stages execute sequentially, pipeline overlapping provides throughput gains when stage latencies differ—GPU evaluation ($\sim{100}$ μs) overlaps with CPU neighbor generation ($\sim{10}$ μs) through asynchronous kernel launches.
+  - **S-Task (Sequential Task)** decomposes algorithms into pipeline stages with sequential dependencies. The hybrid SA+2-opt implementation demonstrates S-Task decomposition: SA generates a candidate neighbor tour (Stage 1), the 2-opt kernel evaluates move cost on GPU (Stage 2), CPU logic applies Metropolis acceptance criterion (Stage 3). While stages execute sequentially, pipeline overlapping provides throughput gains when stage latencies differ—GPU evaluation ($\sim{100}$ μs) overlaps with CPU neighbor generation ($\sim{10}$ μs) through asynchronous kernel launches.
 
-- **P-Task (Parallel Task)** implements task parallelism requiring MIMD hardware since different algorithmic components execute distinct instruction sequences concurrently. In metaheuristic contexts, P-Task applies to hybrid methods where multiple neighborhood operators execute simultaneously (e.g., RandomSwap and Random2Opt neighbor generation in parallel threads) or cooperative search strategies where different metaheuristics share solution information \cite{alba2005parallel}.
+  - **P-Task (Parallel Task)** implements task parallelism requiring MIMD hardware since different algorithmic components execute distinct instruction sequences concurrently. In metaheuristic contexts, P-Task applies to hybrid methods where multiple neighborhood operators execute simultaneously (e.g., RandomSwap and Random2Opt neighbor generation in parallel threads) or cooperative search strategies where different metaheuristics share solution information \cite{alba2005parallel}.
 
-**Hardware-Algorithm Correspondence**
+    **Hardware-Algorithm Correspondence**
 
-The relationship between Flynn's hardware taxonomy and Crainic-Toulouse's algorithmic taxonomy is NOT bijective \cite{crainic2010parallel}:
+    The relationship between Flynn's hardware taxonomy and Crainic-Toulouse's algorithmic taxonomy is NOT bijective \cite{crainic2010parallel}:
 
-- **SIMD hardware (GPU)** can implement **P-Data** algorithms (multistart SA: $N$ threads = $N$ instances; 2-opt evaluation: $n^2$ threads = $n^2$ distance calculations) and data-parallel components of **S-Task** pipelines (Stage 2: parallel move evaluation).
+  - **SIMD hardware (GPU)** can implement **P-Data** algorithms (multistart SA: $N$ threads = $N$ instances; 2-opt evaluation: $n^2$ threads = $n^2$ distance calculations) and data-parallel components of **S-Task** pipelines (Stage 2: parallel move evaluation).
+    >[!warning]
+    > more like SIMT, not truly correct information, should be fixed.
 
-- **MIMD hardware (CPU)** supports **P-Data** (multistart via multiprocessing), **P-Task** (hybrid metaheuristics with concurrent components), and can simulate SIMD operations (NumPy vectorized distance calculations leverage SIMD CPU instructions internally).
+  - **MIMD hardware (CPU)** supports **P-Data** (multistart via multiprocessing), **P-Task** (hybrid metaheuristics with concurrent components), and can simulate SIMD operations (NumPy vectorized distance calculations leverage SIMD CPU instructions internally).
 
-- **Classification Purpose**: Crainic-Toulouse taxonomizes WHERE parallelism exists in the ALGORITHM structure (data vs task decomposition), while Flynn describes HOW HARDWARE EXECUTES that parallelism (instruction/data stream organization). A P-Data multistart algorithm may execute on SIMD GPU hardware ($N$ threads) or MIMD CPU hardware ($N$ processes) with different performance characteristics determined by memory bandwidth, synchronization overhead, and instruction throughput.
+  - **Classification Purpose**: Crainic-Toulouse taxonomizes WHERE parallelism exists in the ALGORITHM structure (data vs task decomposition), while Flynn describes HOW HARDWARE EXECUTES that parallelism (instruction/data stream organization). A P-Data multistart algorithm may execute on SIMD GPU hardware ($N$ threads) or MIMD CPU hardware ($N$ processes) with different performance characteristics determined by memory bandwidth, synchronization overhead, and instruction throughput.
 
-This distinction guides implementation decisions: P-Data strategies naturally map to GPU SIMD for embarrassingly parallel workloads (2-opt evaluation), while P-Task strategies require CPU MIMD for instruction-level independence (hybrid metaheuristics). The hybrid SA+2-opt implementation in this work strategically combines both: P-Data parallelism (distance calculations on GPU) with S-Task decomposition (sequential SA logic on CPU), leveraging the strengths of each hardware architecture \cite{alba2005parallel}.
+    This distinction guides implementation decisions: P-Data strategies naturally map to GPU SIMD for embarrassingly parallel workloads (2-opt evaluation), while P-Task strategies require CPU MIMD for instruction-level independence (hybrid metaheuristics). The hybrid SA+2-opt implementation in this work strategically combines both: P-Data parallelism (distance calculations on GPU) with S-Task decomposition (sequential SA logic on CPU), leveraging the strengths of each hardware architecture \cite{alba2005parallel}.
 
-##### **P-Data (Parallel Data):**
+  ##### **P-Data (Parallel Data):**
 
-Multiple independent algorithm instances execute concurrently on different initial solutions or data partitions. In the context of metaheuristics, P-Data corresponds to multistart methods where $N$ independent Simulated Annealing runs explore distinct regions of the solution space \cite{ali2010simulated}. Each instance maintains its own search trajectory with no inter-instance communication until final result aggregation.
+    Multiple independent algorithm instances execute concurrently on different initial solutions or data partitions. In the context of metaheuristics, P-Data corresponds to multistart methods where $N$ independent Simulated Annealing runs explore distinct regions of the solution space \cite{ali2010simulated}. Each instance maintains its own search trajectory with no inter-instance communication until final result aggregation.
 
-Ali \& Gabere \cite{ali2010simulated} provide statistical analysis of multistart SA convergence, investigating optimal restart conditions and temperature schedule configurations. Their approach focuses on **when to restart** and **how many independent runs** to allocate. Sonuc et al. \cite{sonuc2018cooperative}, in contrast, demonstrate **how to parallelize multistart SA on GPUs** with cooperative threads achieving $29\times$ speedup over single-core CPU on Quadratic Assignment Problem instances. While Ali's work addresses algorithmic strategy (restart policies, cooling schedules), Sonuc's contribution lies in efficient GPU implementation with thread cooperation—both approaches exemplify P-Data parallelism but at different abstraction levels.
+    Ali \& Gabere \cite{ali2010simulated} provide statistical analysis of multistart SA convergence, investigating optimal restart conditions and temperature schedule configurations. Their approach focuses on **when to restart** and **how many independent runs** to allocate. Sonuc et al. \cite{sonuc2018cooperative}, in contrast, demonstrate **how to parallelize multistart SA on GPUs** with cooperative threads achieving $29\times$ speedup over single-core CPU on Quadratic Assignment Problem instances. While Ali's work addresses algorithmic strategy (restart policies, cooling schedules), Sonuc's contribution lies in efficient GPU implementation with thread cooperation—both approaches exemplify P-Data parallelism but at different abstraction levels.
 
-Characteristics of P-Data implementations include:
+    Characteristics of P-Data implementations include:
 
-- **Embarrassingly parallel**: No communication between instances during search.
-- **Linear speedup potential**: In the absence of resource contention, adding $N$ independent runs provides $N \times {throughput}$.
-- **Exploration breadth**: Multiple starting points increase probability of finding global optimum.
+  - **Embarrassingly parallel**: No communication between instances during search.
+  - **Linear speedup potential**: In the absence of resource contention, adding $N$ independent runs provides $N \times {throughput}$.
+  - **Exploration breadth**: Multiple starting points increase probability of finding global optimum.
 
-Example (as will be investigated in future research): A multistart SA strategy launches $10$ independent SA processes, each starting from a different random tour. After all instances complete, the best solution among the $10$ results is selected.
+    Example (as will be investigated in future research): A multistart SA strategy launches $10$ independent SA processes, each starting from a different random tour. After all instances complete, the best solution among the $10$ results is selected.
 
 **Figure 2.4.2: P-Data Multistart Simulated Annealing**
 
