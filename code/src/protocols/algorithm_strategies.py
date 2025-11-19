@@ -29,7 +29,7 @@ See Also:
     - code/src/algorithms/compositional_cvrp_solver.py
 """
 
-from typing import Protocol, List, TYPE_CHECKING
+from typing import Protocol, List, TYPE_CHECKING, Tuple, Dict, Any
 import numpy as np
 from .backend import BackendModule
 
@@ -72,8 +72,8 @@ class BinPackingStrategy(Protocol):
         pack: Group customers into capacity-constrained bins
 
     Example (Single-depot CVRP):
-        >>> from src.protocols import ProblemContext
-        >>> from src.data import Problem
+        >>> from code.src.protocols import ProblemContext
+        >>> from code.src.data import Problem
         >>> import numpy as np
         >>>
         >>> problem = Problem(
@@ -177,7 +177,7 @@ class TspConstructionStrategy(Protocol):
         - SweepStrategy: Angular sorting from depot
 
     Example:
-        >>> from src.protocols import ProblemContext
+        >>> from code.src.protocols import ProblemContext
         >>> import numpy as np
         >>>
         >>> context = ProblemContext(problem, xp=np)
@@ -248,7 +248,7 @@ class TspImprovementStrategy(Protocol):
         - SimulatedAnnealing: Metaheuristic with probabilistic acceptance
 
     Example:
-        >>> from src.protocols import ProblemContext
+        >>> from code.src.protocols import ProblemContext
         >>> import numpy as np
         >>>
         >>> # Construct initial tour
@@ -373,7 +373,7 @@ class TspMetaheuristicStrategy(Protocol):
 
     **Example - Genetic Algorithm:**
     ```python
-    >>> from src.protocols import ProblemContext
+    >>> from code.src.protocols import ProblemContext
     >>> import numpy as np
     >>>
     >>> context = ProblemContext(problem, xp=np)
@@ -562,5 +562,32 @@ class ClusteringStrategy(Protocol):
 
         Raises:
             ValueError: If locations and demands have different lengths
+        """
+        ...
+
+
+# ==============================================================================
+# METAHEURISTIC STRATEGY PROTOCOL
+# ==============================================================================
+
+
+class MetaheuristicStrategy(Protocol):
+    """
+    Protocol for metaheuristic strategies.
+    """
+
+    def improve(
+        self, initial_tour: np.ndarray, distances: np.ndarray, xp: BackendModule
+    ) -> Tuple[np.ndarray, float]:
+        """
+        Improves a given tour using a metaheuristic strategy.
+
+        Args:
+            initial_tour (np.ndarray): The initial tour to improve.
+            distances (np.ndarray): The distance matrix.
+            xp: The backend module (NumPy or CuPy).
+
+        Returns:
+            A tuple containing the improved tour and its total distance.
         """
         ...

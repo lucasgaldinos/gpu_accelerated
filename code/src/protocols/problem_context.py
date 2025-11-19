@@ -26,8 +26,8 @@ Design Philosophy:
 - Hybrid Bridge Compatible: Supports both CPU-only (S-Task) and GPU (P-Task)
 
 Example:
-    >>> from src.data_models.problem import Problem
-    >>> from src.protocols.problem_context import ProblemContext
+    >>> from code.src.data_models.problem import Problem
+    >>> from code.src.protocols.problem_context import ProblemContext
     >>> import numpy as np
     >>>
     >>> # Load problem

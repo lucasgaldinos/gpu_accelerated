@@ -23,23 +23,7 @@ References:
 from typing import Any
 import numpy as np
 
-# Note: SelectionStrategy import is used for protocol conformance documentation
-# Pylint/mypy may warn "unused import" but it's intentional for type clarity
-from ...protocols.strategy_protocols import SelectionStrategy  # noqa: F401
-from ...utils.strategy_registry import StrategyRegistry
 
-
-@StrategyRegistry.register(
-    category="selection",
-    name="tournament",
-    description="k-tournament selection: sample k individuals, return best",
-    reference="Miller & Goldberg (1995) - Genetic Algorithms, Tournament Selection, and the Effects of Noise",
-    complexity_time="O(n_select × k)",
-    complexity_space="O(k)",
-    parameters={
-        "tournament_size": "Number of competitors per tournament (k ≥ 2)",
-    },
-)
 class TournamentSelection:
     """
     k-tournament selection: sample k random individuals, select best.
@@ -144,15 +128,6 @@ class TournamentSelection:
         return selected_indices
 
 
-@StrategyRegistry.register(
-    category="selection",
-    name="roulette_wheel",
-    description="Fitness-proportional selection with binary search on cumulative distribution",
-    reference="Goldberg (1989) - Genetic Algorithms in Search, Optimization, and Machine Learning",
-    complexity_time="O(pop_size + n_select × log(pop_size))",
-    complexity_space="O(pop_size)",
-    parameters={},
-)
 class RouletteWheelSelection:
     """
     Fitness-proportional selection (roulette wheel).
@@ -261,15 +236,6 @@ class RouletteWheelSelection:
         return selected_indices
 
 
-@StrategyRegistry.register(
-    category="selection",
-    name="crowding",
-    description="Deterministic sequential selection for steady-state GA with diversity maintenance",
-    reference="De Jong (1975) / Mahfoud (1992) - Niching Methods for Genetic Algorithms",
-    complexity_time="O(n_select)",
-    complexity_space="O(n_select)",
-    parameters={},
-)
 class CrowdingSelection:
     """
     Crowding selection for steady-state GA (deterministic replacement).

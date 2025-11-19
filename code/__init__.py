@@ -1,1 +1,1 @@
-"""Code package for GPU-accelerated metaheuristics."""
+# This file makes the 'code' directory a Python package.

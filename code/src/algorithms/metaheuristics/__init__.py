@@ -1,15 +1,27 @@
 """
-Metaheuristic algorithms for TSP and CVRP.
+ISO-Algorithmic Genetic Algorithm variants for Chapter 4 validation.
 
-This module provides population-based and trajectory-based metaheuristics
-for solving routing problems.
+This module provides genetic algorithm implementations with different
+GPU acceleration strategies for memory transfer optimization research.
 
 Classes:
-    SimulatedAnnealing: Single-trajectory probabilistic search
-    GeneticAlgorithm: Population-based evolutionary algorithm with OX crossover
+    GeneticAlgorithmBase: Abstract base enforcing ISO-algorithmic flow
+    GeneticAlgorithmCPU: Pure NumPy CPU implementation
+    GeneticAlgorithmHybridNaive: Individual GPU kernel launches (bottleneck demo)
+    GeneticAlgorithmHybridOptimized: Batch GPU with kernel chaining
+    GeneticAlgorithmFullGPU: Fujimoto's full-GPU kernel adapter
 """
 
-from .simulated_annealing import SimulatedAnnealing
-from .genetic_algorithm import GeneticAlgorithm
+from .genetic_algorithm_base import GeneticAlgorithmBase
+from .genetic_algorithm_cpu import GeneticAlgorithmCPU
+from .genetic_algorithm_hybrid_naive import GeneticAlgorithmHybridNaive
+from .genetic_algorithm_hybrid_optimized import GeneticAlgorithmHybridOptimized
+from .genetic_algorithm_full_gpu_iso import GeneticAlgorithmFullGPU
 
-__all__ = ["SimulatedAnnealing", "GeneticAlgorithm"]
+__all__ = [
+    "GeneticAlgorithmBase",
+    "GeneticAlgorithmCPU",
+    "GeneticAlgorithmHybridNaive",
+    "GeneticAlgorithmHybridOptimized",
+    "GeneticAlgorithmFullGPU",
+]

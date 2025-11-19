@@ -7,12 +7,21 @@ Implements the statistical methodology from Section 3.5.3, including:
 - Effect size calculation (Cohen's d)
 - Bootstrap confidence intervals
 - Multiple comparison correction (Holm-Bonferroni)
+- Friedman test for multiple algorithm comparison
+- Nemenyi post-hoc test for pairwise rankings
 """
 
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 import numpy as np
 from scipy import stats
+
+try:
+    import scikit_posthocs as sp
+
+    POSTHOCS_AVAILABLE = True
+except ImportError:
+    POSTHOCS_AVAILABLE = False
 
 
 @dataclass
@@ -396,3 +405,175 @@ class StatisticalAnalyzer:
                 break
 
         return results
+
+    def friedman_test(self, data_sets: List[np.ndarray]) -> Dict[str, float]:
+        """
+        Perform Friedman non-parametric test to compare k related samples.
+
+        The Friedman test is used when comparing the performance (e.g., final cost,
+        optimality gap) of multiple algorithms (k > 2) across the same set of problem
+        instances. It's the non-parametric alternative to repeated measures ANOVA.
+
+        Following Section 3.5.3 Step 5, this test answers: "Do at least two algorithms
+        differ significantly in their performance across instances?"
+
+        If null hypothesis is rejected (p < α), proceed with post-hoc test (Nemenyi)
+        to identify which specific pairs differ significantly.
+
+        Args:
+            data_sets: List of arrays, each containing results for one algorithm
+                      across all problem instances (paired/related samples).
+                      Example: [algo1_gaps, algo2_gaps, algo3_gaps, algo4_gaps]
+                      where each array has shape (n_instances,)
+
+        Returns:
+            Dictionary with:
+                - 'statistic': Friedman test statistic (chi-square distribution)
+                - 'p_value': Probability of observing results under null hypothesis
+                - 'significant': Boolean indicating if p < alpha
+                - 'post_hoc_required': Whether Nemenyi test should be performed
+
+        Raises:
+            ValueError: If data sets have different lengths (must be paired)
+
+        Example:
+            >>> # Compare 4 algorithms on 12 instances
+            >>> naive_gaps = np.array([5.2, 3.8, 7.1, ...])  # 12 instances
+            >>> optimized_gaps = np.array([2.1, 1.5, 3.2, ...])
+            >>> fullgpu_gaps = np.array([1.8, 1.2, 2.9, ...])
+            >>> cpu_gaps = np.array([5.5, 4.1, 7.3, ...])
+            >>> result = analyzer.friedman_test([
+            ...     naive_gaps, optimized_gaps, fullgpu_gaps, cpu_gaps
+            ... ])
+            >>> print(f"p-value: {result['p_value']:.4f}")
+            >>> if result['post_hoc_required']:
+            ...     print("Perform Nemenyi post-hoc test")
+        """
+        # Validate input
+        if len(set(len(d) for d in data_sets)) > 1:
+            raise ValueError(
+                "All data_sets must have the same number of observations (paired samples). "
+                f"Got lengths: {[len(d) for d in data_sets]}"
+            )
+
+        if len(data_sets) < 3:
+            raise ValueError(
+                "Friedman test requires at least 3 algorithms (k >= 3). "
+                f"Got {len(data_sets)} algorithms."
+            )
+
+        # Perform Friedman test
+        # scipy.stats.friedmanchisquare expects *args, not a list
+        statistic, p_value = stats.friedmanchisquare(*data_sets)
+
+        is_significant = p_value < self.alpha
+
+        return {
+            "statistic": float(statistic),
+            "p_value": float(p_value),
+            "significant": is_significant,
+            "post_hoc_required": is_significant,
+        }
+
+    def nemenyi_posthoc(
+        self,
+        data_sets: List[np.ndarray],
+        algorithm_names: Optional[List[str]] = None,
+    ) -> Dict[str, any]:
+        """
+        Perform Nemenyi post-hoc test after significant Friedman result.
+
+        The Nemenyi test is used to identify which specific pairs of algorithms
+        differ significantly after the Friedman test rejects the null hypothesis.
+        It's analogous to Tukey's HSD for parametric ANOVA.
+
+        Following Section 3.5.3 Step 5, this test controls family-wise error rate
+        when making all possible pairwise comparisons.
+
+        Args:
+            data_sets: Same list of arrays used in Friedman test
+            algorithm_names: Optional list of algorithm names for readable output
+                           (default: ["Alg1", "Alg2", ..., "AlgK"])
+
+        Returns:
+            Dictionary with:
+                - 'p_values_matrix': 2D array of pairwise p-values (k × k)
+                - 'significant_pairs': List of (i, j, p_value) tuples for significant pairs
+                - 'algorithm_names': List of algorithm names used
+                - 'critical_distance': Nemenyi critical distance at alpha level
+
+        Raises:
+            ImportError: If scikit-posthocs not installed
+            ValueError: If data sets have different lengths
+
+        Example:
+            >>> # After significant Friedman test
+            >>> result = analyzer.nemenyi_posthoc(
+            ...     [naive_gaps, optimized_gaps, fullgpu_gaps, cpu_gaps],
+            ...     algorithm_names=["Naive", "Optimized", "FullGPU", "CPU"]
+            ... )
+            >>> for i, j, p_val in result['significant_pairs']:
+            ...     name_i = result['algorithm_names'][i]
+            ...     name_j = result['algorithm_names'][j]
+            ...     print(f"{name_i} vs {name_j}: p={p_val:.4f} *")
+        """
+        if not POSTHOCS_AVAILABLE:
+            raise ImportError(
+                "scikit-posthocs is required for Nemenyi test. "
+                "Install with: pip install scikit-posthocs"
+            )
+
+        # Validate input
+        if len(set(len(d) for d in data_sets)) > 1:
+            raise ValueError(
+                "All data_sets must have the same number of observations. "
+                f"Got lengths: {[len(d) for d in data_sets]}"
+            )
+
+        k = len(data_sets)
+        if algorithm_names is None:
+            algorithm_names = [f"Alg{i + 1}" for i in range(k)]
+        elif len(algorithm_names) != k:
+            raise ValueError(
+                f"algorithm_names length ({len(algorithm_names)}) "
+                f"must match data_sets length ({k})"
+            )
+
+        # Prepare data in format expected by scikit-posthocs
+        # Need to convert to long-form DataFrame or use array directly
+        n_instances = len(data_sets[0])
+
+        # Stack data: shape (n_instances, k_algorithms)
+        data_array = np.column_stack(data_sets)
+
+        # Perform Nemenyi test
+        # Returns a symmetric matrix of p-values
+        import scikit_posthocs as sp
+
+        p_matrix = sp.posthoc_nemenyi_friedman(data_array)
+
+        # Convert to numpy array
+        p_values_matrix = p_matrix.values
+
+        # Extract significant pairs (upper triangle only to avoid duplicates)
+        significant_pairs = []
+        for i in range(k):
+            for j in range(i + 1, k):
+                p_val = p_values_matrix[i, j]
+                if p_val < self.alpha:
+                    significant_pairs.append((i, j, float(p_val)))
+
+        # Calculate critical distance for interpretation
+        # CD = q_α * sqrt(k(k+1) / (6*n))
+        # where q_α is studentized range statistic
+        from scipy.stats import studentized_range
+
+        q_critical = studentized_range.ppf(1 - self.alpha, k, np.inf)
+        critical_distance = q_critical * np.sqrt(k * (k + 1) / (6 * n_instances))
+
+        return {
+            "p_values_matrix": p_values_matrix,
+            "significant_pairs": significant_pairs,
+            "algorithm_names": algorithm_names,
+            "critical_distance": float(critical_distance),
+        }

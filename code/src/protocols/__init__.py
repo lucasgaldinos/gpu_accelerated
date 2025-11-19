@@ -1,11 +1,12 @@
 """
-Backend protocols for type safety across NumPy/CuPy implementations.
+Protocols for ISO-algorithmic Genetic Algorithms.
 
-This package defines typing.Protocol interfaces that ensure type safety
-when switching between NumPy (CPU) and CuPy (GPU) backends.
+This package defines protocol interfaces for:
+- Problem context (distance matrices, backend selection)
+- Algorithm strategies (metaheuristics base protocol)
 """
 
-from .backend import BackendModule
-from .bin_packing_protocol import BinPackingStrategy
+from .problem_context import ProblemContext
+from .algorithm_strategies import MetaheuristicStrategy
 
-__all__ = ["BackendModule", "BinPackingStrategy"]
+__all__ = ["ProblemContext", "MetaheuristicStrategy"]

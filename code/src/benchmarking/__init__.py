@@ -1,47 +1,17 @@
 """
-Benchmarking infrastructure for statistically rigorous performance evaluation.
+Statistical analysis for Chapter 4 validation benchmarks.
 
-This module implements the experimental design from Section 3.5, providing:
-- Multi-run orchestration with seed management
-- Convergence tracking and metrics collection
-- Statistical analysis (normality tests, hypothesis tests, effect sizes)
-- Report generation (tables, plots, LaTeX/Markdown output)
+This module provides statistical testing functions for comparing
+ISO-algorithmic GA variants:
+- Friedman test for multiple algorithm comparison
+- Nemenyi post-hoc test for pairwise comparison
+- Wilcoxon signed-rank test
+- Effect size calculation (Cohen's d)
 
-Architecture:
-    - config.py: Data structures for benchmark configuration and results
-    - runner.py: BenchmarkRunner orchestrator for multi-run execution
-    - collectors.py: Metrics collection and convergence tracking
-    - statistics.py: Statistical analysis functions (scipy integration)
-    - reporting.py: Table and plot generation
-    - utils.py: Helper functions (seed generation, memory monitoring)
-
-Usage Example:
-    >>> from benchmarking import BenchmarkRunner, BenchmarkConfig
-    >>> config = BenchmarkConfig(
-    ...     algorithm="SA",
-    ...     backend="numpy",
-    ...     instance_name="berlin52",
-    ...     num_repetitions=30
-    ... )
-    >>> runner = BenchmarkRunner()
-    >>> results = runner.run_benchmark(config, problem)
-    >>> runner.export_results("results.csv")
+See Also:
+    - statistics.py: StatisticalAnalyzer class implementation
 """
 
-from .config import BenchmarkConfig, BenchmarkResult, ComparisonPair
-from .runner import BenchmarkRunner
-from .collectors import ConvergenceTracker, MetricsCollector
-from .statistics import StatisticalAnalyzer, StatisticalSummary
-from .reporting import ReportGenerator
+from .statistics import StatisticalAnalyzer
 
-__all__ = [
-    "BenchmarkConfig",
-    "BenchmarkResult",
-    "ComparisonPair",
-    "BenchmarkRunner",
-    "ConvergenceTracker",
-    "MetricsCollector",
-    "StatisticalAnalyzer",
-    "StatisticalSummary",
-    "ReportGenerator",
-]
+__all__ = ["StatisticalAnalyzer"]

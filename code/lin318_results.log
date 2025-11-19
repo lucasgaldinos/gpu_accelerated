@@ -1,0 +1,47 @@
+nohup: ignoring input
+2025-11-19 09:53:49,785 - INFO - ================================================================================
+2025-11-19 09:53:49,785 - INFO - CHAPTER 4 VALIDATION: ISO-ALGORITHMIC GA BENCHMARK
+2025-11-19 09:53:49,785 - INFO - ================================================================================
+2025-11-19 09:53:49,785 - INFO - Configuration:
+2025-11-19 09:53:49,785 - INFO -   Skip CPU: True
+2025-11-19 09:53:49,785 - INFO -   Repetitions: 30
+2025-11-19 09:53:49,785 - INFO -   Instances: ['lin318']
+2025-11-19 09:53:49,785 - INFO - 
+2025-11-19 09:53:49,785 - INFO - 
+================================================================================
+2025-11-19 09:53:49,785 - INFO - BENCHMARK 2: lin318
+2025-11-19 09:53:49,786 - INFO - ================================================================================
+2025-11-19 09:53:50,302 - INFO - Problem: lin318
+2025-11-19 09:53:50,302 - INFO - Dimension: 318 cities
+2025-11-19 09:53:50,302 - INFO - Optimal: 42029
+2025-11-19 09:53:50,303 - INFO - Generations: 11341
+2025-11-19 09:53:50,303 - INFO - Repetitions: 30
+2025-11-19 09:53:50,303 - INFO - 
+2025-11-19 09:53:50,303 - INFO - GeneticAlgorithmHybridNaive initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-19 09:53:50,303 - INFO - Loaded two_opt_kernel for naive hybrid
+2025-11-19 09:53:50,303 - INFO - Running HybridNaive for 30 repetitions...
+2025-11-19 09:53:50,417 - INFO - Initializing population of size 256
+2025-11-19 09:53:50,500 - INFO - Initial best cost: 546684.00 (avg: 588943.84)
+2025-11-19 09:55:04,502 - INFO - No improvement for 50 generations. Stopping at generation 97
+2025-11-19 09:55:04,503 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=42957.00, improvement=92.14%, H2D=110.06MB, D2H=31.59MB, kernels=248320
+2025-11-19 09:55:04,503 - INFO - Initializing population of size 256
+2025-11-19 09:55:04,586 - INFO - Initial best cost: 542882.00 (avg: 587950.19)
+2025-11-19 09:56:14,547 - INFO - No improvement for 50 generations. Stopping at generation 91
+2025-11-19 09:56:14,547 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=42828.00, improvement=92.11%, H2D=103.25MB, D2H=29.63MB, kernels=232960
+2025-11-19 09:56:14,548 - INFO - Initializing population of size 256
+2025-11-19 09:56:14,613 - INFO - Initial best cost: 553753.00 (avg: 588722.91)
+2025-11-19 09:57:32,488 - INFO - Generation 100/11341: best=42394.00, avg=42394.00
+2025-11-19 09:57:56,815 - INFO - No improvement for 50 generations. Stopping at generation 135
+2025-11-19 09:57:56,815 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=42394.00, improvement=92.34%, H2D=153.17MB, D2H=43.96MB, kernels=345600
+2025-11-19 09:57:56,815 - INFO - Initializing population of size 256
+2025-11-19 09:57:56,901 - INFO - Initial best cost: 549739.00 (avg: 586884.29)
+2025-11-19 09:59:01,734 - INFO - No improvement for 50 generations. Stopping at generation 96
+2025-11-19 09:59:01,734 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=43285.00, improvement=92.13%, H2D=108.92MB, D2H=31.26MB, kernels=245760
+2025-11-19 09:59:01,734 - INFO - Initializing population of size 256
+2025-11-19 09:59:01,800 - INFO - Initial best cost: 543534.00 (avg: 587863.17)
+2025-11-19 10:00:10,366 - INFO - Generation 100/11341: best=42621.00, avg=42621.00
+2025-11-19 10:00:12,971 - INFO - No improvement for 50 generations. Stopping at generation 104
+2025-11-19 10:00:12,971 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=42621.00, improvement=92.16%, H2D=118.00MB, D2H=33.87MB, kernels=266240
+2025-11-19 10:00:12,971 - INFO -   Rep 5/30: cost=42621.00, gap=1.41%, time=71.24s
+2025-11-19 10:00:12,972 - INFO - Initializing population of size 256
+2025-11-19 10:00:13,026 - INFO - Initial best cost: 552864.00 (avg: 588699.93)

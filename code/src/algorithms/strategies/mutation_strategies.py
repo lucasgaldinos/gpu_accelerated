@@ -19,20 +19,7 @@ References:
 from typing import Any
 import numpy as np
 
-# Note: MutationOperator import is used for protocol conformance documentation
-from ...protocols.strategy_protocols import MutationOperator  # noqa: F401
-from ...utils.strategy_registry import StrategyRegistry
 
-
-@StrategyRegistry.register(
-    category="mutation",
-    name="swap",
-    description="Swap two random cities: simplest mutation with constant time complexity",
-    reference="Banzhaf (1990) - The Molecular Traveling Salesman",
-    complexity_time="O(1)",
-    complexity_space="O(n)",
-    parameters={},
-)
 class SwapMutation:
     """
     Swap two random cities in tour.
@@ -114,15 +101,6 @@ class SwapMutation:
         return mutated
 
 
-@StrategyRegistry.register(
-    category="mutation",
-    name="inversion",
-    description="Reverse random tour segment: medium disruption, related to 2-opt",
-    reference="Holland (1975) - Adaptation in Natural and Artificial Systems",
-    complexity_time="O(k)",
-    complexity_space="O(n)",
-    parameters={},
-)
 class InversionMutation:
     """
     Reverse random segment of tour (2-opt style mutation).
@@ -203,15 +181,6 @@ class InversionMutation:
         return mutated
 
 
-@StrategyRegistry.register(
-    category="mutation",
-    name="insertion",
-    description="Remove city and reinsert elsewhere: medium disruption, preserves local structure",
-    reference="Fogel (1988) - An Evolutionary Approach to the Traveling Salesman Problem",
-    complexity_time="O(n)",
-    complexity_space="O(n)",
-    parameters={},
-)
 class InsertionMutation:
     """
     Remove city from tour and reinsert at different position.
