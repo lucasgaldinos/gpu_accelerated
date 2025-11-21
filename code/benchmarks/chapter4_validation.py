@@ -126,9 +126,9 @@ PROBLEM_SET_FULL = [
     {"name": "kroD100", "optimal": 21294, "size": 100},
     {"name": "kroE100", "optimal": 22068, "size": 100},
     {"name": "rd100", "optimal": 7910, "size": 100},
+    # Medium problems (100-200 cities) - Balanced runtime/difficulty
     {"name": "eil101", "optimal": 629, "size": 101},
     {"name": "lin105", "optimal": 14379, "size": 105},
-    # Medium problems (100-200 cities) - Balanced runtime/difficulty
     {"name": "pr107", "optimal": 44303, "size": 107},
     {"name": "pr124", "optimal": 59030, "size": 124},
     {"name": "bier127", "optimal": 118282, "size": 127},
@@ -156,16 +156,18 @@ PROBLEM_SET_FULL = [
     {"name": "pr1002", "optimal": 259045, "size": 1002},
 ]
 
-# For testing: use only first 2 problems
-PROBLEM_SET = PROBLEM_SET_FULL[:2]  # Only eil51 and berlin52
+# Problem set: Default to full benchmark (38 problems)
+# Can be overridden to 2 problems with --test-mode flag
+PROBLEM_SET = PROBLEM_SET_FULL
 
 
 # ============================================================================
 # CHECKPOINT SYSTEM (Fault Tolerance)
 # ============================================================================
 
-CHECKPOINT_DIR = Path("results/checkpoints")
-PROBLEM_STATS_DIR = Path("results/problem_statistics")
+SCRIPT_DIR = Path(__file__).parent
+CHECKPOINT_DIR = SCRIPT_DIR / "results" / "checkpoints"
+PROBLEM_STATS_DIR = SCRIPT_DIR / "results" / "problem_statistics"
 
 
 def ensure_checkpoint_dirs():
@@ -249,7 +251,11 @@ def numpy_to_json_converter(obj):
     if hasattr(obj, "tolist"):  # numpy array
         return obj.tolist()
     elif hasattr(obj, "item"):  # numpy scalar
-        return obj.item()
+        val = obj.item()
+        # Handle NaN: convert to null for valid JSON (RFC 8259 compliance)
+        if isinstance(val, float) and (val != val):  # NaN check
+            return None
+        return val
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
@@ -271,6 +277,10 @@ def save_checkpoint_atomic(filepath: Path, results: Dict[str, Any]):
         with os.fdopen(temp_fd, "w") as f:
             # Use default converter to handle all numpy types
             json.dump(results, f, indent=2, default=numpy_to_json_converter)
+            f.flush()  # Flush Python buffers
+            os.fsync(
+                f.fileno()
+            )  # Ensure OS writes to disk (prevents corruption on disk full)
 
         # Atomic rename (POSIX guarantees atomicity)
         os.replace(temp_path, filepath)
@@ -430,9 +440,11 @@ def run_single_algorithm(
         "final_costs": [],
         "gaps": [],
         "improvements": [],
+        "generations": [],
+        "stop_reasons": [],
         "h2d_bytes": [],
         "d2h_bytes": [],
-        "kernel_launches": [],
+        "kernel_launches": [],  # Will store Python ints to avoid overflow
         "best_tours": [],
     }
 
@@ -462,12 +474,15 @@ def run_single_algorithm(
             gap = (final_cost - optimal_cost) / optimal_cost * 100
             improvement = (initial_cost - final_cost) / initial_cost * 100
             generations = stats.get("generations_completed", 0)
+            stop_reason = stats.get("stop_reason", "completed")
 
             results["times"].append(elapsed)
             results["initial_costs"].append(initial_cost)
             results["final_costs"].append(final_cost)
             results["gaps"].append(gap)
             results["improvements"].append(improvement)
+            results["generations"].append(generations)
+            results["stop_reasons"].append(stop_reason)
             results["h2d_bytes"].append(stats.get("h2d_bytes", 0))
             results["d2h_bytes"].append(stats.get("d2h_bytes", 0))
             results["kernel_launches"].append(stats.get("kernel_launches", 0))
@@ -485,15 +500,26 @@ def run_single_algorithm(
             import traceback
 
             traceback.print_exc()
+            # CRITICAL: Append to ALL lists to maintain synchronization
             results["times"].append(np.nan)
+            results["initial_costs"].append(np.nan)
             results["final_costs"].append(np.nan)
             results["gaps"].append(np.nan)
+            results["improvements"].append(np.nan)
+            results["generations"].append(0)
+            results["stop_reasons"].append("error")
+            results["h2d_bytes"].append(0)
+            results["d2h_bytes"].append(0)
+            results["kernel_launches"].append(0)
+            results["best_tours"].append(None)
 
     # Calculate statistics
     times = np.array(results["times"])
+    initial_costs_arr = np.array(results["initial_costs"])
     final_costs = np.array(results["final_costs"])
     gaps = np.array(results["gaps"])
     improvements = np.array(results["improvements"])
+    generations_arr = np.array(results["generations"])
     h2d = np.array(results["h2d_bytes"])
     d2h = np.array(results["d2h_bytes"])
 
@@ -514,12 +540,20 @@ def run_single_algorithm(
         "std_cost": np.nanstd(final_costs),
         "best_cost": np.nanmin(final_costs),
         "worst_cost": np.nanmax(final_costs),
+        # Initial costs
+        "mean_initial_cost": np.nanmean(initial_costs_arr),
+        "std_initial_cost": np.nanstd(initial_costs_arr),
         # Gap to optimal
         "mean_gap": np.nanmean(gaps),
         "std_gap": np.nanstd(gaps),
         "best_gap": np.nanmin(gaps),
         # Improvement from initial
         "mean_improvement": np.nanmean(improvements),
+        # Convergence metrics
+        "mean_generations": np.nanmean(generations_arr),
+        "std_generations": np.nanstd(generations_arr),
+        "min_generations": np.nanmin(generations_arr),
+        "max_generations": np.nanmax(generations_arr),
         # Memory transfers
         "mean_h2d_mb": np.nanmean(h2d) / 1e6,
         "mean_d2h_mb": np.nanmean(d2h) / 1e6,
@@ -528,8 +562,15 @@ def run_single_algorithm(
         "mean_kernels": np.nanmean(results["kernel_launches"]),
         # Raw data for statistical tests
         "raw_times": times[valid_mask],
+        "raw_initial_costs": initial_costs_arr[valid_mask],
         "raw_costs": final_costs[valid_mask],
         "raw_gaps": gaps[valid_mask],
+        "raw_generations": generations_arr[valid_mask],
+        "raw_stop_reasons": [
+            results["stop_reasons"][i] for i in range(len(valid_mask)) if valid_mask[i]
+        ],
+        # Problem metadata (will be added by caller)
+        # Algorithm parameters (will be added by caller)
     }
 
     logging.info(
@@ -568,9 +609,12 @@ def holm_bonferroni_correction(p_values: List[float], alpha: float = 0.05):
     # Reject hypotheses where p < critical value
     reject_sorted = sorted_pvals < critical_values
 
-    # Adjusted p-values (conservative)
-    pvals_corrected_sorted = np.minimum.accumulate((n - np.arange(n)) * sorted_pvals)
-    pvals_corrected_sorted = np.minimum(pvals_corrected_sorted, 1.0)  # Cap at 1.0
+    # Adjusted p-values (step-down procedure)
+    # CRITICAL: Must use maximum.accumulate for monotonicity (p_adj must be non-decreasing)
+    raw_adjusted = np.minimum(
+        (n - np.arange(n)) * sorted_pvals, 1.0
+    )  # Clip each to 1.0
+    pvals_corrected_sorted = np.maximum.accumulate(raw_adjusted)  # Enforce monotonicity
 
     # Restore original order
     reject = np.zeros(n, dtype=bool)
@@ -603,19 +647,36 @@ def perform_statistical_analysis(
     problem_name: str,
     optimal_cost: float,
     results: Dict[str, Dict[str, Any]],
-):
+) -> Dict[str, Any]:
     """Perform statistical analysis on results for a single problem.
 
     Args:
         problem_name: Name of TSPLIB instance
         optimal_cost: Known optimal solution
         results: Dictionary of algorithm results
+
+    Returns:
+        Dictionary containing all statistical test results
     """
     logging.info(f"\nStatistical Analysis: {problem_name}")
     logging.info(SHORT_SEP)
 
     analyzer = StatisticalAnalyzer()
     algorithm_names = list(results.keys())
+
+    # Guard against empty algorithm list (e.g., all checkpoints failed validation)
+    if len(algorithm_names) < 2:
+        logging.warning(
+            f"Skipping statistical analysis for {problem_name}: "
+            f"only {len(algorithm_names)} algorithm(s) available (need ≥2)"
+        )
+        return {
+            "problem_name": problem_name,
+            "optimal_cost": optimal_cost,
+            "error": "insufficient_data",
+            "available_algorithms": algorithm_names,
+        }
+
     cost_data = [
         np.array(_get_data_field(results[name], "costs")) for name in algorithm_names
     ]
@@ -629,6 +690,19 @@ def perform_statistical_analysis(
         logging.info(f"  p-value: {friedman_result['p_value']:.6f}")
         logging.info(f"  Significant: {friedman_result['significant']}")
 
+        # Calculate mean ranks for interpretation (standard Friedman output)
+        from scipy.stats import rankdata
+
+        mean_ranks = {}
+        n_obs = len(cost_data[0])
+        for i, name in enumerate(algorithm_names):
+            ranks = []
+            for obs_idx in range(n_obs):
+                obs_costs = [cost_data[j][obs_idx] for j in range(len(algorithm_names))]
+                obs_ranks = rankdata(obs_costs, method="average")
+                ranks.append(obs_ranks[i])
+            mean_ranks[name] = float(np.mean(ranks))
+
         # Nemenyi post-hoc if significant
         if friedman_result["post_hoc_required"]:
             logging.info("\nNemenyi Post-Hoc Test:")
@@ -638,16 +712,21 @@ def perform_statistical_analysis(
                 f"  Critical distance: {nemenyi_result['critical_distance']:.4f}"
             )
             logging.info("  Mean ranks:")
-            for name, rank in nemenyi_result["mean_ranks"].items():
+            for name, rank in mean_ranks.items():
                 logging.info(f"    {name}: {rank:.2f}")
 
-            logging.info("\n  Pairwise comparisons:")
-            for comp in nemenyi_result["pairwise_comparisons"]:
-                logging.info(
-                    f"    {comp['algorithm1']} vs {comp['algorithm2']}: "
-                    f"rank_diff={comp['rank_difference']:.2f}, "
-                    f"significant={comp['significant']}"
-                )
+            logging.info("\n  Significant pairwise differences:")
+            if nemenyi_result["significant_pairs"]:
+                for i, j, p_val in nemenyi_result["significant_pairs"]:
+                    name_i = nemenyi_result["algorithm_names"][i]
+                    name_j = nemenyi_result["algorithm_names"][j]
+                    rank_diff = abs(mean_ranks[name_i] - mean_ranks[name_j])
+                    logging.info(
+                        f"    {name_i} vs {name_j}: "
+                        f"rank_diff={rank_diff:.2f}, p={p_val:.4f}"
+                    )
+            else:
+                logging.info("    None (no significant differences detected)")
 
     # Pairwise comparisons with proper statistical tests
     logging.info("\nPairwise Comparisons:")
@@ -668,6 +747,17 @@ def perform_statistical_analysis(
                 metric_name="cost",
             )
             comparisons.append(summary)
+
+            # Handle degenerate case (zero variance) with special messaging
+            if summary.test_used == "no_test_needed":
+                logging.info(f"  {name1} vs {name2}:")
+                logging.info(f"    All measurements identical (no variance)")
+                logging.info(f"    Mean {name1}: {summary.mean_a:.2f}")
+                logging.info(f"    Mean {name2}: {summary.mean_b:.2f}")
+                logging.info(
+                    f"    No statistical test needed - algorithms performed identically"
+                )
+                continue
 
             logging.info(f"  {name1} vs {name2}:")
             logging.info(f"    Normality (Shapiro-Wilk):")
@@ -741,6 +831,77 @@ def perform_statistical_analysis(
 
     logging.info("")
 
+    # BUILD STATISTICAL RESULTS DICTIONARY TO RETURN
+    statistical_results = {
+        "problem_name": problem_name,
+        "optimal_cost": optimal_cost,
+        "baseline_algorithm": baseline_name,
+    }
+
+    # Add Friedman test results if applicable
+    if len(algorithm_names) >= 3:
+        statistical_results["friedman_test"] = {
+            "statistic": float(friedman_result["statistic"]),
+            "p_value": float(friedman_result["p_value"]),
+            "significant": bool(friedman_result["significant"]),
+            "post_hoc_required": bool(friedman_result["post_hoc_required"]),
+        }
+
+        # Add Nemenyi results if performed
+        if friedman_result["post_hoc_required"] and "nemenyi_result" in locals():
+            statistical_results["nemenyi_posthoc"] = {
+                "critical_distance": float(nemenyi_result["critical_distance"]),
+                "mean_ranks": mean_ranks,
+                "algorithm_names": nemenyi_result["algorithm_names"],
+                "significant_pairs": [
+                    {
+                        "algorithm_i": nemenyi_result["algorithm_names"][i],
+                        "algorithm_j": nemenyi_result["algorithm_names"][j],
+                        "p_value": float(p_val),
+                        "rank_difference": abs(
+                            mean_ranks[nemenyi_result["algorithm_names"][i]]
+                            - mean_ranks[nemenyi_result["algorithm_names"][j]]
+                        ),
+                    }
+                    for i, j, p_val in nemenyi_result["significant_pairs"]
+                ],
+            }
+
+    # Add pairwise comparison results
+    statistical_results["pairwise_comparisons"] = []
+    for i, comp in enumerate(comparisons):
+        comparison_dict = {
+            "comparison": comp.comparison_label,
+            "test_used": comp.test_used,
+            "p_value": float(comp.p_value),
+            "mean_difference": float(comp.mean_difference),
+            "ci_95_lower": float(comp.ci_95_difference[0]),
+            "ci_95_upper": float(comp.ci_95_difference[1]),
+            "cohens_d": float(comp.effect_size),
+            "normality_p_value_a": float(comp.normality_p_value_a),
+            "normality_p_value_b": float(comp.normality_p_value_b),
+        }
+
+        # Add corrected p-value if available
+        if len(comparisons) > 1 and i < len(pvals_corrected):
+            comparison_dict["p_value_corrected"] = float(pvals_corrected[i])
+            comparison_dict["significant_after_correction"] = bool(reject[i])
+
+        # Effect size interpretation
+        abs_d = abs(comp.effect_size)
+        if abs_d < 0.2:
+            comparison_dict["effect_interpretation"] = "negligible"
+        elif abs_d < 0.5:
+            comparison_dict["effect_interpretation"] = "small"
+        elif abs_d < 0.8:
+            comparison_dict["effect_interpretation"] = "medium"
+        else:
+            comparison_dict["effect_interpretation"] = "large"
+
+        statistical_results["pairwise_comparisons"].append(comparison_dict)
+
+    return statistical_results
+
 
 def perform_cross_problem_analysis(all_results: Dict[str, Dict[str, Dict[str, Any]]]):
     """Perform cross-problem statistical analysis."""
@@ -760,17 +921,39 @@ def perform_cross_problem_analysis(all_results: Dict[str, Dict[str, Dict[str, An
     # Aggregate statistics per algorithm
     logging.info("Aggregate Statistics (across all problems):")
     logging.info(SHORT_SEP)
+
+    # Determine universal baseline (HybridNaive preferred, exists for all sizes)
+    universal_baseline = (
+        "HybridNaive" if "HybridNaive" in algorithm_names else algorithm_names[0]
+    )
+
     for algorithm in algorithm_names:
         gaps = []
-        times = []
+        speedups = []  # Normalized speedup vs baseline
+
         for problem in problem_names:
             gaps.extend(_get_data_field(all_results[problem][algorithm], "gaps"))
-            times.extend(_get_data_field(all_results[problem][algorithm], "times"))
+
+            # Calculate speedup vs baseline for this problem
+            if algorithm != universal_baseline:
+                baseline_time = all_results[problem][universal_baseline]["mean_time"]
+                algo_time = all_results[problem][algorithm]["mean_time"]
+                if algo_time > 0:
+                    speedups.append(baseline_time / algo_time)
+
+        # Geometric mean for speedups (proper aggregation across problem scales)
+        if speedups:
+            geomean_speedup = np.exp(np.mean(np.log(speedups)))
+            speedup_str = (
+                f", geomean_speedup={geomean_speedup:.2f}× vs {universal_baseline}"
+            )
+        else:
+            speedup_str = " (baseline)"
 
         logging.info(
             f"{algorithm}: "
-            f"mean_gap={np.mean(gaps):.2f}%±{np.std(gaps):.2f}, "
-            f"mean_time={np.mean(times):.2f}s±{np.std(times):.2f}"
+            f"mean_gap={np.mean(gaps):.2f}%±{np.std(gaps):.2f}"
+            f"{speedup_str}"
         )
 
     # Friedman test across problems
@@ -873,23 +1056,23 @@ def generate_result_tables(
     )
     tex_lines.append("\\midrule")
 
-    # Determine baseline algorithm for speedup calculation
-    # Priority: CPU > HybridNaive > first algorithm
+    # Universal baseline: HybridNaive (exists for all problem sizes)
+    # This ensures consistent speedup interpretation across entire table
+    baseline_algorithm = "HybridNaive"
     baseline_times = {}
-    baseline_algorithm = None
 
     for problem in problem_names:
-        if "CPU" in all_results[problem]:
-            baseline_times[problem] = all_results[problem]["CPU"]["mean_time"]
-            baseline_algorithm = "CPU"
-        elif "HybridNaive" in all_results[problem]:
-            baseline_times[problem] = all_results[problem]["HybridNaive"]["mean_time"]
-            baseline_algorithm = "HybridNaive"
+        if baseline_algorithm in all_results[problem]:
+            baseline_times[problem] = all_results[problem][baseline_algorithm][
+                "mean_time"
+            ]
         else:
-            # Use first available algorithm
+            # Fallback if baseline doesn't exist (shouldn't happen with HybridNaive)
             first_alg = next(iter(all_results[problem].keys()))
             baseline_times[problem] = all_results[problem][first_alg]["mean_time"]
-            baseline_algorithm = first_alg
+            logging.warning(
+                f"Baseline {baseline_algorithm} not found for {problem}, using {first_alg}"
+            )
 
     # Data rows
     for problem in problem_names:
@@ -908,9 +1091,14 @@ def generate_result_tables(
                     speedup = "—"
                     tex_speedup = "—"
                 else:
-                    speedup_val = baseline_times[problem] / r["mean_time"]
-                    speedup = f"{speedup_val:.2f}×"
-                    tex_speedup = f"{speedup_val:.2f}$\\times$"
+                    # Guard against division by zero for very fast algorithms
+                    if r["mean_time"] < 1e-6:  # < 1 microsecond
+                        speedup = "—"  # Display as em dash
+                        tex_speedup = "—"
+                    else:
+                        speedup_val = baseline_times[problem] / r["mean_time"]
+                        speedup = f"{speedup_val:.2f}×"
+                        tex_speedup = f"{speedup_val:.2f}$\\times$"
             else:
                 speedup = "—"
                 tex_speedup = "—"
@@ -1156,11 +1344,6 @@ def run_comprehensive_benchmark(args):
     Args:
         args: Command-line arguments with repetitions and skip_cpu settings
     """
-    # Setup logging
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
-
     # Determine which algorithms to run
     selected_algorithms = []
     for alg_name in ALGORITHM_CONFIGS.keys():
@@ -1200,12 +1383,12 @@ def run_comprehensive_benchmark(args):
         logging.info("=" * 80)
 
         # Determine which algorithms to run for this problem
-        # For small problems (n≤100): run all algorithms including CPU
+        # For small problems (n≤100): run selected algorithms (may exclude CPU if --skip-cpu)
         # For large problems (n>100): skip CPU (prohibitive runtime)
         if problem_size <= BENCHMARK_PARAMS["cpu_size_threshold"]:
             problem_algorithms = selected_algorithms
             logging.info(
-                f"Running all {len(selected_algorithms)} algorithms (n≤{BENCHMARK_PARAMS['cpu_size_threshold']})\n"
+                f"Running {len(problem_algorithms)} algorithm(s) (n≤{BENCHMARK_PARAMS['cpu_size_threshold']})\n"
             )
         else:
             problem_algorithms = [
@@ -1244,6 +1427,12 @@ def run_comprehensive_benchmark(args):
                 problem_results[problem_name][alg_name] = load_checkpoint(
                     checkpoint_path
                 )
+
+                # CRITICAL: Cleanup GPU memory even when loading from checkpoint
+                # Prevents memory leak accumulation across resumed problems
+                if alg_config["use_gpu"]:
+                    cp.get_default_memory_pool().free_all_blocks()
+
                 continue
 
             # Run algorithm
@@ -1269,6 +1458,62 @@ def run_comprehensive_benchmark(args):
                 alg_config["use_gpu"],
             )
 
+            # ENHANCE CHECKPOINT WITH METADATA
+            results["problem_name"] = problem_name
+            results["problem_size"] = problem_size
+            results["optimal_cost"] = optimal_cost
+            results["max_generations_configured"] = max_generations  # Configured limit
+            # Note: Actual generations completed stored in "mean_generations" and "raw_generations"
+            results["backend"] = "GPU" if alg_config["use_gpu"] else "CPU"
+            results["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Extract algorithm configuration
+            results["algorithm_config"] = {
+                "population_size": getattr(
+                    algorithm_instance,
+                    "population_size",
+                    GA_PARAMS.get("population_size"),
+                ),
+                "mutation_rate": getattr(
+                    algorithm_instance, "mutation_rate", GA_PARAMS.get("mutation_rate")
+                ),
+                "tournament_size": getattr(
+                    algorithm_instance,
+                    "tournament_size",
+                    GA_PARAMS.get("tournament_size"),
+                ),
+                "two_opt_iterations": getattr(
+                    algorithm_instance,
+                    "two_opt_iterations",
+                    GA_PARAMS.get("two_opt_iterations"),
+                ),
+                "seed": getattr(algorithm_instance, "seed", GA_PARAMS.get("seed")),
+            }
+
+            # Strategy information
+            results["strategies"] = {
+                "selection": getattr(
+                    algorithm_instance.selection,
+                    "__class__.__name__",
+                    "TournamentSelection",
+                )
+                if hasattr(algorithm_instance, "selection")
+                else "TournamentSelection",
+                "crossover": getattr(
+                    algorithm_instance.crossover, "__class__.__name__", "OrderCrossover"
+                )
+                if hasattr(algorithm_instance, "crossover")
+                else "OrderCrossover",
+                "mutation": getattr(
+                    algorithm_instance.mutation, "__class__.__name__", "SwapMutation"
+                )
+                if hasattr(algorithm_instance, "mutation")
+                else "SwapMutation",
+            }
+
+            # Construction heuristic (assuming nearest neighbor, can be extracted if available)
+            results["construction_heuristic"] = "random_initialization"
+
             # SAVE CHECKPOINT IMMEDIATELY (fault tolerance)
             save_checkpoint_atomic(checkpoint_path, results)
             problem_results[problem_name][alg_name] = results
@@ -1283,7 +1528,7 @@ def run_comprehensive_benchmark(args):
         logging.info(f"\n{'─' * 80}")
         logging.info(f"STATISTICS FOR {problem_name}")
         logging.info(f"{'─' * 80}")
-        perform_statistical_analysis(
+        statistical_test_results = perform_statistical_analysis(
             problem_name, optimal_cost, problem_results[problem_name]
         )
 
@@ -1291,29 +1536,51 @@ def run_comprehensive_benchmark(args):
         stats_path = get_problem_stats_path(problem_name)
         try:
             # Compute summary statistics for each algorithm
-            problem_stats = {}
+            problem_stats = {
+                "problem_info": {
+                    "name": problem_name,
+                    "size": problem_size,
+                    "optimal_cost": optimal_cost,
+                },
+                "algorithms": {},
+                "statistical_tests": statistical_test_results,
+            }
+
             for alg_name, results in problem_results[problem_name].items():
                 # Handle both checkpoint format (raw_*) and direct format (*)
                 times = np.array(results.get("raw_times", results.get("times", [])))
+                initial_costs = np.array(
+                    results.get("raw_initial_costs", results.get("initial_costs", []))
+                )
                 costs = np.array(
                     results.get("raw_costs", results.get("final_costs", []))
                 )
                 gaps = np.array(results.get("raw_gaps", results.get("gaps", [])))
+                generations = np.array(
+                    results.get("raw_generations", results.get("generations", []))
+                )
 
                 valid_mask = ~np.isnan(times)
-                problem_stats[alg_name] = {
+                problem_stats["algorithms"][alg_name] = {
                     "mean_time": float(np.nanmean(times)),
                     "std_time": float(np.nanstd(times)),
+                    "mean_initial_cost": float(np.nanmean(initial_costs)),
+                    "std_initial_cost": float(np.nanstd(initial_costs)),
                     "mean_cost": float(np.nanmean(costs)),
                     "std_cost": float(np.nanstd(costs)),
                     "mean_gap": float(np.nanmean(gaps)),
                     "std_gap": float(np.nanstd(gaps)),
+                    "mean_generations": float(np.nanmean(generations)),
+                    "std_generations": float(np.nanstd(generations)),
                     "success_rate": float(np.sum(valid_mask) / len(times))
                     if len(times) > 0
                     else 0.0,
+                    "backend": results.get("backend", "unknown"),
+                    "algorithm_config": results.get("algorithm_config", {}),
+                    "strategies": results.get("strategies", {}),
                 }
 
-            with open(stats_path, "w") as f:
+            with open(stats_path, "w", encoding="utf-8") as f:
                 json.dump(problem_stats, f, indent=2)
             logging.info(f"✓ Problem statistics saved: {stats_path.name}\n")
         except Exception as e:
@@ -1363,8 +1630,32 @@ def main():
         default=BENCHMARK_PARAMS["repetitions"],
         help=f"Number of repetitions per algorithm (default: {BENCHMARK_PARAMS['repetitions']})",
     )
+    parser.add_argument(
+        "--test-mode",
+        action="store_true",
+        default=False,
+        help="Run on first 2 problems only for testing (default: False, runs all 38 problems)",
+    )
 
     args = parser.parse_args()
+
+    # Setup logging early
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+    # Set problem set based on test mode
+    global PROBLEM_SET
+    PROBLEM_SET = PROBLEM_SET_FULL[:2] if args.test_mode else PROBLEM_SET_FULL
+
+    if args.test_mode:
+        logging.info("=" * 80)
+        logging.info("⚠️  TEST MODE ENABLED")
+        logging.info("=" * 80)
+        logging.info("Running on first 2 problems only (eil51, berlin52)")
+        logging.info("Use without --test-mode for full 38-problem benchmark")
+        logging.info("=" * 80)
+        logging.info("")
 
     # Run benchmark
     run_comprehensive_benchmark(args)

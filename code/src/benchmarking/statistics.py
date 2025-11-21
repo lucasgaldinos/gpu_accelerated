@@ -208,6 +208,35 @@ class StatisticalAnalyzer:
 
         n = len(data_a)
 
+        # Check for zero variance (degenerate case: all values identical)
+        # This occurs when all algorithms achieve optimal solution
+        differences = data_a - data_b
+        variance_threshold = 1e-10
+        
+        if np.std(differences) < variance_threshold:
+            # All measurements identical - no statistical test needed
+            mean_a = float(np.mean(data_a))
+            mean_b = float(np.mean(data_b))
+            return StatisticalSummary(
+                comparison_label=label,
+                metric_name=metric_name,
+                sample_size=n,
+                mean_a=mean_a,
+                mean_b=mean_b,
+                std_a=0.0,
+                std_b=0.0,
+                ci_95_a=(mean_a, mean_a),
+                ci_95_b=(mean_b, mean_b),
+                mean_difference=0.0,
+                ci_95_difference=(0.0, 0.0),
+                p_value=1.0,  # No difference
+                effect_size=0.0,
+                test_used="no_test_needed",
+                normality_p_value_a=1.0,
+                normality_p_value_b=1.0,
+                is_normal=True,
+            )
+
         # Step 1: Test normality for both samples
         p_norm_a, is_normal_a = self.test_normality(data_a)
         p_norm_b, is_normal_b = self.test_normality(data_b)
@@ -461,6 +490,20 @@ class StatisticalAnalyzer:
                 "Friedman test requires at least 3 algorithms (k >= 3). "
                 f"Got {len(data_sets)} algorithms."
             )
+
+        # Check for zero variance across all algorithms (degenerate case)
+        # This occurs when all algorithms achieve identical results
+        all_data = np.concatenate(data_sets)
+        variance_threshold = 1e-10
+        
+        if np.std(all_data) < variance_threshold:
+            # All algorithms produced identical results - no test needed
+            return {
+                "statistic": 0.0,
+                "p_value": 1.0,  # No difference
+                "significant": False,
+                "post_hoc_required": False,
+            }
 
         # Perform Friedman test
         # scipy.stats.friedmanchisquare expects *args, not a list
