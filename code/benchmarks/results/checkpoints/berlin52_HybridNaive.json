@@ -1,0 +1,33 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 2,
+  "successful_runs": 2,
+  "mean_time": 0.612325530499902,
+  "std_time": 0.00542907149997518,
+  "min_time": 0.6068964589999268,
+  "max_time": 0.6177546019998772,
+  "mean_cost": 7542.0,
+  "std_cost": 0.0,
+  "best_cost": 7542.0,
+  "worst_cost": 7542.0,
+  "mean_gap": 0.0,
+  "std_gap": 0.0,
+  "best_gap": 0.0,
+  "mean_improvement": 69.7618493817761,
+  "mean_h2d_mb": 0.3744,
+  "mean_d2h_mb": 0.26624,
+  "total_transfer_mb": 0.64064,
+  "mean_kernels": 12800.0,
+  "raw_times": [
+    0.6177546019998772,
+    0.6068964589999268
+  ],
+  "raw_costs": [
+    7542.0,
+    7542.0
+  ],
+  "raw_gaps": [
+    0.0,
+    0.0
+  ]
+}

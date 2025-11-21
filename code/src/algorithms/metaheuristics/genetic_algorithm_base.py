@@ -320,17 +320,12 @@ class GeneticAlgorithmBase(ABC):
         self.kernel_launches = 0
 
         # Step 1: Initialize population (SAME for all)
-        logging.info(f"Initializing population of size {self.population_size}")
         population = self._initialize_population(n)
 
         # Step 2: Initial fitness evaluation
         fitness = self._evaluate_population(population, distances, xp)
         initial_best_cost = float(np.min(fitness))
         self.best_cost_history.append(initial_best_cost)
-
-        logging.info(
-            f"Initial best cost: {initial_best_cost:.2f} (avg: {np.mean(fitness):.2f})"
-        )
 
         # Step 3: Evolution loop
         last_improvement_gen = 0
@@ -406,7 +401,7 @@ class GeneticAlgorithmBase(ABC):
             "h2d_bytes": self.h2d_bytes,
             "d2h_bytes": self.d2h_bytes,
             "kernel_launches": self.kernel_launches,
-            "generations_completed": max_generations,
+            "generations_completed": self.generation,  # Actual completed generations
         }
 
         logging.info(

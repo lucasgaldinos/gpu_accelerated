@@ -1,0 +1,33 @@
+{
+  "algorithm": "FullGPU",
+  "repetitions": 2,
+  "successful_runs": 2,
+  "mean_time": 0.30537308750012926,
+  "std_time": 0.015972564500088993,
+  "min_time": 0.28940052300004027,
+  "max_time": 0.32134565200021825,
+  "mean_cost": 426.0,
+  "std_cost": 0.0,
+  "best_cost": 426.0,
+  "worst_cost": 426.0,
+  "mean_gap": 0.0,
+  "std_gap": 0.0,
+  "best_gap": 0.0,
+  "mean_improvement": 70.12622720897616,
+  "mean_h2d_mb": 0.020808,
+  "mean_d2h_mb": 0.000212,
+  "total_transfer_mb": 0.02102,
+  "mean_kernels": 3.0,
+  "raw_times": [
+    0.32134565200021825,
+    0.28940052300004027
+  ],
+  "raw_costs": [
+    426.0,
+    426.0
+  ],
+  "raw_gaps": [
+    0.0,
+    0.0
+  ]
+}

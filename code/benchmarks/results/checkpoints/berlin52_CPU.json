@@ -1,0 +1,33 @@
+{
+  "algorithm": "CPU",
+  "repetitions": 2,
+  "successful_runs": 2,
+  "mean_time": 24.708818289999954,
+  "std_time": 0.6741398130000107,
+  "min_time": 24.034678476999943,
+  "max_time": 25.382958102999964,
+  "mean_cost": 7542.0,
+  "std_cost": 0.0,
+  "best_cost": 7542.0,
+  "worst_cost": 7542.0,
+  "mean_gap": 0.0,
+  "std_gap": 0.0,
+  "best_gap": 0.0,
+  "mean_improvement": 69.7618493817761,
+  "mean_h2d_mb": 0.0,
+  "mean_d2h_mb": 0.0,
+  "total_transfer_mb": 0.0,
+  "mean_kernels": 0.0,
+  "raw_times": [
+    25.382958102999964,
+    24.034678476999943
+  ],
+  "raw_costs": [
+    7542.0,
+    7542.0
+  ],
+  "raw_gaps": [
+    0.0,
+    0.0
+  ]
+}

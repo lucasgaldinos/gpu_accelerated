@@ -405,6 +405,7 @@ MATRIX indicates that the data is given in one of the matrix formats of 1.1.7. T
 of the corresponding data files are obtained by appending the suffix “.tsp” to the problem
 name. Some optimal tours are also provided. The corresponding files have names with
 suffix “.opt.tour”.
+
 Name
 a280
 ali535

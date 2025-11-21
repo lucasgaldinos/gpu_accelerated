@@ -1,0 +1,38 @@
+{
+  "CPU": {
+    "mean_time": 125.5709821774999,
+    "std_time": 1.807568011499825,
+    "mean_cost": 427.0,
+    "std_cost": 0.0,
+    "mean_gap": 0.2347417840375587,
+    "std_gap": 0.0,
+    "success_rate": 1.0
+  },
+  "HybridNaive": {
+    "mean_time": 0.832574121000107,
+    "std_time": 0.23538382300012017,
+    "mean_cost": 426.0,
+    "std_cost": 0.0,
+    "mean_gap": 0.0,
+    "std_gap": 0.0,
+    "success_rate": 1.0
+  },
+  "HybridOptimized": {
+    "mean_time": 0.2029421109998566,
+    "std_time": 0.03362617700008741,
+    "mean_cost": 426.0,
+    "std_cost": 0.0,
+    "mean_gap": 0.0,
+    "std_gap": 0.0,
+    "success_rate": 1.0
+  },
+  "FullGPU": {
+    "mean_time": 0.30537308750012926,
+    "std_time": 0.015972564500088993,
+    "mean_cost": 426.0,
+    "std_cost": 0.0,
+    "mean_gap": 0.0,
+    "std_gap": 0.0,
+    "success_rate": 1.0
+  }
+}
