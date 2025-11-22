@@ -12631,3 +12631,610 @@ Speedups (relative to baseline):
   [HybridOptimized] Processing rat783 (n=783, optimal=8806)
 2025-11-21 18:32:59,908 - INFO -     Backend: GPU | Early stopping: 50 gen patience | Repetitions: 15
 2025-11-21 18:32:59,909 - INFO -     Repetition 1/15...
+2025-11-21 18:35:17,347 - INFO - Generation 100/43820: best=9955.00, avg=9975.84
+2025-11-21 18:36:10,801 - INFO - No improvement for 50 generations. Stopping at generation 154
+2025-11-21 18:36:10,801 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9812.00, improvement=94.20%, H2D=128.38MB, D2H=123.79MB, kernels=1694
+2025-11-21 18:36:10,801 - INFO -       → Completed in 190.89s | Cost: 9812 (gap: 11.42%) | Generations: 154/43820
+2025-11-21 18:36:10,801 - INFO -     Repetition 2/15...
+2025-11-21 18:38:24,791 - INFO - Generation 100/43820: best=9704.00, avg=9704.00
+2025-11-21 18:39:13,293 - INFO - No improvement for 50 generations. Stopping at generation 150
+2025-11-21 18:39:13,294 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9704.00, improvement=94.32%, H2D=120.27MB, D2H=120.58MB, kernels=1650
+2025-11-21 18:39:13,294 - INFO -       → Completed in 182.49s | Cost: 9704 (gap: 10.20%) | Generations: 150/43820
+2025-11-21 18:39:13,294 - INFO -     Repetition 3/15...
+2025-11-21 18:41:30,441 - INFO - Generation 100/43820: best=9633.00, avg=9657.56
+2025-11-21 18:42:19,965 - INFO - No improvement for 50 generations. Stopping at generation 152
+2025-11-21 18:42:19,965 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9630.00, improvement=94.36%, H2D=121.87MB, D2H=122.18MB, kernels=1672
+2025-11-21 18:42:19,965 - INFO -       → Completed in 186.67s | Cost: 9630 (gap: 9.36%) | Generations: 152/43820
+2025-11-21 18:42:19,965 - INFO -     Repetition 4/15...
+2025-11-21 18:44:38,907 - INFO - Generation 100/43820: best=9479.00, avg=9513.51
+2025-11-21 18:45:34,894 - INFO - No improvement for 50 generations. Stopping at generation 156
+2025-11-21 18:45:34,894 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9444.00, improvement=94.52%, H2D=125.08MB, D2H=125.40MB, kernels=1716
+2025-11-21 18:45:34,894 - INFO -       → Completed in 194.93s | Cost: 9444 (gap: 7.25%) | Generations: 156/43820
+2025-11-21 18:45:34,894 - INFO -     Repetition 5/15...
+2025-11-21 18:48:02,545 - INFO - Generation 100/43820: best=9985.00, avg=10108.06
+2025-11-21 18:49:07,248 - INFO - No improvement for 50 generations. Stopping at generation 169
+2025-11-21 18:49:07,248 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9432.00, improvement=94.49%, H2D=135.50MB, D2H=135.85MB, kernels=1859
+2025-11-21 18:49:07,248 - INFO -       → Completed in 212.35s | Cost: 9432 (gap: 7.11%) | Generations: 169/43820
+2025-11-21 18:49:07,248 - INFO -     Repetition 6/15...
+2025-11-21 18:51:26,088 - INFO - Generation 100/43820: best=9549.00, avg=9585.06
+2025-11-21 18:52:29,148 - INFO - No improvement for 50 generations. Stopping at generation 166
+2025-11-21 18:52:29,148 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9414.00, improvement=94.54%, H2D=133.10MB, D2H=133.44MB, kernels=1826
+2025-11-21 18:52:29,148 - INFO -       → Completed in 201.90s | Cost: 9414 (gap: 6.90%) | Generations: 166/43820
+2025-11-21 18:52:29,148 - INFO -     Repetition 7/15...
+2025-11-21 18:54:51,095 - INFO - Generation 100/43820: best=9779.00, avg=9840.99
+2025-11-21 18:56:10,974 - INFO - No improvement for 50 generations. Stopping at generation 179
+2025-11-21 18:56:10,974 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9428.00, improvement=94.50%, H2D=143.52MB, D2H=143.89MB, kernels=1969
+2025-11-21 18:56:10,974 - INFO -       → Completed in 221.83s | Cost: 9428 (gap: 7.06%) | Generations: 179/43820
+2025-11-21 18:56:10,974 - INFO -     Repetition 8/15...
+2025-11-21 18:58:38,445 - INFO - Generation 100/43820: best=9623.00, avg=9677.38
+2025-11-21 19:00:03,514 - INFO - No improvement for 50 generations. Stopping at generation 188
+2025-11-21 19:00:03,515 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9400.00, improvement=94.49%, H2D=150.74MB, D2H=151.12MB, kernels=2068
+2025-11-21 19:00:03,515 - INFO -       → Completed in 232.54s | Cost: 9400 (gap: 6.75%) | Generations: 188/43820
+2025-11-21 19:00:03,515 - INFO -     Repetition 9/15...
+2025-11-21 19:02:25,146 - INFO - Generation 100/43820: best=9754.00, avg=9815.10
+2025-11-21 19:04:01,314 - INFO - No improvement for 50 generations. Stopping at generation 194
+2025-11-21 19:04:01,314 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9105.00, improvement=94.63%, H2D=155.55MB, D2H=155.94MB, kernels=2134
+2025-11-21 19:04:01,314 - INFO -       → Completed in 237.80s | Cost: 9105 (gap: 3.40%) | Generations: 194/43820
+2025-11-21 19:04:01,314 - INFO -     Repetition 10/15...
+2025-11-21 19:06:16,413 - INFO - Generation 100/43820: best=9610.00, avg=9610.00
+2025-11-21 19:07:03,366 - INFO - No improvement for 50 generations. Stopping at generation 146
+2025-11-21 19:07:03,366 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9610.00, improvement=94.36%, H2D=117.06MB, D2H=117.36MB, kernels=1606
+2025-11-21 19:07:03,366 - INFO -       → Completed in 182.05s | Cost: 9610 (gap: 9.13%) | Generations: 146/43820
+2025-11-21 19:07:03,366 - INFO -     Repetition 11/15...
+2025-11-21 19:09:23,621 - INFO - Generation 100/43820: best=9767.00, avg=9855.03
+2025-11-21 19:10:31,990 - INFO - No improvement for 50 generations. Stopping at generation 171
+2025-11-21 19:10:31,990 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9379.00, improvement=94.53%, H2D=137.11MB, D2H=137.46MB, kernels=1881
+2025-11-21 19:10:31,990 - INFO -       → Completed in 208.62s | Cost: 9379 (gap: 6.51%) | Generations: 171/43820
+2025-11-21 19:10:31,990 - INFO -     Repetition 12/15...
+2025-11-21 19:12:51,734 - INFO - Generation 100/43820: best=9803.00, avg=9803.23
+2025-11-21 19:13:40,236 - INFO - No improvement for 50 generations. Stopping at generation 151
+2025-11-21 19:13:40,236 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9792.00, improvement=94.28%, H2D=121.07MB, D2H=121.38MB, kernels=1661
+2025-11-21 19:13:40,236 - INFO -       → Completed in 188.25s | Cost: 9792 (gap: 11.20%) | Generations: 151/43820
+2025-11-21 19:13:40,236 - INFO -     Repetition 13/15...
+2025-11-21 19:16:00,290 - INFO - Generation 100/43820: best=9764.00, avg=9778.56
+2025-11-21 19:17:24,144 - INFO - No improvement for 50 generations. Stopping at generation 188
+2025-11-21 19:17:24,144 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9591.00, improvement=94.37%, H2D=150.74MB, D2H=151.12MB, kernels=2068
+2025-11-21 19:17:24,145 - INFO -       → Completed in 223.91s | Cost: 9591 (gap: 8.91%) | Generations: 188/43820
+2025-11-21 19:17:24,145 - INFO -     Repetition 14/15...
+2025-11-21 19:19:49,241 - INFO - Generation 100/43820: best=9870.00, avg=9962.11
+2025-11-21 19:21:18,578 - INFO - No improvement for 50 generations. Stopping at generation 187
+2025-11-21 19:21:18,578 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9080.00, improvement=94.68%, H2D=149.94MB, D2H=150.32MB, kernels=2057
+2025-11-21 19:21:18,578 - INFO -       → Completed in 234.43s | Cost: 9080 (gap: 3.11%) | Generations: 187/43820
+2025-11-21 19:21:18,578 - INFO -     Repetition 15/15...
+2025-11-21 19:23:36,764 - INFO - Generation 100/43820: best=9990.00, avg=9990.05
+2025-11-21 19:24:25,975 - INFO - No improvement for 50 generations. Stopping at generation 152
+2025-11-21 19:24:25,976 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=9943.00, improvement=94.20%, H2D=121.87MB, D2H=122.18MB, kernels=1672
+2025-11-21 19:24:25,976 - INFO -       → Completed in 187.40s | Cost: 9943 (gap: 12.91%) | Generations: 152/43820
+2025-11-21 19:24:26,013 - INFO - 
+    ✓ HybridOptimized summary for rat783: Cost=9518±235.3 | Gap=8.08%±2.67% | Time=205.74s±19.44s
+2025-11-21 19:24:26,022 - INFO -     ✓ Checkpoint saved: rat783_HybridOptimized.json
+2025-11-21 19:24:26,093 - INFO -   [3/3] FullGPU (GPU): Running 15 repetitions...
+2025-11-21 19:24:26,094 - INFO - GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-21 19:24:26,096 - INFO - GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-21 19:24:26,096 - INFO - Loaded Fujimoto GA kernel with early stopping support
+2025-11-21 19:24:26,096 - INFO - 
+  [FullGPU] Processing rat783 (n=783, optimal=8806)
+2025-11-21 19:24:26,096 - INFO -     Backend: GPU | Early stopping: 50 gen patience | Repetitions: 15
+2025-11-21 19:24:26,096 - INFO -     Repetition 1/15...
+2025-11-21 19:24:26,103 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:31:53,218 - INFO - FullGPUEarlyStop complete: best=9240.00, improvement=94.63%, stopped=stagnation (gen 165), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:31:53,218 - INFO -       → Completed in 447.12s | Cost: 9240 (gap: 4.93%) | Generations: 0/43820
+2025-11-21 19:31:53,218 - INFO -     Repetition 2/15...
+2025-11-21 19:31:53,222 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:36:46,938 - INFO - FullGPUEarlyStop complete: best=9236.00, improvement=94.61%, stopped=stagnation (gen 109), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:36:46,938 - INFO -       → Completed in 293.72s | Cost: 9236 (gap: 4.88%) | Generations: 0/43820
+2025-11-21 19:36:46,938 - INFO -     Repetition 3/15...
+2025-11-21 19:36:46,942 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:41:42,862 - INFO - FullGPUEarlyStop complete: best=9201.00, improvement=94.62%, stopped=stagnation (gen 109), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:41:42,863 - INFO -       → Completed in 295.92s | Cost: 9201 (gap: 4.49%) | Generations: 0/43820
+2025-11-21 19:41:42,863 - INFO -     Repetition 4/15...
+2025-11-21 19:41:42,867 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:46:01,745 - INFO - FullGPUEarlyStop complete: best=9249.00, improvement=94.57%, stopped=stagnation (gen 96), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:46:01,745 - INFO -       → Completed in 258.88s | Cost: 9249 (gap: 5.03%) | Generations: 0/43820
+2025-11-21 19:46:01,745 - INFO -     Repetition 5/15...
+2025-11-21 19:46:01,749 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:52:51,434 - INFO - FullGPUEarlyStop complete: best=9222.00, improvement=94.59%, stopped=stagnation (gen 152), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:52:51,434 - INFO -       → Completed in 409.69s | Cost: 9222 (gap: 4.72%) | Generations: 0/43820
+2025-11-21 19:52:51,434 - INFO -     Repetition 6/15...
+2025-11-21 19:52:51,438 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 19:57:51,686 - INFO - FullGPUEarlyStop complete: best=9227.00, improvement=94.59%, stopped=stagnation (gen 111), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 19:57:51,687 - INFO -       → Completed in 300.25s | Cost: 9227 (gap: 4.78%) | Generations: 0/43820
+2025-11-21 19:57:51,687 - INFO -     Repetition 7/15...
+2025-11-21 19:57:51,693 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:02:59,188 - INFO - FullGPUEarlyStop complete: best=9232.00, improvement=94.56%, stopped=stagnation (gen 114), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:02:59,188 - INFO -       → Completed in 307.50s | Cost: 9232 (gap: 4.84%) | Generations: 0/43820
+2025-11-21 20:02:59,188 - INFO -     Repetition 8/15...
+2025-11-21 20:02:59,193 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:09:19,308 - INFO - FullGPUEarlyStop complete: best=9170.00, improvement=94.65%, stopped=stagnation (gen 141), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:09:19,308 - INFO -       → Completed in 380.12s | Cost: 9170 (gap: 4.13%) | Generations: 0/43820
+2025-11-21 20:09:19,308 - INFO -     Repetition 9/15...
+2025-11-21 20:09:19,314 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:16:38,085 - INFO - FullGPUEarlyStop complete: best=9213.00, improvement=94.65%, stopped=stagnation (gen 163), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:16:38,085 - INFO -       → Completed in 438.78s | Cost: 9213 (gap: 4.62%) | Generations: 0/43820
+2025-11-21 20:16:38,086 - INFO -     Repetition 10/15...
+2025-11-21 20:16:38,090 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:22:17,360 - INFO - FullGPUEarlyStop complete: best=9220.00, improvement=94.61%, stopped=stagnation (gen 125), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:22:17,360 - INFO -       → Completed in 339.27s | Cost: 9220 (gap: 4.70%) | Generations: 0/43820
+2025-11-21 20:22:17,360 - INFO -     Repetition 11/15...
+2025-11-21 20:22:17,364 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:28:31,309 - INFO - FullGPUEarlyStop complete: best=9254.00, improvement=94.59%, stopped=stagnation (gen 138), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:28:31,309 - INFO -       → Completed in 373.95s | Cost: 9254 (gap: 5.09%) | Generations: 0/43820
+2025-11-21 20:28:31,309 - INFO -     Repetition 12/15...
+2025-11-21 20:28:31,313 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:33:59,022 - INFO - FullGPUEarlyStop complete: best=9200.00, improvement=94.64%, stopped=stagnation (gen 122), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:33:59,023 - INFO -       → Completed in 327.71s | Cost: 9200 (gap: 4.47%) | Generations: 0/43820
+2025-11-21 20:33:59,023 - INFO -     Repetition 13/15...
+2025-11-21 20:33:59,027 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:39:22,523 - INFO - FullGPUEarlyStop complete: best=9213.00, improvement=94.62%, stopped=stagnation (gen 120), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:39:22,524 - INFO -       → Completed in 323.50s | Cost: 9213 (gap: 4.62%) | Generations: 0/43820
+2025-11-21 20:39:22,524 - INFO -     Repetition 14/15...
+2025-11-21 20:39:22,528 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:44:33,526 - INFO - FullGPUEarlyStop complete: best=9226.00, improvement=94.53%, stopped=stagnation (gen 115), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:44:33,527 - INFO -       → Completed in 311.00s | Cost: 9226 (gap: 4.77%) | Generations: 0/43820
+2025-11-21 20:44:33,527 - INFO -     Repetition 15/15...
+2025-11-21 20:44:33,531 - INFO - FullGPUEarlyStop: Launching kernel (max=43820 gens, optimal=8806, patience=50)
+2025-11-21 20:50:22,944 - INFO - FullGPUEarlyStop complete: best=9256.00, improvement=94.62%, stopped=stagnation (gen 129), H2D=4.68MB, D2H=0.00MB, kernels=3
+2025-11-21 20:50:22,944 - INFO -       → Completed in 349.42s | Cost: 9256 (gap: 5.11%) | Generations: 0/43820
+2025-11-21 20:50:22,945 - INFO - 
+    ✓ FullGPU summary for rat783: Cost=9224±22.1 | Gap=4.75%±0.25% | Time=343.79s±53.72s
+2025-11-21 20:50:22,954 - INFO -     ✓ Checkpoint saved: rat783_FullGPU.json
+2025-11-21 20:50:23,018 - INFO - 
+────────────────────────────────────────────────────────────────────────────────
+2025-11-21 20:50:23,018 - INFO - STATISTICS FOR rat783
+2025-11-21 20:50:23,018 - INFO - ────────────────────────────────────────────────────────────────────────────────
+2025-11-21 20:50:23,018 - INFO - 
+Statistical Analysis: rat783
+2025-11-21 20:50:23,018 - INFO - --------------------------------------------------------------------------------
+2025-11-21 20:50:23,025 - INFO - Friedman Test (k=3 algorithms):
+2025-11-21 20:50:23,025 - INFO -   Statistic: 10.5333
+2025-11-21 20:50:23,025 - INFO -   p-value: 0.005161
+2025-11-21 20:50:23,025 - INFO -   Significant: True
+2025-11-21 20:50:23,030 - INFO - 
+Nemenyi Post-Hoc Test:
+2025-11-21 20:50:23,050 - INFO -   Critical distance: 1.2103
+2025-11-21 20:50:23,050 - INFO -   Mean ranks:
+2025-11-21 20:50:23,050 - INFO -     HybridNaive: 2.20
+2025-11-21 20:50:23,050 - INFO -     HybridOptimized: 2.47
+2025-11-21 20:50:23,050 - INFO -     FullGPU: 1.33
+2025-11-21 20:50:23,050 - INFO - 
+  Significant pairwise differences:
+2025-11-21 20:50:23,050 - INFO -     HybridNaive vs FullGPU: rank_diff=0.87, p=0.0464
+2025-11-21 20:50:23,051 - INFO -     HybridOptimized vs FullGPU: rank_diff=1.13, p=0.0054
+2025-11-21 20:50:23,051 - INFO - 
+Pairwise Comparisons:
+2025-11-21 20:50:23,051 - INFO - Following gpu_cpu_comparison_methodology.md guidelines:
+2025-11-21 20:50:23,051 - INFO -   - Normality testing (Shapiro-Wilk)
+2025-11-21 20:50:23,051 - INFO -   - Test selection (paired t-test vs Wilcoxon)
+2025-11-21 20:50:23,051 - INFO -   - Effect size (Cohen's d)
+2025-11-21 20:50:23,051 - INFO -   - 95% Confidence Intervals
+2025-11-21 20:50:23,051 - INFO -   - Holm-Bonferroni multiple comparison correction
+
+2025-11-21 20:50:23,055 - INFO -   HybridNaive vs HybridOptimized:
+2025-11-21 20:50:23,055 - INFO -     Normality (Shapiro-Wilk):
+2025-11-21 20:50:23,055 - INFO -       HybridNaive: p=0.4085 (normal)
+2025-11-21 20:50:23,055 - INFO -       HybridOptimized: p=0.6046 (normal)
+2025-11-21 20:50:23,055 - INFO -     Test selected: paired_t_test
+2025-11-21 20:50:23,055 - INFO -     Mean difference: -84.00
+2025-11-21 20:50:23,055 - INFO -     95% CI difference: [-264.68, 96.68]
+2025-11-21 20:50:23,055 - INFO -     p-value (uncorrected): 0.335626
+2025-11-21 20:50:23,055 - INFO -     Cohen's d: -0.3642
+2025-11-21 20:50:23,055 - INFO -     Effect size interpretation: small
+2025-11-21 20:50:23,057 - INFO -   HybridNaive vs FullGPU:
+2025-11-21 20:50:23,057 - INFO -     Normality (Shapiro-Wilk):
+2025-11-21 20:50:23,057 - INFO -       HybridNaive: p=0.4085 (normal)
+2025-11-21 20:50:23,057 - INFO -       FullGPU: p=0.6159 (normal)
+2025-11-21 20:50:23,057 - INFO -     Test selected: paired_t_test
+2025-11-21 20:50:23,058 - INFO -     Mean difference: 209.67
+2025-11-21 20:50:23,058 - INFO -     95% CI difference: [92.54, 326.79]
+2025-11-21 20:50:23,058 - INFO -     p-value (uncorrected): 0.001804
+2025-11-21 20:50:23,058 - INFO -     Cohen's d: 1.3588
+2025-11-21 20:50:23,058 - INFO -     Effect size interpretation: large
+2025-11-21 20:50:23,060 - INFO -   HybridOptimized vs FullGPU:
+2025-11-21 20:50:23,060 - INFO -     Normality (Shapiro-Wilk):
+2025-11-21 20:50:23,060 - INFO -       HybridOptimized: p=0.6046 (normal)
+2025-11-21 20:50:23,060 - INFO -       FullGPU: p=0.6159 (normal)
+2025-11-21 20:50:23,060 - INFO -     Test selected: paired_t_test
+2025-11-21 20:50:23,060 - INFO -     Mean difference: 293.67
+2025-11-21 20:50:23,060 - INFO -     95% CI difference: [160.37, 426.96]
+2025-11-21 20:50:23,060 - INFO -     p-value (uncorrected): 0.000325
+2025-11-21 20:50:23,060 - INFO -     Cohen's d: 1.6977
+2025-11-21 20:50:23,061 - INFO -     Effect size interpretation: large
+2025-11-21 20:50:23,061 - INFO - 
+  Multiple Comparison Correction (Holm-Bonferroni, α=0.05):
+2025-11-21 20:50:23,061 - INFO -     HybridNaive vs HybridOptimized:
+2025-11-21 20:50:23,061 - INFO -       Original p-value: 0.335626
+2025-11-21 20:50:23,061 - INFO -       Adjusted p-value: 0.335626
+2025-11-21 20:50:23,061 - INFO -       Significant (after correction): False
+2025-11-21 20:50:23,061 - INFO -     HybridNaive vs FullGPU:
+2025-11-21 20:50:23,061 - INFO -       Original p-value: 0.001804
+2025-11-21 20:50:23,061 - INFO -       Adjusted p-value: 0.003609
+2025-11-21 20:50:23,061 - INFO -       Significant (after correction): True
+2025-11-21 20:50:23,061 - INFO -     HybridOptimized vs FullGPU:
+2025-11-21 20:50:23,061 - INFO -       Original p-value: 0.000325
+2025-11-21 20:50:23,061 - INFO -       Adjusted p-value: 0.000976
+2025-11-21 20:50:23,061 - INFO -       Significant (after correction): True
+2025-11-21 20:50:23,061 - INFO - 
+Summary: rat783 (optimal=8806)
+2025-11-21 20:50:23,061 - INFO - --------------------------------------------------------------------------------
+2025-11-21 20:50:23,061 - INFO - Algorithm            Mean Cost       Gap (%)      Time (s)     H2D (MB)     D2H (MB)    
+2025-11-21 20:50:23,061 - INFO - --------------------------------------------------------------------------------
+2025-11-21 20:50:23,062 - INFO - HybridNaive          9433.60         7.13         452.27       1069.02      150.20      
+2025-11-21 20:50:23,062 - INFO - HybridOptimized      9517.60         8.08         205.74       134.12       134.13      
+2025-11-21 20:50:23,062 - INFO - FullGPU              9223.93         4.75         343.79       4.90         0.00        
+2025-11-21 20:50:23,062 - INFO - 
+Speedups (relative to baseline):
+2025-11-21 20:50:23,062 - INFO -   HybridNaive: 1.00x (baseline)
+2025-11-21 20:50:23,062 - INFO -   HybridOptimized: 2.20x vs HybridNaive
+2025-11-21 20:50:23,062 - INFO -   FullGPU: 1.32x vs HybridNaive
+2025-11-21 20:50:23,062 - INFO - 
+2025-11-21 20:50:23,066 - INFO - ✓ Problem statistics saved: rat783_stats.json
+
+2025-11-21 20:50:23,127 - INFO - 
+================================================================================
+2025-11-21 20:50:23,128 - INFO - PROBLEM 38/38: pr1002
+2025-11-21 20:50:23,128 - INFO - Size: 1002 cities | Optimal: 259045
+2025-11-21 20:50:23,128 - INFO - ================================================================================
+2025-11-21 20:50:23,128 - INFO - Running 3 GPU algorithms only (n>100)
+
+2025-11-21 20:50:23,249 - INFO -   [1/3] HybridNaive (GPU): Running 15 repetitions...
+2025-11-21 20:50:23,250 - INFO - GeneticAlgorithmHybridNaive initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-21 20:50:23,250 - INFO - Loaded two_opt_kernel for naive hybrid
+2025-11-21 20:50:23,250 - INFO - 
+  [HybridNaive] Processing pr1002 (n=1002, optimal=259045)
+2025-11-21 20:50:23,250 - INFO -     Backend: GPU | Early stopping: 50 gen patience | Repetitions: 15
+2025-11-21 20:50:23,250 - INFO -     Repetition 1/15...
+2025-11-21 20:56:36,621 - INFO - Generation 100/63435: best=376876.00, avg=380873.36
+2025-11-21 21:02:32,032 - INFO - Generation 200/63435: best=282121.00, avg=282121.00
+2025-11-21 21:04:14,401 - INFO - No improvement for 50 generations. Stopping at generation 229
+2025-11-21 21:04:14,402 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=282121.00, improvement=95.44%, H2D=2074.30MB, D2H=234.96MB, kernels=586240
+2025-11-21 21:04:14,402 - INFO -       → Completed in 831.15s | Cost: 282121 (gap: 8.91%) | Generations: 229/63435
+2025-11-21 21:04:14,402 - INFO -     Repetition 2/15...
+2025-11-21 21:10:28,794 - INFO - Generation 100/63435: best=340000.00, avg=343160.14
+2025-11-21 21:15:13,983 - INFO - No improvement for 50 generations. Stopping at generation 180
+2025-11-21 21:15:13,983 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=280840.00, improvement=95.47%, H2D=1630.45MB, D2H=184.69MB, kernels=460800
+2025-11-21 21:15:13,983 - INFO -       → Completed in 659.58s | Cost: 280840 (gap: 8.41%) | Generations: 180/63435
+2025-11-21 21:15:13,983 - INFO -     Repetition 3/15...
+2025-11-21 21:21:25,947 - INFO - Generation 100/63435: best=358790.00, avg=361879.69
+2025-11-21 21:26:21,810 - INFO - No improvement for 50 generations. Stopping at generation 186
+2025-11-21 21:26:21,810 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=282489.00, improvement=95.42%, H2D=1684.80MB, D2H=190.84MB, kernels=476160
+2025-11-21 21:26:21,810 - INFO -       → Completed in 667.83s | Cost: 282489 (gap: 9.05%) | Generations: 186/63435
+2025-11-21 21:26:21,810 - INFO -     Repetition 4/15...
+2025-11-21 21:32:34,094 - INFO - Generation 100/63435: best=348799.00, avg=351214.53
+2025-11-21 21:37:43,348 - INFO - No improvement for 50 generations. Stopping at generation 185
+2025-11-21 21:37:43,348 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=282773.00, improvement=95.45%, H2D=1675.74MB, D2H=189.82MB, kernels=473600
+2025-11-21 21:37:43,348 - INFO -       → Completed in 681.54s | Cost: 282773 (gap: 9.16%) | Generations: 185/63435
+2025-11-21 21:37:43,348 - INFO -     Repetition 5/15...
+2025-11-21 21:43:55,151 - INFO - Generation 100/63435: best=358260.00, avg=362056.96
+2025-11-21 21:49:42,739 - INFO - Generation 200/63435: best=282433.00, avg=282433.00
+2025-11-21 21:50:36,862 - INFO - No improvement for 50 generations. Stopping at generation 216
+2025-11-21 21:50:36,862 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=282433.00, improvement=95.44%, H2D=1956.55MB, D2H=221.63MB, kernels=552960
+2025-11-21 21:50:36,862 - INFO -       → Completed in 773.51s | Cost: 282433 (gap: 9.03%) | Generations: 216/63435
+2025-11-21 21:50:36,862 - INFO -     Repetition 6/15...
+2025-11-21 21:56:37,237 - INFO - Generation 100/63435: best=358074.00, avg=360747.95
+2025-11-21 22:01:34,699 - INFO - No improvement for 50 generations. Stopping at generation 188
+2025-11-21 22:01:34,700 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=280758.00, improvement=95.49%, H2D=1702.92MB, D2H=192.90MB, kernels=481280
+2025-11-21 22:01:34,700 - INFO -       → Completed in 657.84s | Cost: 280758 (gap: 8.38%) | Generations: 188/63435
+2025-11-21 22:01:34,700 - INFO -     Repetition 7/15...
+2025-11-21 22:07:35,344 - INFO - Generation 100/63435: best=372622.00, avg=372643.28
+2025-11-21 22:12:45,490 - INFO - No improvement for 50 generations. Stopping at generation 192
+2025-11-21 22:12:45,490 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=282710.00, improvement=95.45%, H2D=1739.15MB, D2H=197.00MB, kernels=491520
+2025-11-21 22:12:45,490 - INFO -       → Completed in 670.79s | Cost: 282710 (gap: 9.14%) | Generations: 192/63435
+2025-11-21 22:12:45,490 - INFO -     Repetition 8/15...
+2025-11-21 22:18:45,596 - INFO - Generation 100/63435: best=364305.00, avg=368026.57
+2025-11-21 22:23:58,916 - INFO - No improvement for 50 generations. Stopping at generation 193
+2025-11-21 22:23:58,917 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=280819.00, improvement=95.50%, H2D=1748.21MB, D2H=198.03MB, kernels=494080
+2025-11-21 22:23:58,917 - INFO -       → Completed in 673.43s | Cost: 280819 (gap: 8.41%) | Generations: 193/63435
+2025-11-21 22:23:58,917 - INFO -     Repetition 9/15...
+2025-11-21 22:29:58,154 - INFO - Generation 100/63435: best=351928.00, avg=356496.33
+2025-11-21 22:35:08,028 - INFO - No improvement for 50 generations. Stopping at generation 192
+2025-11-21 22:35:08,028 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=272844.00, improvement=95.55%, H2D=1739.15MB, D2H=197.00MB, kernels=491520
+2025-11-21 22:35:08,028 - INFO -       → Completed in 669.11s | Cost: 272844 (gap: 5.33%) | Generations: 192/63435
+2025-11-21 22:35:08,029 - INFO -     Repetition 10/15...
+2025-11-21 22:41:06,324 - INFO - Generation 100/63435: best=344435.00, avg=351029.62
+2025-11-21 22:45:46,122 - INFO - No improvement for 50 generations. Stopping at generation 183
+2025-11-21 22:45:46,122 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=278413.00, improvement=95.49%, H2D=1657.63MB, D2H=187.77MB, kernels=468480
+2025-11-21 22:45:46,122 - INFO -       → Completed in 638.09s | Cost: 278413 (gap: 7.48%) | Generations: 183/63435
+2025-11-21 22:45:46,122 - INFO -     Repetition 11/15...
+2025-11-21 22:51:46,305 - INFO - Generation 100/63435: best=360238.00, avg=362858.24
+2025-11-21 22:57:23,940 - INFO - Generation 200/63435: best=278565.00, avg=278565.00
+2025-11-21 23:01:54,044 - INFO - No improvement for 50 generations. Stopping at generation 280
+2025-11-21 23:01:54,044 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=278466.00, improvement=95.49%, H2D=2536.26MB, D2H=287.29MB, kernels=716800
+2025-11-21 23:01:54,044 - INFO -       → Completed in 967.92s | Cost: 278466 (gap: 7.50%) | Generations: 280/63435
+2025-11-21 23:01:54,044 - INFO -     Repetition 12/15...
+2025-11-21 23:07:53,476 - INFO - Generation 100/63435: best=356787.00, avg=358421.92
+2025-11-21 23:12:39,859 - INFO - No improvement for 50 generations. Stopping at generation 185
+2025-11-21 23:12:39,860 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=283832.00, improvement=95.44%, H2D=1675.74MB, D2H=189.82MB, kernels=473600
+2025-11-21 23:12:39,860 - INFO -       → Completed in 645.82s | Cost: 283832 (gap: 9.57%) | Generations: 185/63435
+2025-11-21 23:12:39,860 - INFO -     Repetition 13/15...
+2025-11-21 23:18:39,267 - INFO - Generation 100/63435: best=348214.00, avg=349686.71
+2025-11-21 23:23:19,178 - INFO - No improvement for 50 generations. Stopping at generation 183
+2025-11-21 23:23:19,178 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=286864.00, improvement=95.37%, H2D=1657.63MB, D2H=187.77MB, kernels=468480
+2025-11-21 23:23:19,178 - INFO -       → Completed in 639.32s | Cost: 286864 (gap: 10.74%) | Generations: 183/63435
+2025-11-21 23:23:19,178 - INFO -     Repetition 14/15...
+2025-11-21 23:29:19,219 - INFO - Generation 100/63435: best=364651.00, avg=367206.45
+2025-11-21 23:34:56,289 - INFO - Generation 200/63435: best=278882.00, avg=278882.00
+2025-11-21 23:35:09,748 - INFO - No improvement for 50 generations. Stopping at generation 204
+2025-11-21 23:35:09,748 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=278882.00, improvement=95.52%, H2D=1847.85MB, D2H=209.31MB, kernels=522240
+2025-11-21 23:35:09,748 - INFO -       → Completed in 710.57s | Cost: 278882 (gap: 7.66%) | Generations: 204/63435
+2025-11-21 23:35:09,748 - INFO -     Repetition 15/15...
+2025-11-21 23:41:10,035 - INFO - Generation 100/63435: best=365958.00, avg=368366.21
+2025-11-21 23:46:47,444 - INFO - Generation 200/63435: best=281243.00, avg=281243.00
+2025-11-21 23:48:08,155 - INFO - No improvement for 50 generations. Stopping at generation 224
+2025-11-21 23:48:08,155 - INFO - GeneticAlgorithmHybridNaive evolution complete: best=281243.00, improvement=95.50%, H2D=2029.01MB, D2H=229.83MB, kernels=573440
+2025-11-21 23:48:08,155 - INFO -       → Completed in 778.41s | Cost: 281243 (gap: 8.57%) | Generations: 224/63435
+2025-11-21 23:48:08,156 - INFO - 
+    ✓ HybridNaive summary for pr1002: Cost=281032±3036.2 | Gap=8.49%±1.17% | Time=710.99s±88.16s
+2025-11-21 23:48:08,198 - INFO -     ✓ Checkpoint saved: pr1002_HybridNaive.json
+2025-11-21 23:48:08,252 - INFO -   [2/3] HybridOptimized (GPU): Running 15 repetitions...
+2025-11-21 23:48:08,253 - INFO - GeneticAlgorithmHybridOptimized initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-21 23:48:08,253 - INFO - Loaded batch kernels: two_opt_batch, cost_calculator
+2025-11-21 23:48:08,253 - INFO - 
+  [HybridOptimized] Processing pr1002 (n=1002, optimal=259045)
+2025-11-21 23:48:08,253 - INFO -     Backend: GPU | Early stopping: 50 gen patience | Repetitions: 15
+2025-11-21 23:48:08,253 - INFO -     Repetition 1/15...
+2025-11-21 23:52:04,584 - INFO - Generation 100/63435: best=369463.00, avg=372206.52
+2025-11-21 23:54:01,572 - INFO - No improvement for 50 generations. Stopping at generation 191
+2025-11-21 23:54:01,572 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=278487.00, improvement=95.49%, H2D=204.01MB, D2H=196.37MB, kernels=2101
+2025-11-21 23:54:01,572 - INFO -       → Completed in 353.32s | Cost: 278487 (gap: 7.51%) | Generations: 191/63435
+2025-11-21 23:54:01,572 - INFO -     Repetition 2/15...
+2025-11-21 23:57:56,247 - INFO - Generation 100/63435: best=354904.00, avg=357335.28
+2025-11-21 23:59:45,621 - INFO - No improvement for 50 generations. Stopping at generation 186
+2025-11-21 23:59:45,621 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=276691.00, improvement=95.54%, H2D=190.84MB, D2H=191.23MB, kernels=2046
+2025-11-21 23:59:45,621 - INFO -       → Completed in 344.05s | Cost: 276691 (gap: 6.81%) | Generations: 186/63435
+2025-11-21 23:59:45,621 - INFO -     Repetition 3/15...
+2025-11-22 00:03:44,982 - INFO - Generation 100/63435: best=371842.00, avg=374182.37
+2025-11-22 00:05:38,619 - INFO - No improvement for 50 generations. Stopping at generation 189
+2025-11-22 00:05:38,619 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=279903.00, improvement=95.47%, H2D=193.92MB, D2H=194.31MB, kernels=2079
+2025-11-22 00:05:38,620 - INFO -       → Completed in 353.00s | Cost: 279903 (gap: 8.05%) | Generations: 189/63435
+2025-11-22 00:05:38,620 - INFO -     Repetition 4/15...
+2025-11-22 00:09:31,210 - INFO - Generation 100/63435: best=350566.00, avg=354815.71
+2025-11-22 00:11:35,831 - INFO - Generation 200/63435: best=276032.00, avg=276032.00
+2025-11-22 00:11:43,158 - INFO - No improvement for 50 generations. Stopping at generation 206
+2025-11-22 00:11:43,158 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=276032.00, improvement=95.52%, H2D=211.37MB, D2H=211.79MB, kernels=2266
+2025-11-22 00:11:43,158 - INFO -       → Completed in 364.54s | Cost: 276032 (gap: 6.56%) | Generations: 206/63435
+2025-11-22 00:11:43,158 - INFO -     Repetition 5/15...
+2025-11-22 00:15:42,659 - INFO - Generation 100/63435: best=366588.00, avg=370279.50
+2025-11-22 00:17:32,315 - INFO - No improvement for 50 generations. Stopping at generation 188
+2025-11-22 00:17:32,316 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=277242.00, improvement=95.54%, H2D=192.90MB, D2H=193.28MB, kernels=2068
+2025-11-22 00:17:32,316 - INFO -       → Completed in 349.16s | Cost: 277242 (gap: 7.02%) | Generations: 188/63435
+2025-11-22 00:17:32,316 - INFO -     Repetition 6/15...
+2025-11-22 00:21:28,208 - INFO - Generation 100/63435: best=357612.00, avg=362830.88
+2025-11-22 00:23:32,959 - INFO - Generation 200/63435: best=275363.00, avg=275363.00
+2025-11-22 00:23:45,270 - INFO - No improvement for 50 generations. Stopping at generation 210
+2025-11-22 00:23:45,270 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=275363.00, improvement=95.54%, H2D=215.47MB, D2H=215.90MB, kernels=2310
+2025-11-22 00:23:45,271 - INFO -       → Completed in 372.95s | Cost: 275363 (gap: 6.30%) | Generations: 210/63435
+2025-11-22 00:23:45,271 - INFO -     Repetition 7/15...
+2025-11-22 00:27:43,773 - INFO - Generation 100/63435: best=363178.00, avg=366175.57
+2025-11-22 00:29:38,479 - INFO - No improvement for 50 generations. Stopping at generation 190
+2025-11-22 00:29:38,479 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=277752.00, improvement=95.52%, H2D=194.95MB, D2H=195.34MB, kernels=2090
+2025-11-22 00:29:38,479 - INFO -       → Completed in 353.21s | Cost: 277752 (gap: 7.22%) | Generations: 190/63435
+2025-11-22 00:29:38,479 - INFO -     Repetition 8/15...
+2025-11-22 00:33:28,462 - INFO - Generation 100/63435: best=339604.00, avg=343609.44
+2025-11-22 00:35:11,310 - INFO - No improvement for 50 generations. Stopping at generation 182
+2025-11-22 00:35:11,310 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=273563.00, improvement=95.59%, H2D=186.74MB, D2H=187.11MB, kernels=2002
+2025-11-22 00:35:11,310 - INFO -       → Completed in 332.83s | Cost: 273563 (gap: 5.60%) | Generations: 182/63435
+2025-11-22 00:35:11,311 - INFO -     Repetition 9/15...
+2025-11-22 00:39:03,797 - INFO - Generation 100/63435: best=359638.00, avg=361288.41
+2025-11-22 00:40:55,449 - INFO - No improvement for 50 generations. Stopping at generation 189
+2025-11-22 00:40:55,449 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=281044.00, improvement=95.50%, H2D=193.92MB, D2H=194.31MB, kernels=2079
+2025-11-22 00:40:55,449 - INFO -       → Completed in 344.14s | Cost: 281044 (gap: 8.49%) | Generations: 189/63435
+2025-11-22 00:40:55,449 - INFO -     Repetition 10/15...
+2025-11-22 00:44:49,531 - INFO - Generation 100/63435: best=355713.00, avg=359641.26
+2025-11-22 00:47:03,783 - INFO - Generation 200/63435: best=279070.00, avg=279070.00
+2025-11-22 00:47:38,415 - INFO - No improvement for 50 generations. Stopping at generation 227
+2025-11-22 00:47:38,415 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=279070.00, improvement=95.53%, H2D=232.91MB, D2H=233.38MB, kernels=2497
+2025-11-22 00:47:38,415 - INFO -       → Completed in 402.97s | Cost: 279070 (gap: 7.73%) | Generations: 227/63435
+2025-11-22 00:47:38,415 - INFO -     Repetition 11/15...
+2025-11-22 00:51:37,378 - INFO - Generation 100/63435: best=351624.00, avg=357506.30
+2025-11-22 00:53:45,254 - INFO - Generation 200/63435: best=280363.00, avg=280363.00
+2025-11-22 00:54:12,983 - INFO - No improvement for 50 generations. Stopping at generation 222
+2025-11-22 00:54:12,984 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=280363.00, improvement=95.50%, H2D=227.78MB, D2H=228.24MB, kernels=2442
+2025-11-22 00:54:12,984 - INFO -       → Completed in 394.57s | Cost: 280363 (gap: 8.23%) | Generations: 222/63435
+2025-11-22 00:54:12,984 - INFO -     Repetition 12/15...
+2025-11-22 00:58:04,185 - INFO - Generation 100/63435: best=342398.00, avg=343975.76
+2025-11-22 01:00:09,910 - INFO - Generation 200/63435: best=283224.00, avg=283224.00
+2025-11-22 01:00:29,777 - INFO - No improvement for 50 generations. Stopping at generation 216
+2025-11-22 01:00:29,777 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=283224.00, improvement=95.44%, H2D=221.63MB, D2H=222.07MB, kernels=2376
+2025-11-22 01:00:29,777 - INFO -       → Completed in 376.79s | Cost: 283224 (gap: 9.33%) | Generations: 216/63435
+2025-11-22 01:00:29,777 - INFO -     Repetition 13/15...
+2025-11-22 01:04:27,973 - INFO - Generation 100/63435: best=356638.00, avg=360059.61
+2025-11-22 01:06:22,800 - INFO - No improvement for 50 generations. Stopping at generation 186
+2025-11-22 01:06:22,800 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=278450.00, improvement=95.54%, H2D=190.84MB, D2H=191.23MB, kernels=2046
+2025-11-22 01:06:22,800 - INFO -       → Completed in 353.02s | Cost: 278450 (gap: 7.49%) | Generations: 186/63435
+2025-11-22 01:06:22,800 - INFO -     Repetition 14/15...
+2025-11-22 01:10:23,794 - INFO - Generation 100/63435: best=361878.00, avg=366190.96
+2025-11-22 01:12:13,356 - INFO - No improvement for 50 generations. Stopping at generation 185
+2025-11-22 01:12:13,356 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=281319.00, improvement=95.47%, H2D=189.82MB, D2H=190.20MB, kernels=2035
+2025-11-22 01:12:13,356 - INFO -       → Completed in 350.56s | Cost: 281319 (gap: 8.60%) | Generations: 185/63435
+2025-11-22 01:12:13,356 - INFO -     Repetition 15/15...
+2025-11-22 01:16:11,716 - INFO - Generation 100/63435: best=359071.00, avg=363154.70
+2025-11-22 01:18:22,919 - INFO - Generation 200/63435: best=288436.00, avg=288436.00
+2025-11-22 01:18:59,177 - INFO - No improvement for 50 generations. Stopping at generation 228
+2025-11-22 01:18:59,177 - INFO - GeneticAlgorithmHybridOptimized evolution complete: best=288436.00, improvement=95.34%, H2D=233.94MB, D2H=234.41MB, kernels=2508
+2025-11-22 01:18:59,177 - INFO -       → Completed in 405.82s | Cost: 288436 (gap: 11.35%) | Generations: 228/63435
+2025-11-22 01:18:59,178 - INFO - 
+    ✓ HybridOptimized summary for pr1002: Cost=279129±3473.8 | Gap=7.75%±1.34% | Time=363.39s±21.72s
+2025-11-22 01:18:59,222 - INFO -     ✓ Checkpoint saved: pr1002_HybridOptimized.json
+2025-11-22 01:18:59,282 - INFO -   [3/3] FullGPU (GPU): Running 15 repetitions...
+2025-11-22 01:18:59,282 - INFO - GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-22 01:18:59,282 - INFO - GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
+2025-11-22 01:18:59,283 - INFO - Loaded Fujimoto GA kernel with early stopping support
+2025-11-22 01:18:59,283 - INFO - 
+  [FullGPU] Processing pr1002 (n=1002, optimal=259045)
+2025-11-22 01:18:59,283 - INFO -     Backend: GPU | Early stopping: 50 gen patience | Repetitions: 15
+2025-11-22 01:18:59,283 - INFO -     Repetition 1/15...
+2025-11-22 01:18:59,290 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 01:28:28,353 - INFO - FullGPUEarlyStop complete: best=268729.00, improvement=95.65%, stopped=stagnation (gen 121), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 01:28:28,353 - INFO -       → Completed in 569.07s | Cost: 268729 (gap: 3.74%) | Generations: 0/63435
+2025-11-22 01:28:28,354 - INFO -     Repetition 2/15...
+2025-11-22 01:28:28,362 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 01:35:42,250 - INFO - FullGPUEarlyStop complete: best=270414.00, improvement=95.65%, stopped=stagnation (gen 93), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 01:35:42,250 - INFO -       → Completed in 433.90s | Cost: 270414 (gap: 4.39%) | Generations: 0/63435
+2025-11-22 01:35:42,250 - INFO -     Repetition 3/15...
+2025-11-22 01:35:42,256 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 01:54:12,684 - INFO - FullGPUEarlyStop complete: best=270179.00, improvement=95.66%, stopped=stagnation (gen 239), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 01:54:12,684 - INFO -       → Completed in 1110.43s | Cost: 270179 (gap: 4.30%) | Generations: 0/63435
+2025-11-22 01:54:12,684 - INFO -     Repetition 4/15...
+2025-11-22 01:54:12,690 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 02:06:22,332 - INFO - FullGPUEarlyStop complete: best=270880.00, improvement=95.65%, stopped=stagnation (gen 157), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 02:06:22,333 - INFO -       → Completed in 729.65s | Cost: 270880 (gap: 4.57%) | Generations: 0/63435
+2025-11-22 02:06:22,333 - INFO -     Repetition 5/15...
+2025-11-22 02:06:22,338 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 02:22:41,838 - INFO - FullGPUEarlyStop complete: best=270583.00, improvement=95.58%, stopped=stagnation (gen 212), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 02:22:41,838 - INFO -       → Completed in 979.50s | Cost: 270583 (gap: 4.45%) | Generations: 0/63435
+2025-11-22 02:22:41,838 - INFO -     Repetition 6/15...
+2025-11-22 02:22:41,843 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 02:33:26,916 - INFO - FullGPUEarlyStop complete: best=271302.00, improvement=95.65%, stopped=stagnation (gen 138), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 02:33:26,917 - INFO -       → Completed in 645.08s | Cost: 271302 (gap: 4.73%) | Generations: 0/63435
+2025-11-22 02:33:26,917 - INFO -     Repetition 7/15...
+2025-11-22 02:33:26,922 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 02:52:53,298 - INFO - FullGPUEarlyStop complete: best=268727.00, improvement=95.64%, stopped=stagnation (gen 251), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 02:52:53,298 - INFO -       → Completed in 1166.38s | Cost: 268727 (gap: 3.74%) | Generations: 0/63435
+2025-11-22 02:52:53,299 - INFO -     Repetition 8/15...
+2025-11-22 02:52:53,304 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 03:00:42,031 - INFO - FullGPUEarlyStop complete: best=270851.00, improvement=95.64%, stopped=stagnation (gen 100), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 03:00:42,031 - INFO -       → Completed in 468.73s | Cost: 270851 (gap: 4.56%) | Generations: 0/63435
+2025-11-22 03:00:42,032 - INFO -     Repetition 9/15...
+2025-11-22 03:00:42,037 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 03:07:43,808 - INFO - FullGPUEarlyStop complete: best=270817.00, improvement=95.61%, stopped=stagnation (gen 90), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 03:07:43,808 - INFO -       → Completed in 421.78s | Cost: 270817 (gap: 4.54%) | Generations: 0/63435
+2025-11-22 03:07:43,808 - INFO -     Repetition 10/15...
+2025-11-22 03:07:43,813 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 03:28:19,179 - INFO - FullGPUEarlyStop complete: best=270275.00, improvement=95.62%, stopped=stagnation (gen 265), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 03:28:19,179 - INFO -       → Completed in 1235.37s | Cost: 270275 (gap: 4.34%) | Generations: 0/63435
+2025-11-22 03:28:19,180 - INFO -     Repetition 11/15...
+2025-11-22 03:28:19,185 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 03:37:40,332 - INFO - FullGPUEarlyStop complete: best=270053.00, improvement=95.65%, stopped=stagnation (gen 121), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 03:37:40,332 - INFO -       → Completed in 561.15s | Cost: 270053 (gap: 4.25%) | Generations: 0/63435
+2025-11-22 03:37:40,332 - INFO -     Repetition 12/15...
+2025-11-22 03:37:40,337 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 03:50:30,913 - INFO - FullGPUEarlyStop complete: best=270787.00, improvement=95.63%, stopped=stagnation (gen 166), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 03:50:30,921 - INFO -       → Completed in 770.59s | Cost: 270787 (gap: 4.53%) | Generations: 0/63435
+2025-11-22 03:50:30,924 - INFO -     Repetition 13/15...
+2025-11-22 03:50:30,946 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 04:01:29,958 - INFO - FullGPUEarlyStop complete: best=267634.00, improvement=95.67%, stopped=stagnation (gen 141), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 04:01:29,958 - INFO -       → Completed in 659.03s | Cost: 267634 (gap: 3.32%) | Generations: 0/63435
+2025-11-22 04:01:29,958 - INFO -     Repetition 14/15...
+2025-11-22 04:01:29,964 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 04:15:24,727 - INFO - FullGPUEarlyStop complete: best=269802.00, improvement=95.59%, stopped=stagnation (gen 178), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 04:15:24,727 - INFO -       → Completed in 834.77s | Cost: 269802 (gap: 4.15%) | Generations: 0/63435
+2025-11-22 04:15:24,735 - INFO -     Repetition 15/15...
+2025-11-22 04:15:24,741 - INFO - FullGPUEarlyStop: Launching kernel (max=63435 gens, optimal=259045, patience=50)
+2025-11-22 04:31:11,805 - INFO - FullGPUEarlyStop complete: best=268860.00, improvement=95.65%, stopped=stagnation (gen 204), H2D=7.66MB, D2H=0.00MB, kernels=3
+2025-11-22 04:31:11,805 - INFO -       → Completed in 947.07s | Cost: 268860 (gap: 3.79%) | Generations: 0/63435
+2025-11-22 04:31:11,863 - INFO - 
+    ✓ FullGPU summary for pr1002: Cost=269993±1009.1 | Gap=4.23%±0.39% | Time=768.83s±259.17s
+2025-11-22 04:31:11,921 - INFO -     ✓ Checkpoint saved: pr1002_FullGPU.json
+2025-11-22 04:31:13,718 - INFO - 
+────────────────────────────────────────────────────────────────────────────────
+2025-11-22 04:31:13,718 - INFO - STATISTICS FOR pr1002
+2025-11-22 04:31:13,718 - INFO - ────────────────────────────────────────────────────────────────────────────────
+2025-11-22 04:31:13,718 - INFO - 
+Statistical Analysis: pr1002
+2025-11-22 04:31:13,718 - INFO - --------------------------------------------------------------------------------
+2025-11-22 04:31:13,735 - INFO - Friedman Test (k=3 algorithms):
+2025-11-22 04:31:13,736 - INFO -   Statistic: 23.3333
+2025-11-22 04:31:13,736 - INFO -   p-value: 0.000009
+2025-11-22 04:31:13,736 - INFO -   Significant: True
+2025-11-22 04:31:13,743 - INFO - 
+Nemenyi Post-Hoc Test:
+2025-11-22 04:31:13,791 - INFO -   Critical distance: 1.2103
+2025-11-22 04:31:13,791 - INFO -   Mean ranks:
+2025-11-22 04:31:13,792 - INFO -     HybridNaive: 2.67
+2025-11-22 04:31:13,792 - INFO -     HybridOptimized: 2.33
+2025-11-22 04:31:13,792 - INFO -     FullGPU: 1.00
+2025-11-22 04:31:13,792 - INFO - 
+  Significant pairwise differences:
+2025-11-22 04:31:13,792 - INFO -     HybridNaive vs FullGPU: rank_diff=1.67, p=0.0000
+2025-11-22 04:31:13,792 - INFO -     HybridOptimized vs FullGPU: rank_diff=1.33, p=0.0008
+2025-11-22 04:31:13,792 - INFO - 
+Pairwise Comparisons:
+2025-11-22 04:31:13,792 - INFO - Following gpu_cpu_comparison_methodology.md guidelines:
+2025-11-22 04:31:13,792 - INFO -   - Normality testing (Shapiro-Wilk)
+2025-11-22 04:31:13,792 - INFO -   - Test selection (paired t-test vs Wilcoxon)
+2025-11-22 04:31:13,792 - INFO -   - Effect size (Cohen's d)
+2025-11-22 04:31:13,792 - INFO -   - 95% Confidence Intervals
+2025-11-22 04:31:13,792 - INFO -   - Holm-Bonferroni multiple comparison correction
+
+2025-11-22 04:31:13,798 - INFO -   HybridNaive vs HybridOptimized:
+2025-11-22 04:31:13,798 - INFO -     Normality (Shapiro-Wilk):
+2025-11-22 04:31:13,798 - INFO -       HybridNaive: p=0.1513 (normal)
+2025-11-22 04:31:13,798 - INFO -       HybridOptimized: p=0.3647 (normal)
+2025-11-22 04:31:13,798 - INFO -     Test selected: paired_t_test
+2025-11-22 04:31:13,798 - INFO -     Mean difference: 1903.20
+2025-11-22 04:31:13,798 - INFO -     95% CI difference: [-911.27, 4717.67]
+2025-11-22 04:31:13,799 - INFO -     p-value (uncorrected): 0.168996
+2025-11-22 04:31:13,799 - INFO -     Cohen's d: 0.5636
+2025-11-22 04:31:13,799 - INFO -     Effect size interpretation: medium
+2025-11-22 04:31:13,801 - INFO -   HybridNaive vs FullGPU:
+2025-11-22 04:31:13,801 - INFO -     Normality (Shapiro-Wilk):
+2025-11-22 04:31:13,801 - INFO -       HybridNaive: p=0.1513 (normal)
+2025-11-22 04:31:13,801 - INFO -       FullGPU: p=0.0678 (normal)
+2025-11-22 04:31:13,801 - INFO -     Test selected: paired_t_test
+2025-11-22 04:31:13,801 - INFO -     Mean difference: 11039.60
+2025-11-22 04:31:13,801 - INFO -     95% CI difference: [8975.36, 13103.84]
+2025-11-22 04:31:13,801 - INFO -     p-value (uncorrected): 0.000000
+2025-11-22 04:31:13,801 - INFO -     Cohen's d: 4.7141
+2025-11-22 04:31:13,801 - INFO -     Effect size interpretation: large
+2025-11-22 04:31:13,804 - INFO -   HybridOptimized vs FullGPU:
+2025-11-22 04:31:13,804 - INFO -     Normality (Shapiro-Wilk):
+2025-11-22 04:31:13,804 - INFO -       HybridOptimized: p=0.3647 (normal)
+2025-11-22 04:31:13,804 - INFO -       FullGPU: p=0.0678 (normal)
+2025-11-22 04:31:13,804 - INFO -     Test selected: paired_t_test
+2025-11-22 04:31:13,804 - INFO -     Mean difference: 9136.40
+2025-11-22 04:31:13,804 - INFO -     95% CI difference: [6896.61, 11376.19]
+2025-11-22 04:31:13,804 - INFO -     p-value (uncorrected): 0.000000
+2025-11-22 04:31:13,804 - INFO -     Cohen's d: 3.4508
+2025-11-22 04:31:13,804 - INFO -     Effect size interpretation: large
+2025-11-22 04:31:13,804 - INFO - 
+  Multiple Comparison Correction (Holm-Bonferroni, α=0.05):
+2025-11-22 04:31:13,804 - INFO -     HybridNaive vs HybridOptimized:
+2025-11-22 04:31:13,805 - INFO -       Original p-value: 0.168996
+2025-11-22 04:31:13,805 - INFO -       Adjusted p-value: 0.168996
+2025-11-22 04:31:13,805 - INFO -       Significant (after correction): False
+2025-11-22 04:31:13,805 - INFO -     HybridNaive vs FullGPU:
+2025-11-22 04:31:13,805 - INFO -       Original p-value: 0.000000
+2025-11-22 04:31:13,805 - INFO -       Adjusted p-value: 0.000000
+2025-11-22 04:31:13,805 - INFO -       Significant (after correction): True
+2025-11-22 04:31:13,805 - INFO -     HybridOptimized vs FullGPU:
+2025-11-22 04:31:13,805 - INFO -       Original p-value: 0.000000
+2025-11-22 04:31:13,805 - INFO -       Adjusted p-value: 0.000001
+2025-11-22 04:31:13,805 - INFO -       Significant (after correction): True
+2025-11-22 04:31:13,805 - INFO - 
+Summary: pr1002 (optimal=259045)
+2025-11-22 04:31:13,805 - INFO - --------------------------------------------------------------------------------
+2025-11-22 04:31:13,805 - INFO - Algorithm            Mean Cost       Gap (%)      Time (s)     H2D (MB)     D2H (MB)    
+2025-11-22 04:31:13,805 - INFO - --------------------------------------------------------------------------------
+2025-11-22 04:31:13,806 - INFO - HybridNaive          281032.47       8.49         710.99       1823.69      206.58      
+2025-11-22 04:31:13,806 - INFO - HybridOptimized      279129.27       7.75         363.39       205.40       205.28      
+2025-11-22 04:31:13,806 - INFO - FullGPU              269992.87       4.23         768.83       8.03         0.00        
+2025-11-22 04:31:13,806 - INFO - 
+Speedups (relative to baseline):
+2025-11-22 04:31:13,806 - INFO -   HybridNaive: 1.00x (baseline)
+2025-11-22 04:31:13,806 - INFO -   HybridOptimized: 1.96x vs HybridNaive
+2025-11-22 04:31:13,806 - INFO -   FullGPU: 0.92x vs HybridNaive
+2025-11-22 04:31:13,806 - INFO - 
+2025-11-22 04:31:13,815 - INFO - ✓ Problem statistics saved: pr1002_stats.json
+
+2025-11-22 04:31:13,890 - INFO - 
+================================================================================
+2025-11-22 04:31:13,890 - INFO - CROSS-PROBLEM ANALYSIS
+2025-11-22 04:31:13,890 - INFO - ================================================================================
+2025-11-22 04:31:13,890 - INFO - ================================================================================
+2025-11-22 04:31:13,890 - INFO - CROSS-PROBLEM ANALYSIS
+2025-11-22 04:31:13,890 - INFO - ================================================================================
+2025-11-22 04:31:13,890 - INFO - Problems analyzed: 38
+2025-11-22 04:31:13,890 - INFO - Algorithms compared: 4
+2025-11-22 04:31:13,890 - INFO - 
+2025-11-22 04:31:13,890 - INFO - Aggregate Statistics (across all problems):
+2025-11-22 04:31:13,890 - INFO - --------------------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/lucas_galdino/chimera/gpu_accelerated/code/benchmarks/chapter4_validation.py", line 1638, in <module>
+    )
+  File "/home/lucas_galdino/chimera/gpu_accelerated/code/benchmarks/chapter4_validation.py", line 1634, in main
+    "--test-mode",
+  File "/home/lucas_galdino/chimera/gpu_accelerated/code/benchmarks/chapter4_validation.py", line 1572, in run_comprehensive_benchmark
+    "std_gap": float(np.nanstd(gaps)),
+  File "/home/lucas_galdino/chimera/gpu_accelerated/code/benchmarks/chapter4_validation.py", line 914, in perform_cross_problem_analysis
+    problem_names = list(all_results.keys())
+KeyError: 'CPU'

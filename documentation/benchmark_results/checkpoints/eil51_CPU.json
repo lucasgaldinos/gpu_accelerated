@@ -1,0 +1,70 @@
+{
+  "algorithm": "CPU",
+  "repetitions": 2,
+  "successful_runs": 2,
+  "mean_time": 65.79150896149986,
+  "std_time": 43.72701791349937,
+  "min_time": 22.06449104800049,
+  "max_time": 109.51852687499922,
+  "mean_cost": 426.5,
+  "std_cost": 0.5,
+  "best_cost": 426.0,
+  "worst_cost": 427.0,
+  "mean_initial_cost": 1349.0,
+  "std_initial_cost": 6.0,
+  "mean_gap": 0.11737089201877934,
+  "std_gap": 0.11737089201877934,
+  "best_gap": 0.0,
+  "mean_improvement": 68.38319783048911,
+  "mean_generations": 31.0,
+  "std_generations": 25.0,
+  "min_generations": 6,
+  "max_generations": 56,
+  "mean_h2d_mb": 0.0,
+  "mean_d2h_mb": 0.0,
+  "total_transfer_mb": 0.0,
+  "mean_kernels": 0.0,
+  "raw_times": [
+    109.51852687499922,
+    22.06449104800049
+  ],
+  "raw_initial_costs": [
+    1343.0,
+    1355.0
+  ],
+  "raw_costs": [
+    427.0,
+    426.0
+  ],
+  "raw_gaps": [
+    0.2347417840375587,
+    0.0
+  ],
+  "raw_generations": [
+    56,
+    6
+  ],
+  "raw_stop_reasons": [
+    "completed",
+    "completed"
+  ],
+  "problem_name": "eil51",
+  "problem_size": 51,
+  "optimal_cost": 426,
+  "max_generations_configured": 728,
+  "backend": "CPU",
+  "timestamp": "2025-11-21 02:05:03",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}
