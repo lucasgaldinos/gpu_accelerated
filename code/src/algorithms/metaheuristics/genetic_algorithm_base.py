@@ -307,6 +307,7 @@ class GeneticAlgorithmBase(ABC):
                 - d2h_bytes: Total D2H memory transfer
                 - kernel_launches: Total GPU kernel launches
                 - generations_completed: Actual generations run
+                - stop_reason: Why evolution stopped ("hit_optimal", "no_improvements", "max_generations")
         """
         n = len(customers)
         xp = context.xp
@@ -330,6 +331,7 @@ class GeneticAlgorithmBase(ABC):
         # Step 3: Evolution loop
         last_improvement_gen = 0
         best_ever_cost = float('inf')
+        stop_reason = "max_generations"  # Default if loop completes
         
         for gen in range(max_generations):
             self.generation = gen + 1
@@ -362,20 +364,24 @@ class GeneticAlgorithmBase(ABC):
                 best_ever_cost = best_cost
                 last_improvement_gen = gen
             
-            # Early stopping condition 1: Optimal reached (with tolerance for floating point)
-            if optimal_cost is not None and abs(best_cost - optimal_cost) < 1e-6:
-                logging.info(
-                    f"Optimal solution reached at generation {gen + 1} "
-                    f"(cost={best_cost:.2f}, optimal={optimal_cost:.2f})"
-                )
-                break
+            # Early stopping condition 1: Optimal reached (within 1% of optimal)
+            if optimal_cost is not None:
+                gap_percent = abs(best_cost - optimal_cost) / optimal_cost * 100
+                if gap_percent < 1.0:  # Within 1% of optimal
+                    logging.info(
+                        f"Near-optimal solution reached at generation {gen + 1} "
+                        f"(cost={best_cost:.2f}, optimal={optimal_cost:.2f}, gap={gap_percent:.2f}%)"
+                    )
+                    stop_reason = "hit_optimal"
+                    break
             
-            # Early stopping condition 2: Stagnation
+            # Early stopping condition 2: Stagnation (patience threshold reached)
             if gen - last_improvement_gen >= patience:
                 logging.info(
                     f"No improvement for {patience} generations. "
                     f"Stopping at generation {gen + 1}"
                 )
+                stop_reason = "no_improvements"
                 break
 
             if (gen + 1) % 100 == 0:
@@ -402,13 +408,14 @@ class GeneticAlgorithmBase(ABC):
             "d2h_bytes": self.d2h_bytes,
             "kernel_launches": self.kernel_launches,
             "generations_completed": self.generation,  # Actual completed generations
+            "stop_reason": stop_reason,  # Why evolution stopped
         }
 
         logging.info(
             f"{self.__class__.__name__} evolution complete: "
             f"best={final_best_cost:.2f}, improvement={improvement_pct:.2f}%, "
             f"H2D={self.h2d_bytes / 1e6:.2f}MB, D2H={self.d2h_bytes / 1e6:.2f}MB, "
-            f"kernels={self.kernel_launches}"
+            f"kernels={self.kernel_launches}, stopped={stop_reason}"
         )
 
         return best_tour, stats

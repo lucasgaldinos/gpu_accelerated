@@ -932,10 +932,18 @@ def perform_cross_problem_analysis(all_results: Dict[str, Dict[str, Dict[str, An
         speedups = []  # Normalized speedup vs baseline
 
         for problem in problem_names:
+            # Skip if algorithm doesn't exist for this problem (e.g., CPU skipped for large problems)
+            if algorithm not in all_results[problem]:
+                continue
+            
             gaps.extend(_get_data_field(all_results[problem][algorithm], "gaps"))
 
             # Calculate speedup vs baseline for this problem
             if algorithm != universal_baseline:
+                # Skip if baseline doesn't exist for this problem
+                if universal_baseline not in all_results[problem]:
+                    continue
+                    
                 baseline_time = all_results[problem][universal_baseline]["mean_time"]
                 algo_time = all_results[problem][algorithm]["mean_time"]
                 if algo_time > 0:
@@ -962,16 +970,24 @@ def perform_cross_problem_analysis(all_results: Dict[str, Dict[str, Dict[str, An
     for algorithm in algorithm_names:
         instance_gaps = []
         for problem in problem_names:
+            # Skip if algorithm doesn't exist for this problem
+            if algorithm not in all_results[problem]:
+                continue
             mean_gap = all_results[problem][algorithm]["mean_gap"]
             instance_gaps.append(mean_gap)
-        algorithm_gap_data.append(np.array(instance_gaps))
+        
+        # Only add if we have data for this algorithm
+        if instance_gaps:
+            algorithm_gap_data.append(np.array(instance_gaps))
 
-    if len(algorithm_names) >= 3:
+    if len(algorithm_gap_data) >= 3:
         friedman_result = analyzer.friedman_test(algorithm_gap_data)
 
         logging.info(f"  Statistic: {friedman_result['statistic']:.4f}")
         logging.info(f"  p-value: {friedman_result['p_value']:.6f}")
         logging.info(f"  Significant: {friedman_result['significant']}")
+    else:
+        logging.info(f"  Skipped: Need ≥3 algorithms with complete data (found {len(algorithm_gap_data)})")
 
     logging.info("")
 

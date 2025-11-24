@@ -215,18 +215,18 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
             (initial_best_cost - final_best_cost) / initial_best_cost * 100
         )
 
-        # Determine stopping reason
+        # Determine stopping reason (standardized format)
         if optimal_cost and abs(final_best_cost - optimal_cost) < 1e-6:
-            stop_reason = f"optimal reached (gen {actual_generations})"
+            stop_reason = "hit_optimal"
         elif actual_generations < max_generations:
-            stop_reason = f"stagnation (gen {actual_generations})"
+            stop_reason = "no_improvements"
         else:
-            stop_reason = f"max generations ({actual_generations})"
+            stop_reason = "max_generations"
 
         logging.info(
             f"FullGPUEarlyStop complete: best={final_best_cost:.2f}, "
-            f"improvement={improvement_pct:.2f}%, stopped={stop_reason}, "
-            f"H2D={self.h2d_bytes / 1024 / 1024:.2f}MB, "
+            f"improvement={improvement_pct:.2f}%, gens={actual_generations}/{max_generations}, "
+            f"stopped={stop_reason}, H2D={self.h2d_bytes / 1024 / 1024:.2f}MB, "
             f"D2H={self.d2h_bytes / 1024 / 1024:.2f}MB, kernels={self.kernel_launches}"
         )
 
@@ -238,8 +238,8 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
             "h2d_bytes": self.h2d_bytes,
             "d2h_bytes": self.d2h_bytes,
             "kernel_launches": self.kernel_launches,
-            "actual_generations": actual_generations,  # NEW
-            "stop_reason": stop_reason,  # NEW
+            "generations_completed": actual_generations,  # FIXED: Use standard field name
+            "stop_reason": stop_reason,  # Standardized format
         }
 
         return best_tour, stats

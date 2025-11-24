@@ -248,11 +248,13 @@ class GeneticAlgorithmFullGPU(GeneticAlgorithmBase):
             "d2h_bytes": self.d2h_bytes,
             "kernel_launches": self.kernel_launches,
             "generations_completed": max_generations,
+            "stop_reason": "max_generations",  # Always completes full run
         }
 
         logging.info(
             f"FullGPU evolution complete: "
             f"best={final_best_cost:.2f}, improvement={improvement_pct:.2f}%, "
+            f"gens={max_generations}/{max_generations}, stopped=max_generations, "
             f"H2D={self.h2d_bytes / 1e6:.2f}MB, D2H={self.d2h_bytes / 1e6:.2f}MB, "
             f"kernels={self.kernel_launches}"
         )
