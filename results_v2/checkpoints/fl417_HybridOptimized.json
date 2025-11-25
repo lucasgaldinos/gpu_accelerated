@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridOptimized",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 18.15123728150138,
+  "std_time": 4.5880179919297195,
+  "min_time": 11.458405868994305,
+  "max_time": 24.318147860001773,
+  "mean_cost": 12018.75,
+  "std_cost": 31.665241195986493,
+  "best_cost": 11976.0,
+  "worst_cost": 12062.0,
+  "mean_initial_cost": 459574.0,
+  "std_initial_cost": 2897.2713887380314,
+  "mean_gap": 1.3299890397099738,
+  "std_gap": 0.266969405581203,
+  "best_gap": 0.969564117696653,
+  "mean_improvement": 97.3847037894653,
+  "mean_generations": 101.25,
+  "std_generations": 30.74390183434757,
+  "min_generations": 55.0,
+  "max_generations": 141.0,
+  "mean_h2d_mb": 42.54234,
+  "mean_d2h_mb": 42.047488,
+  "total_transfer_mb": 84.589828,
+  "mean_kernels": 1078.0,
+  "raw_times": [
+    17.627889357012464,
+    19.20050603999698,
+    11.458405868994305,
+    24.318147860001773
+  ],
+  "raw_initial_costs": [
+    456705.0,
+    461872.0,
+    456705.0,
+    463014.0
+  ],
+  "raw_costs": [
+    12062.0,
+    12006.0,
+    11976.0,
+    12031.0
+  ],
+  "raw_gaps": [
+    1.6946294578871934,
+    1.2224938875305624,
+    0.969564117696653,
+    1.4332686957254868
+  ],
+  "raw_generations": [
+    100,
+    109,
+    55,
+    141
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "hit_optimal",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    1694714382,
+    1067317568,
+    1752944671,
+    1511868956
+  ],
+  "problem_name": "fl417",
+  "problem_size": 417,
+  "optimal_cost": 11861.0,
+  "max_generations_configured": 17030,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:14:43.492233",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

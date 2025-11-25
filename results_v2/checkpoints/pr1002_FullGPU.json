@@ -1,0 +1,88 @@
+{
+  "algorithm": "FullGPU",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 1019.195927179011,
+  "std_time": 280.4396944469726,
+  "min_time": 639.2658039600065,
+  "max_time": 1329.894789189013,
+  "mean_cost": 269484.75,
+  "std_cost": 582.5694701063557,
+  "best_cost": 268883.0,
+  "worst_cost": 270305.0,
+  "mean_initial_cost": 6206862.25,
+  "std_initial_cost": 14435.324093608013,
+  "mean_gap": 4.03009129687892,
+  "std_gap": 0.2248912235736475,
+  "best_gap": 3.7977957497732056,
+  "mean_improvement": 95.65826959166914,
+  "mean_generations": 219.25,
+  "std_generations": 60.172148873045906,
+  "min_generations": 138.0,
+  "max_generations": 287.0,
+  "mean_h2d_mb": 8.032032,
+  "mean_d2h_mb": 0.004016,
+  "total_transfer_mb": 8.036048,
+  "mean_kernels": 3.0,
+  "raw_times": [
+    639.2658039600065,
+    1242.6349193390051,
+    864.9881962280197,
+    1329.894789189013
+  ],
+  "raw_initial_costs": [
+    6220324.0,
+    6212411.0,
+    6182511.0,
+    6212203.0
+  ],
+  "raw_costs": [
+    270305.0,
+    268989.0,
+    268883.0,
+    269762.0
+  ],
+  "raw_gaps": [
+    4.346735123241135,
+    3.8387152811287613,
+    3.7977957497732056,
+    4.13711903337258
+  ],
+  "raw_generations": [
+    138,
+    266,
+    186,
+    287
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    746198739,
+    193126031,
+    1012740321,
+    804485637
+  ],
+  "problem_name": "pr1002",
+  "problem_size": 1002,
+  "optimal_cost": 259045.0,
+  "max_generations_configured": 63435,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T04:19:22.839863",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

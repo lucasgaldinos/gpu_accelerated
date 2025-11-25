@@ -284,7 +284,7 @@ class GeneticAlgorithmBase(ABC):
         customers: List[int],
         max_generations: int,
         optimal_cost: Optional[float] = None,
-        patience: int = 50,
+        patience: Optional[int] = None,
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
         """
         Run GA evolution (IDENTICAL algorithm flow for all variants).
@@ -330,9 +330,9 @@ class GeneticAlgorithmBase(ABC):
 
         # Step 3: Evolution loop
         last_improvement_gen = 0
-        best_ever_cost = float('inf')
+        best_ever_cost = float("inf")
         stop_reason = "max_generations"  # Default if loop completes
-        
+
         for gen in range(max_generations):
             self.generation = gen + 1
 
@@ -358,15 +358,15 @@ class GeneticAlgorithmBase(ABC):
             # Track best cost
             best_cost = float(np.min(fitness))
             self.best_cost_history.append(best_cost)
-            
+
             # Track improvement for early stopping
             if best_cost < best_ever_cost:
                 best_ever_cost = best_cost
                 last_improvement_gen = gen
-            
+
             # Early stopping condition 1: Optimal reached (within 1% of optimal)
             if optimal_cost is not None:
-                gap_percent = abs(best_cost - optimal_cost) / optimal_cost * 100
+                gap_percent = (best_cost - optimal_cost) / optimal_cost * 100
                 if gap_percent < 1.0:  # Within 1% of optimal
                     logging.info(
                         f"Near-optimal solution reached at generation {gen + 1} "
@@ -374,7 +374,7 @@ class GeneticAlgorithmBase(ABC):
                     )
                     stop_reason = "hit_optimal"
                     break
-            
+
             # Early stopping condition 2: Stagnation (patience threshold reached)
             if gen - last_improvement_gen >= patience:
                 logging.info(

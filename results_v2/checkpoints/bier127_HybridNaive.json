@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 3.0058034414978465,
+  "std_time": 0.17029245752998817,
+  "min_time": 2.8894017590064323,
+  "max_time": 3.2996522119938163,
+  "mean_cost": 119077.0,
+  "std_cost": 247.10422902087288,
+  "best_cost": 118768.0,
+  "worst_cost": 119437.0,
+  "mean_initial_cost": 572243.5,
+  "std_initial_cost": 7963.5,
+  "mean_gap": 0.6721225545729697,
+  "std_gap": 0.20891110145319905,
+  "best_gap": 0.41088246732385314,
+  "mean_improvement": 79.18664853800063,
+  "mean_generations": 14.0,
+  "std_generations": 0.0,
+  "min_generations": 14.0,
+  "max_generations": 14.0,
+  "mean_h2d_mb": 3.62712,
+  "mean_d2h_mb": 1.820672,
+  "total_transfer_mb": 5.447792,
+  "mean_kernels": 35840.0,
+  "raw_times": [
+    2.903702711002552,
+    2.8894017590064323,
+    2.9304570839885855,
+    3.2996522119938163
+  ],
+  "raw_initial_costs": [
+    580207.0,
+    564280.0,
+    580207.0,
+    564280.0
+  ],
+  "raw_costs": [
+    118957.0,
+    119146.0,
+    118768.0,
+    119437.0
+  ],
+  "raw_gaps": [
+    0.5706700935053516,
+    0.7304577196868501,
+    0.41088246732385314,
+    0.9764799377758239
+  ],
+  "raw_generations": [
+    14,
+    14,
+    14,
+    14
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    1285612510,
+    695923350,
+    162142562,
+    1285273101
+  ],
+  "problem_name": "bier127",
+  "problem_size": 127,
+  "optimal_cost": 118282.0,
+  "max_generations_configured": 2862,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T01:49:27.338262",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

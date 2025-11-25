@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 4.791222155497962,
+  "std_time": 0.6094644171387219,
+  "min_time": 4.095473185996525,
+  "max_time": 5.58277868598816,
+  "mean_cost": 74227.75,
+  "std_cost": 109.72550979603604,
+  "best_cost": 74041.0,
+  "worst_cost": 74310.0,
+  "mean_initial_cost": 948341.0,
+  "std_initial_cost": 16852.0,
+  "mean_gap": 0.7406829347737574,
+  "std_gap": 0.14891765939583074,
+  "best_gap": 0.4872289025813632,
+  "mean_improvement": 92.17051614641754,
+  "mean_generations": 17.25,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 17.0,
+  "max_generations": 18.0,
+  "mean_h2d_mb": 5.78816,
+  "mean_d2h_mb": 2.646016,
+  "total_transfer_mb": 8.434176,
+  "mean_kernels": 43520.0,
+  "raw_times": [
+    4.095473185996525,
+    4.3128711720055435,
+    5.173765578001621,
+    5.58277868598816
+  ],
+  "raw_initial_costs": [
+    965193.0,
+    931489.0,
+    965193.0,
+    931489.0
+  ],
+  "raw_costs": [
+    74310.0,
+    74303.0,
+    74257.0,
+    74041.0
+  ],
+  "raw_gaps": [
+    0.8523112836242229,
+    0.8428109986156727,
+    0.7803805542737711,
+    0.4872289025813632
+  ],
+  "raw_generations": [
+    17,
+    18,
+    17,
+    17
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    283392535,
+    872569899,
+    1165571686,
+    264243887
+  ],
+  "problem_name": "pr152",
+  "problem_size": 152,
+  "optimal_cost": 73682.0,
+  "max_generations_configured": 3747,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T01:52:00.710859",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 102.71178522100308,
+  "std_time": 6.3413249480229785,
+  "min_time": 95.57240506401286,
+  "max_time": 112.88957268100057,
+  "mean_cost": 15608.75,
+  "std_cost": 78.73174391565324,
+  "best_cost": 15485.0,
+  "worst_cost": 15704.0,
+  "mean_initial_cost": 199140.75,
+  "std_initial_cost": 975.3356793945354,
+  "mean_gap": 2.1448203651593483,
+  "std_gap": 0.5152263851557701,
+  "best_gap": 1.33499116549964,
+  "mean_improvement": 92.16173686978205,
+  "mean_generations": 113.25,
+  "std_generations": 6.179603547154137,
+  "min_generations": 107.0,
+  "max_generations": 123.0,
+  "mean_h2d_mb": 195.9936,
+  "mean_d2h_mb": 47.5136,
+  "total_transfer_mb": 243.5072,
+  "mean_kernels": 296960.0,
+  "raw_times": [
+    102.10787996600266,
+    95.57240506401286,
+    112.88957268100057,
+    100.27728317299625
+  ],
+  "raw_initial_costs": [
+    198852.0,
+    198112.0,
+    198852.0,
+    200747.0
+  ],
+  "raw_costs": [
+    15622.0,
+    15704.0,
+    15485.0,
+    15624.0
+  ],
+  "raw_gaps": [
+    2.231529350173418,
+    2.7681434461095478,
+    1.33499116549964,
+    2.244617498854787
+  ],
+  "raw_generations": [
+    114,
+    107,
+    123,
+    109
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    1933982811,
+    179207107,
+    1816440357,
+    2065839403
+  ],
+  "problem_name": "rd400",
+  "problem_size": 400,
+  "optimal_cost": 15281.0,
+  "max_generations_configured": 16000,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:08:12.221993",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

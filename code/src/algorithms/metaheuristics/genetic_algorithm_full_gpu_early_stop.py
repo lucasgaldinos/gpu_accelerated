@@ -86,7 +86,7 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
         customers,
         max_generations: int,
         optimal_cost: Optional[float] = None,
-        patience: int = 50,
+        patience: int = None,
     ):
         """Override evolve() to use Fujimoto's kernel with early stopping.
 

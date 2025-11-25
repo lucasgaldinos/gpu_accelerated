@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridOptimized",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 0.7739185129976249,
+  "std_time": 0.01733914243193663,
+  "min_time": 0.7555242749949684,
+  "max_time": 0.7918934320041444,
+  "mean_cost": 26724.5,
+  "std_cost": 18.874586088176873,
+  "best_cost": 26699.0,
+  "worst_cost": 26748.0,
+  "mean_initial_cost": 227695.5,
+  "std_initial_cost": 3797.267800669318,
+  "mean_gap": 0.755919167546373,
+  "std_gap": 0.07116040600277816,
+  "best_gap": 0.6597798220479565,
+  "mean_improvement": 88.25977609656299,
+  "mean_generations": 19.25,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 19.0,
+  "max_generations": 20.0,
+  "mean_h2d_mb": 3.0852,
+  "mean_d2h_mb": 3.035136,
+  "total_transfer_mb": 6.120336,
+  "mean_kernels": 214.5,
+  "raw_times": [
+    0.7905758139968384,
+    0.7576805309945485,
+    0.7918934320041444,
+    0.7555242749949684
+  ],
+  "raw_initial_costs": [
+    223901.0,
+    231695.0,
+    223901.0,
+    231285.0
+  ],
+  "raw_costs": [
+    26715.0,
+    26699.0,
+    26736.0,
+    26748.0
+  ],
+  "raw_gaps": [
+    0.7201025486351983,
+    0.6597798220479565,
+    0.7992761272809531,
+    0.8445181722213844
+  ],
+  "raw_generations": [
+    19,
+    19,
+    20,
+    19
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    342560382,
+    60668693,
+    178057286,
+    690667269
+  ],
+  "problem_name": "kroA150",
+  "problem_size": 150,
+  "optimal_cost": 26524.0,
+  "max_generations_configured": 3674,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T01:51:10.962910",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

@@ -1,0 +1,88 @@
+{
+  "algorithm": "CPU",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 25.88040091649964,
+  "std_time": 4.378878221136857,
+  "min_time": 19.11635165500047,
+  "max_time": 31.14584970899159,
+  "mean_cost": 7557.25,
+  "std_cost": 26.413774815425377,
+  "best_cost": 7542.0,
+  "worst_cost": 7603.0,
+  "mean_initial_cost": 24942.5,
+  "std_initial_cost": 111.5,
+  "mean_gap": 0.20220100769026786,
+  "std_gap": 0.3502224186611692,
+  "best_gap": 0.0,
+  "mean_improvement": 69.70098085778793,
+  "mean_generations": 4.75,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 4.0,
+  "max_generations": 5.0,
+  "mean_h2d_mb": 0.0,
+  "mean_d2h_mb": 0.0,
+  "total_transfer_mb": 0.0,
+  "mean_kernels": 0.0,
+  "raw_times": [
+    27.653928377010743,
+    31.14584970899159,
+    25.60547392499575,
+    19.11635165500047
+  ],
+  "raw_initial_costs": [
+    24831.0,
+    25054.0,
+    24831.0,
+    25054.0
+  ],
+  "raw_costs": [
+    7542.0,
+    7542.0,
+    7542.0,
+    7603.0
+  ],
+  "raw_gaps": [
+    0.0,
+    0.0,
+    0.0,
+    0.8088040307610714
+  ],
+  "raw_generations": [
+    5,
+    5,
+    5,
+    4
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    1063147615,
+    86364216,
+    1203284823,
+    1268536204
+  ],
+  "problem_name": "berlin52",
+  "problem_size": 52,
+  "optimal_cost": 7542.0,
+  "max_generations_configured": 749,
+  "backend": "CPU",
+  "timestamp": "2025-11-25T00:48:20.517272",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

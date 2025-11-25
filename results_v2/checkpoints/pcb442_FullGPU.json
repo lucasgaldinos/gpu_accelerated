@@ -1,0 +1,88 @@
+{
+  "algorithm": "FullGPU",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 82.22611988249992,
+  "std_time": 28.13172373479933,
+  "min_time": 61.006931636002264,
+  "max_time": 129.57713005502592,
+  "mean_cost": 52308.75,
+  "std_cost": 187.41848227963004,
+  "best_cost": 52100.0,
+  "worst_cost": 52608.0,
+  "mean_initial_cost": 734251.25,
+  "std_initial_cost": 3665.119873551205,
+  "mean_gap": 3.0145929339477724,
+  "std_gap": 0.3690938640348773,
+  "best_gap": 2.6034897002638937,
+  "mean_improvement": 92.87576414638802,
+  "mean_generations": 108.5,
+  "std_generations": 37.745860700214536,
+  "min_generations": 80.0,
+  "max_generations": 172.0,
+  "mean_h2d_mb": 1.562912,
+  "mean_d2h_mb": 0.001776,
+  "total_transfer_mb": 1.564688,
+  "mean_kernels": 3.0,
+  "raw_times": [
+    61.006931636002264,
+    61.04333303098974,
+    129.57713005502592,
+    77.27708480798174
+  ],
+  "raw_initial_costs": [
+    736682.0,
+    738689.0,
+    732324.0,
+    729310.0
+  ],
+  "raw_costs": [
+    52608.0,
+    52223.0,
+    52100.0,
+    52304.0
+  ],
+  "raw_gaps": [
+    3.603922958761668,
+    2.8457205876560714,
+    2.6034897002638937,
+    3.005238489109457
+  ],
+  "raw_generations": [
+    80,
+    80,
+    172,
+    102
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    874069039,
+    1695506546,
+    2090467356,
+    666100174
+  ],
+  "problem_name": "pcb442",
+  "problem_size": 442,
+  "optimal_cost": 50778.0,
+  "max_generations_configured": 18585,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:34:29.210941",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

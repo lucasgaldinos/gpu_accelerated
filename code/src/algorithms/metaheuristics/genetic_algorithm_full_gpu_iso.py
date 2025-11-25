@@ -104,7 +104,7 @@ class GeneticAlgorithmFullGPU(GeneticAlgorithmBase):
         customers,
         max_generations: int,
         optimal_cost: Optional[float] = None,
-        patience: int = 50,
+        patience: Optional[int] = None,
     ):
         """Override evolve() to use Fujimoto's monolithic kernel.
 

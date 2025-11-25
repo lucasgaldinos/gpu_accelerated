@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 658.9261126682613,
+  "std_time": 17.011114203942356,
+  "min_time": 637.3992504170164,
+  "max_time": 683.3078143240127,
+  "mean_cost": 282372.25,
+  "std_cost": 3282.912455046586,
+  "best_cost": 278073.0,
+  "worst_cost": 287128.0,
+  "mean_initial_cost": 6160311.0,
+  "std_initial_cost": 20241.0,
+  "mean_gap": 9.005095639753712,
+  "std_gap": 1.2673135768096608,
+  "best_gap": 7.345441911636974,
+  "mean_improvement": 95.41612212179027,
+  "mean_generations": 185.0,
+  "std_generations": 4.898979485566356,
+  "min_generations": 177.0,
+  "max_generations": 189.0,
+  "mean_h2d_mb": 1657.62864,
+  "mean_d2h_mb": 187.766784,
+  "total_transfer_mb": 1845.395424,
+  "mean_kernels": 468480.0,
+  "raw_times": [
+    664.4111381850089,
+    650.5862477470073,
+    683.3078143240127,
+    637.3992504170164
+  ],
+  "raw_initial_costs": [
+    6180552.0,
+    6140070.0,
+    6180552.0,
+    6140070.0
+  ],
+  "raw_costs": [
+    278073.0,
+    287128.0,
+    283120.0,
+    281168.0
+  ],
+  "raw_gaps": [
+    7.345441911636974,
+    10.84097357601961,
+    9.293752050801984,
+    8.540215020556275
+  ],
+  "raw_generations": [
+    189,
+    185,
+    189,
+    177
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    1749231965,
+    534475282,
+    450033346,
+    1553908368
+  ],
+  "problem_name": "pr1002",
+  "problem_size": 1002,
+  "optimal_cost": 259045.0,
+  "max_generations_configured": 63435,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T03:29:34.255395",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

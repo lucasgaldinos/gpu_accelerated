@@ -125,7 +125,7 @@ extern "C" __global__ void ga_evolution_early_stop(
     int* best_tour,
     float* best_fitness,
     float optimal_cost,       // NEW: Optimal cost for early stopping (-1 to disable)
-    int patience,             // NEW: Stagnation patience (generations without improvement)
+    int patience,             // NEW: Stagnation patience (adaptive: 2×√n, passed from host)
     int* stopped_generation   // NEW: Output - actual generation stopped at
 ) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;

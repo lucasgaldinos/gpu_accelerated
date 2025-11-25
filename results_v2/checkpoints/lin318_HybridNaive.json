@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 56.11134911275076,
+  "std_time": 12.05680695662922,
+  "min_time": 35.231533575002686,
+  "max_time": 63.26749849699263,
+  "mean_cost": 42647.25,
+  "std_cost": 133.61769156814526,
+  "best_cost": 42440.0,
+  "worst_cost": 42813.0,
+  "mean_initial_cost": 549073.25,
+  "std_initial_cost": 3143.743101384081,
+  "mean_gap": 1.471008113445478,
+  "std_gap": 0.31791784617322627,
+  "best_gap": 0.9778962145185467,
+  "mean_improvement": 92.23263388515839,
+  "mean_generations": 88.25,
+  "std_generations": 18.713297411199342,
+  "min_generations": 56.0,
+  "max_generations": 101.0,
+  "mean_h2d_mb": 111.193152,
+  "mean_d2h_mb": 31.911936,
+  "total_transfer_mb": 143.105088,
+  "mean_kernels": 250880.0,
+  "raw_times": [
+    35.231533575002686,
+    62.72854091000045,
+    63.21782346900727,
+    63.26749849699263
+  ],
+  "raw_initial_costs": [
+    546684.0,
+    548573.0,
+    546684.0,
+    554352.0
+  ],
+  "raw_costs": [
+    42440.0,
+    42660.0,
+    42813.0,
+    42676.0
+  ],
+  "raw_gaps": [
+    0.9778962145185467,
+    1.5013443098812724,
+    1.8653786671108044,
+    1.539413262271289
+  ],
+  "raw_generations": [
+    56,
+    101,
+    96,
+    100
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    157137719,
+    1829108655,
+    1576197354,
+    46514567
+  ],
+  "problem_name": "lin318",
+  "problem_size": 318,
+  "optimal_cost": 42029.0,
+  "max_generations_configured": 11341,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:03:03.523134",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

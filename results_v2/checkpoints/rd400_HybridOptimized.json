@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridOptimized",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 22.811196196747915,
+  "std_time": 0.9168411654009851,
+  "min_time": 21.492498482009978,
+  "max_time": 23.832713129988406,
+  "mean_cost": 15823.75,
+  "std_cost": 104.4709887959332,
+  "best_cost": 15682.0,
+  "worst_cost": 15958.0,
+  "mean_initial_cost": 199897.75,
+  "std_initial_cost": 1226.5660143261755,
+  "mean_gap": 3.551796348406518,
+  "std_gap": 0.6836659171254056,
+  "best_gap": 2.6241738106144883,
+  "mean_improvement": 92.08392632048145,
+  "mean_generations": 105.75,
+  "std_generations": 4.02336923485777,
+  "min_generations": 100.0,
+  "max_generations": 110.0,
+  "mean_h2d_mb": 42.4192,
+  "mean_d2h_mb": 41.988096,
+  "total_transfer_mb": 84.407296,
+  "mean_kernels": 1122.0,
+  "raw_times": [
+    23.47736371899373,
+    22.442209455999546,
+    21.492498482009978,
+    23.832713129988406
+  ],
+  "raw_initial_costs": [
+    198852.0,
+    200037.0,
+    198852.0,
+    201850.0
+  ],
+  "raw_costs": [
+    15880.0,
+    15682.0,
+    15775.0,
+    15958.0
+  ],
+  "raw_gaps": [
+    3.919900530070022,
+    2.6241738106144883,
+    3.2327727242981483,
+    4.430338328643414
+  ],
+  "raw_generations": [
+    110,
+    109,
+    100,
+    104
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "no_improvements"
+  ],
+  "raw_seeds": [
+    677727842,
+    1155292886,
+    591842225,
+    163436409
+  ],
+  "problem_name": "rd400",
+  "problem_size": 400,
+  "optimal_cost": 15281.0,
+  "max_generations_configured": 16000,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:08:57.617088",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

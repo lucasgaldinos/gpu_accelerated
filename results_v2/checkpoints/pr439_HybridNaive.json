@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 124.78076428125132,
+  "std_time": 8.443626525725458,
+  "min_time": 113.17671639200125,
+  "max_time": 136.69210331300565,
+  "mean_cost": 110172.75,
+  "std_cost": 1953.1396999446813,
+  "best_cost": 108202.0,
+  "worst_cost": 113296.0,
+  "mean_initial_cost": 1802566.5,
+  "std_initial_cost": 1913.4764827402505,
+  "mean_gap": 2.756792299728588,
+  "std_gap": 1.8216697911195814,
+  "best_gap": 0.9186975945978716,
+  "mean_improvement": 93.88793063407164,
+  "mean_generations": 126.5,
+  "std_generations": 6.726812023536855,
+  "min_generations": 117.0,
+  "max_generations": 136.0,
+  "mean_h2d_mb": 261.856476,
+  "mean_d2h_mb": 59.113984,
+  "total_transfer_mb": 320.97046,
+  "mean_kernels": 336640.0,
+  "raw_times": [
+    113.17671639200125,
+    122.55369439799688,
+    126.70054302200151,
+    136.69210331300565
+  ],
+  "raw_initial_costs": [
+    1801276.0,
+    1801859.0,
+    1801276.0,
+    1805855.0
+  ],
+  "raw_costs": [
+    108905.0,
+    110288.0,
+    113296.0,
+    108202.0
+  ],
+  "raw_gaps": [
+    1.5743771976458956,
+    2.8642845817361056,
+    5.669809824934479,
+    0.9186975945978716
+  ],
+  "raw_generations": [
+    117,
+    126,
+    127,
+    136
+  ],
+  "raw_stop_reasons": [
+    "no_improvements",
+    "no_improvements",
+    "no_improvements",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    231584165,
+    202640935,
+    313131114,
+    1573348459
+  ],
+  "problem_name": "pr439",
+  "problem_size": 439,
+  "optimal_cost": 107217.0,
+  "max_generations_configured": 18396,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T02:22:33.358255",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

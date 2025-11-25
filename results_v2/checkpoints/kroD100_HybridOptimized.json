@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridOptimized",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 0.366924940750323,
+  "std_time": 0.10652547591636793,
+  "min_time": 0.26712567900540307,
+  "max_time": 0.5437674449931365,
+  "mean_cost": 21410.5,
+  "std_cost": 32.96589146375386,
+  "best_cost": 21374.0,
+  "worst_cost": 21464.0,
+  "mean_initial_cost": 140710.5,
+  "std_initial_cost": 448.5,
+  "mean_gap": 0.5471024701793933,
+  "std_gap": 0.1548130528024508,
+  "best_gap": 0.37569268338499107,
+  "mean_improvement": 84.78380358846331,
+  "mean_generations": 11.25,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 11.0,
+  "max_generations": 12.0,
+  "mean_h2d_mb": 1.1664,
+  "mean_d2h_mb": 1.148928,
+  "total_transfer_mb": 2.315328,
+  "mean_kernels": 121.0,
+  "raw_times": [
+    0.3527930050040595,
+    0.5437674449931365,
+    0.26712567900540307,
+    0.30401363399869297
+  ],
+  "raw_initial_costs": [
+    141159.0,
+    140262.0,
+    141159.0,
+    140262.0
+  ],
+  "raw_costs": [
+    21404.0,
+    21464.0,
+    21374.0,
+    21400.0
+  ],
+  "raw_gaps": [
+    0.5165774396543628,
+    0.7983469521931061,
+    0.37569268338499107,
+    0.4977928054851132
+  ],
+  "raw_generations": [
+    11,
+    12,
+    11,
+    11
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    1398458054,
+    1409711103,
+    134219304,
+    802388181
+  ],
+  "problem_name": "kroD100",
+  "problem_size": 100,
+  "optimal_cost": 21294.0,
+  "max_generations_configured": 2000,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T01:29:58.625178",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

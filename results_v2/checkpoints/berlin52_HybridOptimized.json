@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridOptimized",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 0.10181727675080765,
+  "std_time": 0.00878143864008823,
+  "min_time": 0.09563381200132426,
+  "max_time": 0.11696214599942323,
+  "mean_cost": 7568.75,
+  "std_cost": 24.055924426219832,
+  "best_cost": 7542.0,
+  "worst_cost": 7597.0,
+  "mean_initial_cost": 25208.0,
+  "std_initial_cost": 532.0803510749105,
+  "mean_gap": 0.35468045611243704,
+  "std_gap": 0.3189594858952511,
+  "best_gap": 0.0,
+  "mean_improvement": 69.96248601309865,
+  "mean_generations": 4.25,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 4.0,
+  "max_generations": 5.0,
+  "mean_h2d_mb": 0.223808,
+  "mean_d2h_mb": 0.221184,
+  "total_transfer_mb": 0.444992,
+  "mean_kernels": 44.0,
+  "raw_times": [
+    0.11696214599942323,
+    0.09792774799279869,
+    0.09563381200132426,
+    0.09674540100968443
+  ],
+  "raw_initial_costs": [
+    24831.0,
+    25054.0,
+    24831.0,
+    26116.0
+  ],
+  "raw_costs": [
+    7542.0,
+    7548.0,
+    7597.0,
+    7588.0
+  ],
+  "raw_gaps": [
+    0.0,
+    0.07955449482895784,
+    0.7292495359321135,
+    0.6099177936886768
+  ],
+  "raw_generations": [
+    5,
+    4,
+    4,
+    4
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    392128823,
+    588161755,
+    913987926,
+    2003647011
+  ],
+  "problem_name": "berlin52",
+  "problem_size": 52,
+  "optimal_cost": 7542.0,
+  "max_generations_configured": 749,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T00:48:22.086087",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}

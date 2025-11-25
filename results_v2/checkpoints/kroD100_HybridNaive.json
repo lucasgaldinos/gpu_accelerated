@@ -1,0 +1,88 @@
+{
+  "algorithm": "HybridNaive",
+  "repetitions": 4,
+  "successful_runs": 4,
+  "mean_time": 2.007334443998843,
+  "std_time": 0.098513772822494,
+  "min_time": 1.889098847997957,
+  "max_time": 2.1120472610055003,
+  "mean_cost": 21452.5,
+  "std_cost": 26.081602711489953,
+  "best_cost": 21418.0,
+  "worst_cost": 21482.0,
+  "mean_initial_cost": 140777.5,
+  "std_initial_cost": 393.09063840290065,
+  "mean_gap": 0.7443411289565136,
+  "std_gap": 0.12248334137076147,
+  "best_gap": 0.5823236592467361,
+  "mean_improvement": 84.76129954807924,
+  "mean_generations": 11.25,
+  "std_generations": 0.4330127018922193,
+  "min_generations": 11.0,
+  "max_generations": 12.0,
+  "mean_h2d_mb": 2.0976,
+  "mean_d2h_mb": 1.1776,
+  "total_transfer_mb": 3.2752,
+  "mean_kernels": 29440.0,
+  "raw_times": [
+    2.1120472610055003,
+    1.9310777909995522,
+    2.0971138759923633,
+    1.889098847997957
+  ],
+  "raw_initial_costs": [
+    141159.0,
+    140262.0,
+    141159.0,
+    140530.0
+  ],
+  "raw_costs": [
+    21482.0,
+    21473.0,
+    21437.0,
+    21418.0
+  ],
+  "raw_gaps": [
+    0.882877805954729,
+    0.8406123790739175,
+    0.6715506715506716,
+    0.5823236592467361
+  ],
+  "raw_generations": [
+    11,
+    11,
+    12,
+    11
+  ],
+  "raw_stop_reasons": [
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal",
+    "hit_optimal"
+  ],
+  "raw_seeds": [
+    1446507521,
+    1558607418,
+    911847436,
+    2078123255
+  ],
+  "problem_name": "kroD100",
+  "problem_size": 100,
+  "optimal_cost": 21294.0,
+  "max_generations_configured": 2000,
+  "backend": "GPU",
+  "timestamp": "2025-11-25T01:29:58.006244",
+  "algorithm_config": {
+    "population_size": 256,
+    "mutation_rate": 0.02,
+    "tournament_size": 5,
+    "two_opt_iterations": 10,
+    "seed": 42
+  },
+  "strategies": {
+    "selection": "TournamentSelection",
+    "crossover": "OrderCrossover",
+    "mutation": "SwapMutation"
+  },
+  "construction_heuristic": "random_initialization"
+}
