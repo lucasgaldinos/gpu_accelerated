@@ -23,6 +23,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
 import logging
+import math
 
 from src.data_models.problem import Problem
 from src.protocols.problem_context import ProblemContext
@@ -296,6 +297,8 @@ class GeneticAlgorithmBase(ABC):
             context: Problem context with distance matrix and backend
             customers: List of customer indices
             max_generations: Number of generations to evolve
+            optimal_cost: Known optimal cost for early stopping (None to disable)
+            patience: Stagnation patience in generations (None = adaptive: 2×√n)
 
         Returns:
             (best_tour, stats) where stats contains:
@@ -312,6 +315,10 @@ class GeneticAlgorithmBase(ABC):
         n = len(customers)
         xp = context.xp
         distances = context.get_cpu_distances()
+        
+        # Use adaptive patience if not provided: 2 × sqrt(n)
+        if patience is None:
+            patience = int(2 * math.sqrt(n))
 
         # Reset statistics
         self.generation = 0
@@ -376,7 +383,7 @@ class GeneticAlgorithmBase(ABC):
                     break
 
             # Early stopping condition 2: Stagnation (patience threshold reached)
-            if gen - last_improvement_gen >= patience:
+            if patience is not None and gen - last_improvement_gen >= patience:
                 logging.info(
                     f"No improvement for {patience} generations. "
                     f"Stopping at generation {gen + 1}"

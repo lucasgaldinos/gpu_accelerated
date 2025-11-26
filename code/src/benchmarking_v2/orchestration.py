@@ -415,13 +415,15 @@ def run_comprehensive_benchmark(
 
                         continue
                     else:
-                        # Need to complete to target
+                        # Need to complete to target - treat as incremental internally
                         actual_repetitions = args.repetitions - existing_runs
                         logging.info(
                             f"  [{algo_idx}/{len(problem_algorithms)}] {alg_name} ({backend_type}): "
                             f"Resuming: {existing_runs}/{args.repetitions} runs exist, "
                             f"completing remaining {actual_repetitions}"
                         )
+                        # Enable incremental mode internally to merge data
+                        incremental_mode = True
             else:
                 # Fresh start - no checkpoint exists
                 actual_repetitions = args.repetitions
@@ -452,6 +454,7 @@ def run_comprehensive_benchmark(
                 optimal_cost=optimal_cost,
                 repetitions=actual_repetitions,
                 use_gpu=alg_config.use_gpu,
+                patience=benchmark_config.patience,
                 existing_checkpoint=existing_checkpoint,
                 incremental_mode=incremental_mode and existing_checkpoint is not None,
             )

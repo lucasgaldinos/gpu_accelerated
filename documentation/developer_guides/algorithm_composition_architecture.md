@@ -936,7 +936,7 @@ cost = compute_tour_cost(problem, tour, xp=cp)
 
 ### 8.1 Architectural Decisions
 
-This section addresses key design decisions that emerged during architecture development, with particular focus on how they enable the research questions defined in [`first_draft.md`](./../../first_draft.md#L562-L1130).
+This section addresses key design decisions that emerged during architecture development, with particular focus on how they enable the research questions defined in [`first_draft.md`](../../drafts/first_draft.md#L562-L1130).
 
 ---
 
@@ -1723,7 +1723,7 @@ def apply_2opt_move(
 - Existing Implementation: `code/src/algorithms/construction/nearest_neighbor.py`
 - Existing Implementation: `code/src/algorithms/objectives/tour_cost.py`
 - Decision 9: Backend Parameter Pattern
-- Research Questions: [`first_draft.md`](./../../first_draft.md#L562-L1130)
+- Research Questions: [`first_draft.md`](../../drafts/first_draft.md#L562-L1130)
 
 ---
 

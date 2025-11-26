@@ -27,5 +27,5 @@ def load_kernel(kernel_filename: str, kernel_function_name: str, caller_file_pat
             f"Expected a 'kernels' directory alongside the calling script."
         )
 
-    kernel_source = kernel_path.read_text()
+    kernel_source = kernel_path.read_text(encoding="utf-8")
     return cp.RawKernel(kernel_source, kernel_function_name)

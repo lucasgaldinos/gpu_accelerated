@@ -321,6 +321,17 @@
     - [Statistical Methods Textbooks](#statistical-methods-textbooks)
     - [Online Resources](#online-resources)
     - [Software Documentation](#software-documentation)
+  - [Correlation Analysis and Covariate Testing](#correlation-analysis-and-covariate-testing)
+    - [Spearman Rank Correlation](#spearman-rank-correlation)
+      - [Purpose](#purpose)
+      - [Mathematical Formulation](#mathematical-formulation-9)
+      - [Interpretation](#interpretation-7)
+      - [Application to Regression Diagnostics](#application-to-regression-diagnostics)
+      - [Example: Stop Reason Distribution as Covariate](#example-stop-reason-distribution-as-covariate)
+      - [Spearman vs Pearson: When to Choose](#spearman-vs-pearson-when-to-choose)
+      - [Python Implementation](#python-implementation)
+      - [Assumptions and Limitations](#assumptions-and-limitations-5)
+      - [Reporting Template](#reporting-template)
   - [Appendix: Code Examples](#appendix-code-examples)
     - [Complete Statistical Analysis Pipeline](#complete-statistical-analysis-pipeline)
 
@@ -7205,17 +7216,17 @@ from scipy.stats import spearmanr
 problem_metrics = []
 for problem_name in unique_problems:
     problem_data = df[df['problem'] == problem_name]
-    
+
     # Covariate: % hitting optimal
     hit_optimal_pct = np.mean([
-        'hit_optimal' in reason or 'optimal reached' in reason 
+        'hit_optimal' in reason or 'optimal reached' in reason
         for reason in problem_data['stop_reasons']
     ]) * 100
-    
+
     # Model residual: absolute error in time prediction
-    residual = abs(problem_data['actual_time'].mean() - 
+    residual = abs(problem_data['actual_time'].mean() -
                    model.predict(problem_data['n'].mean()))
-    
+
     problem_metrics.append({
         'problem': problem_name,
         'n': problem_data['n'].iloc[0],
@@ -7227,7 +7238,7 @@ metrics_df = pd.DataFrame(problem_metrics)
 
 # Spearman correlation test
 rho, p_value = spearmanr(
-    metrics_df['hit_optimal_pct'], 
+    metrics_df['hit_optimal_pct'],
     metrics_df['abs_residual']
 )
 
@@ -7242,7 +7253,7 @@ if p_value < 0.05:
     else:
         print("  ⚠ Higher hit_optimal% → Smaller residuals")
         print("     Model fits better for fast-convergence problems")
-    
+
     print("\n  Recommendation: Stratify analysis by convergence behavior")
 else:
     print("  ✓ Stop reason distribution does not affect model fit")
@@ -7311,16 +7322,16 @@ corr_matrix, p_matrix = spearmanr(data_matrix, axis=0)
 ```markdown
 **Covariate Analysis: Hit Optimal Percentage vs Model Residuals**
 
-We tested whether stop reason distribution (hit_optimal%) correlates 
+We tested whether stop reason distribution (hit_optimal%) correlates
 with regression model residuals using Spearman rank correlation:
 
 - Spearman ρ = 0.28, 95% CI [0.03, 0.51]
 - p = 0.048 (two-tailed)
 - Effect: Weak-to-moderate positive correlation
-- Interpretation: Problems with higher early-optimal rates show 
+- Interpretation: Problems with higher early-optimal rates show
   slightly larger timing prediction errors, but effect is weak.
   
-**Conclusion**: Stop reason distribution has minimal impact on model 
+**Conclusion**: Stop reason distribution has minimal impact on model
 fit quality. Pooled analysis is appropriate.
 ```
 

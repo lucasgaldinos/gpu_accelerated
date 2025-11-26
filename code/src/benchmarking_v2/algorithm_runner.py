@@ -43,7 +43,7 @@ import gc
 import logging
 import math
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 import numpy as np
 
@@ -207,6 +207,10 @@ def run_single_algorithm(
         >>> print(f"Total runs: {results['successful_runs']}")  # 40 total
     """
     backend = "GPU" if use_gpu else "CPU"
+    
+    # Calculate adaptive patience if not provided: 2 × sqrt(n)
+    if patience is None:
+        patience = adaptive_patience(problem_size)
 
     # Handle incremental mode
     if incremental_mode and existing_checkpoint:

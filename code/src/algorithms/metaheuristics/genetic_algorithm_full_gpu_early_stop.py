@@ -86,7 +86,7 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
         customers,
         max_generations: int,
         optimal_cost: Optional[float] = None,
-        patience: int = None,
+        patience: Optional[int] = None,
     ):
         """Override evolve() to use Fujimoto's kernel with early stopping.
 
@@ -95,13 +95,18 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
             customers: List of customer indices
             max_generations: Maximum number of generations
             optimal_cost: Optimal cost for early stopping (None to disable)
-            patience: Stagnation patience (generations without improvement)
+            patience: Stagnation patience in generations (None = adaptive: 2×√n)
 
         Returns:
             (best_tour, stats) tuple
         """
         n = len(customers)
         distances = context.get_cpu_distances()
+        
+        # Use adaptive patience if not provided: 2 × sqrt(n)
+        if patience is None:
+            import math
+            patience = int(2 * math.sqrt(n))
 
         # Reset statistics
         self.generation = 0
@@ -215,13 +220,19 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
             (initial_best_cost - final_best_cost) / initial_best_cost * 100
         )
 
-        # Determine stopping reason (standardized format)
-        if optimal_cost and abs(final_best_cost - optimal_cost) < 1e-6:
-            stop_reason = "hit_optimal"
+        # Determine stopping reason (standardized format - matches base algorithm)
+        if optimal_cost is not None:
+            gap_percent = (final_best_cost - optimal_cost) / optimal_cost * 100
+            if gap_percent < 1.0:  # Within 1% of optimal
+                stop_reason = "hit_optimal"
+            elif actual_generations < max_generations:
+                stop_reason = "no_improvements"  # Stagnation
+            else:
+                stop_reason = "max_generations"  # Ran full duration without hitting optimal
         elif actual_generations < max_generations:
-            stop_reason = "no_improvements"
+            stop_reason = "no_improvements"  # Stagnation (no optimal cost provided)
         else:
-            stop_reason = "max_generations"
+            stop_reason = "max_generations"  # Completed all generations
 
         logging.info(
             f"FullGPUEarlyStop complete: best={final_best_cost:.2f}, "

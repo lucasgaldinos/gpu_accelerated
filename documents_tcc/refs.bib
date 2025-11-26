@@ -20,25 +20,6 @@
   Year = {2017},
   Bdsk-Url-1 = {https://repositorio.ufsc.br/handle/123456789/182018?show=full}}
 
-@manual{pursuit_travelling_salesman,
-  Author = {William Cook},
-  Date-Added = {2014-11-09},
-  Date-Modified = {2014-11-09},
-  Isbn = {9780691163529},
-  Month = {Nov.},
-  Title = {In Pursuit of the Traveling Salesman: Mathematics at the Limits of Computation},
-  Bdsk-Url-1 = {https://press.princeton.edu/books/paperback/9780691163529/in-pursuit-of-the-traveling-salesman},
-  Year= {2014},
-}
-
-@manual{tsplib_ref,
-  author = {Gerhard Reinelt},
-  title = { TSPLIB—A Traveling Salesman Problem Library },
-  Isbn = {9780691163529},
-  Year= {1991},
-  publisher = { INFORMS },
-},
-
 @inproceedings{tsp_gpu,
  author = {Rocki, Kamil and Suda, Reiji},
  title = {High Performance GPU Accelerated Local Optimization in TSP},
@@ -169,6 +150,31 @@ keywords = {Vehicle routing and driver scheduling, Point-to-point long-haul full
   year={2018}
 }
 
+@article{binjubier2024gpu,
+  title = {A GPU Accelerated Parallel Genetic Algorithm for the Traveling Salesman Problem},
+  author = {BinJubier, Mohammed and Ismail, Mohd Arfian and Tusher, Ekramul Haque and Aljanabi, Mohammad},
+  journal = {Journal of Soft Computing and Data Mining},
+  volume = {5},
+  number = {2},
+  pages = {137--150},
+  year = {2024},
+  doi = {10.30880/jscdm.2024.05.02.010},
+  url = {https://doi.org/10.30880/jscdm.2024.05.02.010}
+}
+
+@article{harada2020parallel,
+  title = {Parallel Genetic Algorithms: A Useful Survey},
+  author = {Harada, Tomohiro and Alba, Enrique},
+  journal = {ACM Computing Surveys},
+  volume = {53},
+  number = {4},
+  pages = {86:1--86:39},
+  year = {2020},
+  doi = {10.1145/3400031},
+  url = {https://dl.acm.org/doi/10.1145/3400031},
+  note = {Article 86}
+}
+
 @article{simchi2005logic,
   title={The logic of logistics},
   author={Simchi-Levi, David and Chen, Xin and Bramel, Julien and others},
@@ -191,21 +197,6 @@ keywords = {Vehicle routing and driver scheduling, Point-to-point long-haul full
   author={Gomes, Fabricio Maciel and Pereira, Felix Monteiro and Silva, Messias Borges and Marins, Fernando Augusto Silva},
   journal={Encontro Nacional de Engenharia de Produ{\c{c}}{\~a}o ENEGEP},
   year={2015}
-}
-
-@article{gendreau1993tabu,
-title = {A tabu search heuristic for the heterogeneous fleet vehicle routing problem},
-journal = {Computers \& Operations Research},
-volume = {26},
-number = {12},
-pages = {1153-1173},
-year = {1999},
-issn = {0305-0548},
-doi = {https://doi.org/10.1016/S0305-0548(98)00100-2},
-url = {https://www.sciencedirect.com/science/article/pii/S0305054898001002},
-author = {Michel Gendreau and Alain Hertz and Gilbert Laporte},
-keywords = {Vehicle routing, Tabu search, Heterogeneous fleet},
-abstract = {This paper describes a tabu search heuristic for the vehicle routing problem with a heterogeneous fleet of vehicles. The heuristic is based on the TABUROUTE algorithm recently proposed by Gendreau, Hertz and Laporte for the standard capacitated vehicle routing problem with a homogeneous fleet. Computational experiments on 20 test problems show that the algorithm yields high quality solutions.}
 }
 
 @article{prins2004simple,
@@ -411,18 +402,6 @@ doi = {10.1145/3377930.3390159}
   doi = {10.1137/0206041}
 }
 
-@article{kirkpatrick1983simulated,
-  title={Optimization by simulated annealing},
-  author={Kirkpatrick, Scott and Gelatt, C Daniel and Vecchi, Mario P},
-  journal={Science},
-  volume={220},
-  number={4598},
-  pages={671--680},
-  year={1983},
-  publisher={American Association for the Advancement of Science},
-  doi={10.1126/science.220.4598.671}
-}
-
 @article{croes1958method,
   title={A method for solving traveling-salesman problems},
   author={Croes, Georges A},
@@ -470,16 +449,6 @@ doi = {10.1145/3377930.3390159}
   publisher={Morgan Kaufmann},
   edition={1st},
   isbn={978-0123814722}
-}
-
-@inproceedings{rocki2013high,
-  title={High Performance GPU Accelerated Local Optimization in TSP},
-  author={Rocki, Kamil and Suda, Reiji},
-  booktitle={2013 IEEE 27th International Symposium on Parallel and Distributed Processing Workshops and PhD Forum (IPDPSW)},
-  pages={1788--1796},
-  year={2013},
-  organization={IEEE},
-  doi={10.1109/IPDPSW.2013.45}
 }
 
 @article{clarke1964scheduling,
@@ -693,27 +662,6 @@ doi = {10.1145/3377930.3390159}
   note = {State-of-the-art survey of parallel meta-heuristic strategies, introducing P-Data/S-Task/P-Task taxonomy adapted from Flynn}
 }
 
-@article{crainic2010parallel,
-  author = {Crainic, Teodor Gabriel and Toulouse, Michel},
-  title = {Parallel Meta-Heuristics},
-  journal = {Handbook of Metaheuristics, International Series in Operations Research \& Management Science},
-  volume = {146},
-  pages = {497--541},
-  year = {2010},
-  publisher = {Springer},
-  doi = {10.1007/978-1-4419-1665-5_17},
-  note = {Updated parallel metaheuristics survey with design principles and implementation strategies for distributed and shared-memory systems}
-}
-
-@book{alba2005parallel,
-  author = {Alba, Enrique},
-  title = {Parallel Metaheuristics: A New Class of Algorithms},
-  publisher = {John Wiley \& Sons},
-  year = {2005},
-  isbn = {978-0-471-67806-9},
-  note = {Comprehensive treatment of parallel metaheuritic algorithms covering genetic algorithms, evolutionary strategies, and trajectory-based methods}
-}
-
 @article{kirkpatrick1983optimization,
   author = {Kirkpatrick, Scott and Gelatt, C. Daniel and Vecchi, Mario P.},
   title = {Optimization by Simulated Annealing},
@@ -841,18 +789,22 @@ doi = {10.1145/3377930.3390159}
   publisher={Springer}
 }
 
+@techreport{crainic2012designing,
+  title={Designing Parallel Meta-Heuristic Methods},
+  author={Crainic, Teodor Gabriel and Davidovi{\'c}, Tatjana and Ramljak, Du{\v{s}}an},
+  institution={CIRRELT -- Interuniversity Research Centre on Enterprise Networks, Logistics and Transportation},
+  address={Montr{\'e}al, QC, Canada},
+  number={CIRRELT-2012-28},
+  year={2012},
+  url={https://www.cirrelt.ca/DocumentsTravail/CIRRELT-2012-28.pdf},
+  note={Research report surveying taxonomy and implementation guidelines for parallel meta-heuristics, with VNS and BCO case studies}
+}
+
 @book{alba2005parallel,
   title={Parallel metaheuristics: a new class of algorithms},
   author={Alba, Enrique},
   year={2005},
   publisher={John Wiley \& Sons}
-}
-
-@book{eiben2015introduction,
-  title={Introduction to evolutionary computing},
-  author={Eiben, Agoston E and Smith, James E},
-  year={2015},
-  publisher={Springer}
 }
 
 @article{ropke2006unified,
@@ -1234,3 +1186,92 @@ doi = {10.1145/3377930.3390159}
   url = {https://doi.org/10.1214/ss/1032280214},
   note = {Comprehensive 40-page review article comparing bootstrap CI methods: percentile, BCa, ABC, bootstrap-t, studentized. Provides theoretical framework (Edgeworth expansions, transformation theory) and simulation studies demonstrating BCa superiority for skewed distributions. Tutorial-style exposition for applied researchers. Usage: Cited in statistical_tests_comprehensive_guide.md Chapter 8 for selecting optimal bootstrap CI method (BCa recommended) when reporting GPU speedup confidence intervals in academic publications.}
 }
+
+@techreport{cantupaz1998survey,
+  title = {A Survey of Parallel Genetic Algorithms},
+  author = {Cantú-Paz, Erick},
+  institution = {Illinois Genetic Algorithms Laboratory, University of Illinois at Urbana-Champaign},
+  year = {1998},
+  note = {Technical report 97003. Comprehensive survey of parallel GA techniques including master-slave, multiple demes, and hierarchical approaches. Focuses on multi-population parallel GAs with modeling and design considerations.}
+}
+
+@inproceedings{eiben2011parameters,
+  title = {Evolutionary Algorithm Parameters and Methods to Tune Them},
+  author = {Eiben, A. E. and Smit, S. K.},
+  booktitle = {Autonomous Search},
+  editor = {Hamadi, Youssef and Monfroy, Eric and Saubion, Frédéric},
+  year = {2011},
+  publisher = {Springer},
+  pages = {15--36},
+  doi = {10.1007/978-3-642-21434-9_2},
+  note = {Chapter addressing EA parameter tuning problem with overview of existing parameter tuning methods and methodological recommendations. Distinguishes between EA specifications and EA instances based on parameter types.}
+}
+
+@article{ahmed2024optimization,
+  title = {Optimization of the Travelling Salesman Problem Using a New Hybrid Genetic Algorithm},
+  author = {Ahmed, Zakir Hussain and Altukhaim, Furat Fahad and Saudagar, Abdul Khader Jilani and Khan, Shakir},
+  journal = {IJCSNS International Journal of Computer Science and Network Security},
+  volume = {24},
+  number = {3},
+  pages = {12--22},
+  year = {2024},
+  month = {March},
+  note = {Proposes new hybrid genetic algorithm for TSP combining GA with local search refinements.}
+}
+
+@inproceedings{whitley2010hybrid,
+  title = {A Hybrid Genetic Algorithm for the Traveling Salesman Problem using Generalized Partition Crossover},
+  author = {Whitley, Darrell and Hains, Doug and Howe, Adele},
+  booktitle = {Parallel Problem Solving from Nature},
+  year = {2010},
+  publisher = {Springer},
+  note = {Presents hybrid GA with Generalized Partition Crossover (GPX) operator that is competitive with state-of-the-art for TSP. Finds optimal/near-optimal solutions on 500-1817 city problems with population size of 10.}
+}
+
+@article{alsheddy2017memetic,
+  title = {Solving the Free Clustered TSP Using a Memetic Algorithm},
+  author = {Alsheddy, Abdullah},
+  journal = {International Journal of Advanced Computer Science and Applications},
+  volume = {8},
+  number = {8},
+  year = {2017},
+  publisher = {The Science and Information Organization},
+  note = {Proposes memetic algorithm combining GA global search with local search for Free Clustered TSP (FCTSP). Tests on TSPLIB instances with up to 318 vertices and 2-50 clusters.}
+}
+
+@article{mast2017traveling,
+  title = {Traveling Salesman: A Heuristic Scaling Analysis},
+  author = {Mast, Quincy E. and Nasrawt, Zamua O. and Folks, Garrett L. and Lam, Michael O.},
+  journal = {Journal of Computing Sciences in Colleges},
+  volume = {33},
+  number = {3},
+  pages = {95--101},
+  year = {2017},
+  publisher = {Consortium for Computing Sciences in Colleges},
+  note = {Analyzes K-Opt search and ant colony optimization heuristics for TSP, exploring parallel performance on CPU cores and GPU computing. K-Opt shows impressive GPU scaling.}
+}
+
+@article{wu2013performance,
+  title = {The performance research on solving TSP by four typical AI algorithms},
+  author = {Wu, Yue and Jiang, Zheng-qiang},
+  journal = {BioTechnology: An Indian Journal},
+  volume = {8},
+  number = {9},
+  pages = {1234--1239},
+  year = {2013},
+  issn = {0974-7435},
+  note = {Comparative study of GA, PSO, SA, and ACA for TSP. Average iteration time: SA < PSO < ACA < GA. Optimal route length: GA < ACA < SA < PSO.}
+}
+
+% --- DRAFT FORCE ENTRIES ---
+@misc{Crainic2003, title={DRAFT: Crainic2003}, author={DRAFT}, year={2025}}
+@misc{addproperrefs, title={DRAFT: addproperrefs}, author={DRAFT}, year={2025}}
+@misc{almasi2002high, title={DRAFT: almasi2002high}, author={DRAFT}, year={2025}}
+@misc{article, title={DRAFT: Syntax Error in MD}, author={DRAFT}, year={2025}}
+@misc{demsar2006statistical, title={DRAFT: demsar2006statistical}, author={DRAFT}, year={2025}}
+@misc{flynn1972taxonomy, title={DRAFT: flynn1972taxonomy}, author={DRAFT}, year={2025}}
+@misc{held1962dynamic, title={DRAFT: held1962dynamic}, author={DRAFT}, year={2025}}
+@misc{otherrefs, title={DRAFT: otherrefs}, author={DRAFT}, year={2025}}
+@misc{properref, title={DRAFT: properref}, author={DRAFT}, year={2025}}
+@misc{properrefs, title={DRAFT: properrefs}, author={DRAFT}, year={2025}}
+@misc{roperrefs, title={DRAFT: roperrefs}, author={DRAFT}, year={2025}}

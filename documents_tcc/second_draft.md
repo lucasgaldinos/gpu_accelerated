@@ -4,14 +4,28 @@ author: "Lucas Galdino"
 date: 2025-11-22
 lang: pt-BR
 bibliography:
-   - documentation/refs.bib
+   - ./refs.bib
 reference-section-title: "Referências"
 link-citations: true
 ---
 
-# Capítulo 1 – Introdução
+- [Capítulo 1 – Introdução](#capítulo-1--introdução)
+  - [1.1 Contexto e motivação](#11-contexto-e-motivação)
+  - [1.2 Problema de pesquisa](#12-problema-de-pesquisa)
+  - [1.3 Objetivo geral](#13-objetivo-geral)
+  - [1.4 Objetivos específicos](#14-objetivos-específicos)
+  - [1.5 Justificativa](#15-justificativa)
+- [Capítulo 2 - Revisão bibliográfica](#capítulo-2---revisão-bibliográfica)
+  - [2. Fundamentação teórica e revisão bibliográfica](#2-fundamentação-teórica-e-revisão-bibliográfica)
+    - [2.1 Otimização combinatória e o Problema do Caixeiro Viajante](#21-otimização-combinatória-e-o-problema-do-caixeiro-viajante)
+    - [2.2 Heurísticas para o TSP](#22-heurísticas-para-o-tsp)
+    - [2.3 Algoritmos genéticos e heurísticas híbridas](#23-algoritmos-genéticos-e-heurísticas-híbridas)
+    - [2.4 Computação em GPU e paralelização de meta-heurísticas](#24-computação-em-gpu-e-paralelização-de-meta-heurísticas)
+    - [2.5 Comparação estatística de algoritmos de otimização](#25-comparação-estatística-de-algoritmos-de-otimização)
 
-## 1.1 Contexto e motivação
+## Capítulo 1 – Introdução
+
+### 1.1 Contexto e motivação
 
 O Problema do Caixeiro Viajante (Traveling Salesman Problem – TSP) é um dos problemas mais estudados em otimização combinatória [@cook2012pursuit]. Tem esse nome devida a sua história clássica: um vendedor precisa visitar um conjunto de cidades, passando por cada uma exatamente uma vez, e deseja minimizar a distância total percorrida.
 
@@ -40,7 +54,7 @@ Este trabalho insere-se nesse contexto, investigando como acelerar, utilizando G
 > - deixar esta nota aqui até resolução.
 usando instâncias clássicas da biblioteca TSPLIB [@reinelt1991tsplib]. A combinação entre GA e busca local é um exemplo de algoritmo memético amplamente estudado na literatura [@larranaga1999genetic; @goldberg1989genetic], em que operadores evolutivos globais são complementados por heurísticas de melhoria como 2-opt [@croes1958method] ou Lin–Kernighan [@lin1973efficient]. Neste Trabalho de Conclusão de Curso, usarei a nomenclatura em inglês para alguns termos técnicos como "2-opt", "TSPLIB", "GPU", "CPU" e "GA".
 
-## 1.2 Problema de pesquisa
+### 1.2 Problema de pesquisa
 
 Muitos estudos em computação de alto desempenho comparam algoritmos em CPU e GPU utilizando implementações que diferem não apenas na plataforma de execução, mas também em detalhes relevantes da lógica do algoritmo (por exemplo, operadores distintos, parâmetros diferentes ou vizinhanças não equivalentes) [@schulz2013gpu; @van2013gpu; @benaini2018genetic]. Isso torna difícil atribuir ganhos de desempenho exclusivamente ao uso da GPU, uma vez que alterações no desenho algorítmico ou na parametrização podem, por si só, explicar diferenças observadas. Parâmteros escolhidos serão discutidos no capítulo 3 `>[!caution] fazer o link para pula para o capítulo 3, de forma que seja renderizada em pandoc como um link em pdf no latex`
 
@@ -50,7 +64,7 @@ Neste trabalho, busquei implementar os algoritmos sob as mesmas condições. A e
 
 Responder a essa pergunta exige, ao mesmo tempo, um desenho experimental cuidadoso de hiperparâmetros e validade estatística (número significativo de instâncias, número adequado de repetições, métricas de qualidade e tempo). Os parâmetros básicos dos GAs (tamanho de população $n_{pop}$, taxa de mutação $\dot{m}$ `>[!caution] adicionar os símbolos matemáticos próprios ao katex, usar o símbolo conforme literatura para taxa de mutação`, torneio $k$, iterações de 2-opt) $n_{rep}$ são escolhidos com base em recomendações da literatura de algoritmos evolutivos [@eiben2015introduction; @goldberg1989genetic] e em análises específicas documentadas nos relatórios técnicos do projeto (Capítulo 3). `>[!caution] fazer o link para pula para o capítulo 3, de forma que seja renderizada em pandoc como um link em pdf no latex`
 
-## 1.3 Objetivo geral
+### 1.3 Objetivo geral
 
 O objetivo geral deste trabalho é:
 
@@ -60,9 +74,9 @@ O objetivo geral deste trabalho é:
 > mais detalhado. Objetivo muito fora do padrão, traduzido ao pé da letra. Objetivo não
 
 > [!ULTRACAUTION]
-> a citação de autores deve ser feita corretamente, com o sobrenome e o ano, conforme as normas ABNT. Deve assegurar que as fontes  realmente dize isso. Também, senti falta dos documentos principais e mais densos. #read-pdf [crainic2003parallel](documentation/pdfs/Parallel_Strategies_for_Meta-Heuristics.pdf), #websearch and #fetch [@article{crainic2010parallel,](documentation/refs.bib#L696-L706) [designing_parallel_metaheuristics](documentation/pdfs/designin-parallel-heuristics.pdf). Não há paenas paralelismo funcional e
+> a citação de autores deve ser feita corretamente, com o sobrenome e o ano, conforme as normas ABNT. Deve assegurar que as fontes  realmente dize isso. Também, senti falta dos documentos principais e mais densos. #read-pdf [crainic2003parallel](../documentation/pdfs/Parallel_Strategies_for_Meta-Heuristics.pdf), #websearch and #fetch [article{crainic2010parallel](../documentation/refs.bib#L696-L706) [designing_parallel_metaheuristics](../documentation/pdfs/designin-parallel-heuristics.pdf). Não há paenas paralelismo funcional e
 
-## 1.4 Objetivos específicos
+### 1.4 Objetivos específicos
 
 Para viabilizar o objetivo geral, definem-se os seguintes objetivos específicos:
 
@@ -88,7 +102,7 @@ Para viabilizar o objetivo geral, definem-se os seguintes objetivos específicos
 
    cada variação isoalgorítmica é vantajosa, os limites práticos do uso de GPU neste contexto e as implicações para o projeto de algoritmos de roteamento em cenários reais, à luz das diretrizes para paralelização de meta-heurísticas [@crainic2003parallel; @alba2005parallel] e de estudos de caso em roteamento em GPU [@schulz2013gpu; @tsp_gpu; @fujimoto2011highly].
 
-## 1.5 Justificativa
+### 1.5 Justificativa
 
 Do ponto de vista científico, o TSP continua sendo um problema de referência para avaliar novas ideias em heurísticas e meta-heurísticas [@cook2012pursuit]. A vasta disponibilidade de estudos, instâncias utilizadas em larga escala e muitas soluções ótimas conhecidas, em particular as fornecidas pela TSPLIB [@reinelt1991tsplib], na qual o projeto se baseia, permite medir o desempenho de diferentes algoritmos tanto em termos de qualidade quanto em tempo de execução.
 >[!caution]
@@ -122,13 +136,15 @@ Os capítulos seguintes discutem, à luz desses três eixos, em que condições 
 > - **Capítulo 6 – Conclusões e Trabalhos Futuros**: sintetiza as principais contribuições do trabalho, responde explicitamente aos objetivos propostos e indica possíveis extensões, como a aplicação do framework a problemas de roteirização mais complexos.
 > - Elementos pós-textuais, como referências, glossário, apêndices técnicos e anexos com tabelas completas de resultados, são apresentados ao final do documento, conforme normas da instituição.
 
-## 2. Fundamentação teórica e revisão bibliográfica
+## Capítulo 2 - Revisão bibliográfica
+
+### 2. Fundamentação teórica e revisão bibliográfica
 
 Este capítulo apresenta conceitos teóricos e a bibliografia utilizada para contextualizar o problema estudado e as escolhas metodológicas adotadas. São discutidos o Problema do Caixeiro Viajante (TSP) no contexto da otimização combinatória[@properref], sua importância geral e exemplos de utilização. Também serão discutidas generalizações do problema[@properref], heurísticas e metaheurísticas clássicas para o TSP[@roperrefs], aprofundando-se então no tópico de algoritmos genéticos e algoritmos meméticos[@properrefs], princípios de computação em GPU[@properref] e taxonomias de paralelização de meta-heurísticas[@properrefs], além de noções básicas de comparação estatística de algoritmos de otimização[@properrefs].
 >[!caution]
 >por favor, adicionar as referências aqui, para cada situação
 
-### 2.1 Otimização combinatória e o Problema do Caixeiro Viajante
+#### 2.1 Otimização combinatória e o Problema do Caixeiro Viajante
 
 O TSP pode ser formulado, na versão simétrica[^1], como um problema de encontrar um ciclo hamiltoniano de custo mínimo — podendo este ser a distância percorrida, combustível gasto, ou mesmo uma combinação de fatores. Para fins deste trabalho, o custo será também chamado de distância — em um grafo completo não direcionado $G = (V, E)$, no qual cada vértice em $V$ representa uma cidade e cada aresta $(i, j) \in E$ possui um custo $c_{ij} \geq 0$ entre as cidades $i$ e $j$ [@cook2012pursuit]. O objetivo é determinar uma combinação das cidades que minimize a soma total dos custos, retornando à cidade de origem. Geralmente em aplicações práticas assume-se que a matriz de custos é métrica e euclidiana, isto é, os custos derivam de distâncias euclidianas entre coordenadas no plano.
 
@@ -140,19 +156,25 @@ Do ponto de vista da complexidade, o TSP é um problema NP-difícil em sua forma
 
 [^2]: O algoritmo Held-Karp "troca" a complexidade temporal da força bruta $O(n!)$ por uma complexidade espacial $O(n 2^n)$, tornando sua viabilidade limitada a $\sim{40}$ problemas. Já o algoritmo Concorde, baseado em técnicas de ramificação e corte, é capaz de resolver instâncias com até 85.900 cidades, mas seu desempenho depende fortemente da estrutura específica da instância [@cook2012pursuit].
 
-Ao longo das últimas décadas, o TSP consolidou-se também como um padrão de avaliação empírica de algoritmos, graças à disponibilidade de coleções de instâncias padronizadas, como a TSPLIB [@reinelt1991tsplib]. Essas coleções incluem instâncias com diferentes tamanhos, estruturas e origens (geográficas, sintéticas, industriais), A maioria delas com soluções ótimas conhecidas e obtidas por métodos exatos. No presente trabalho, são utilizadas algumas dessas instâncias como base para avaliar e comparar heurísticas e variantes paralelas de um Algoritmo Memético (algoritmos evolucionários a técnicas de busca locais).
+Ao longo das últimas décadas, o TSP consolidou-se também como um padrão de avaliação empírica de algoritmos, graças à disponibilidade de coleções de instâncias padronizadas, como a TSPLIB [@reinelt1991tsplib]. Essas coleções incluem instâncias com diferentes tamanhos, estruturas e origens (geográficas, sintéticas, industriais), A maioria delas com soluções ótimas conhecidas e obtidas por métodos exatos. No presente trabalho, são utilizadas algumas dessas instâncias como base para avaliar e comparar heurísticas e variantes paralelas de um Algoritmo Memético (algoritmos evolucionários a técnicas de busca locais) [@properrefs].
 
-### 2.2 Heurísticas para o TSP
+#### 2.2 Heurísticas para o TSP
 
 Devido à dificuldade de resolver instâncias grandes do TSP exatamente, uma vasta literatura de heurísticas tem sido desenvolvida para produzir boas soluções em tempos de computação aceitáveis [@cook2012pursuit,@otherrefs]. De forma geral, heurísticas podem ser agrupadas em dois grandes tipos: heurísticas de construção e heurísticas de melhoria.
 
-Heurísticas de construção produzem uma solução viável “do zero”, frequentemente seguindo regras simples, também algoritmos gulosos, como escolher iterativamente o vizinho mais próximo ou inserir cidades em posições que causem o menor aumento de custo. Exemplos incluem a heurística do vizinho mais próximo (*nearest neighbor*), heurísticas de inserção e variantes baseadas em árvores geradoras mínimas. Embora rápidas e fáceis de implementar, essas estratégias tendem a gerar soluções de qualidade moderada, servindo sobretudo como ponto de partida para métodos mais sofisticados. [@simchi2005logic]
+Heurísticas de construção produzem uma solução viável “do zero”, frequentemente seguindo regras simples, também algoritmos gulosos, como escolher iterativamente o vizinho mais próximo ou inserir cidades em posições que causem o menor aumento de custo. Exemplos incluem a heurística do vizinho mais próximo (nearest neighbor — NN), heurísticas de inserção (insertion heuristics) e variantes baseadas em árvores de extensão mínimas (Minimum Spanning Trees — MSTs), como o Algoritmo de Christofides. Embora rápidas e fáceis de implementar, essas estratégias tendem a gerar soluções de qualidade moderada, servindo sobretudo como ponto de partida para métodos mais sofisticados. Simchi et al. [@simchi2005logic] demonstra que algumas dessas soluções garantem uma solução $H^*$ não maior que $1.5\times$ o custo ótimo $B^*$, em casos específicos.
+>[!caution] Citações necessárias
+>citar ainda [@simchi2005logic] e os cálculos de upper bounds e lower bounds relacionados -> capítulos 4 e 5 do livro. #read-pdf [simchi-levi](../documentation/pdfs/simchi2005logic.pdf)
 
-Heurísticas de melhoria partem de uma solução inicial e aplicam sucessivos movimentos locais que procuram reduzir seu custo. Entre essas, as chamadas $k$-opt são particularmente influentes: um movimento 2-opt consiste em remover duas arestas de um tour e reconectar os segmentos resultantes de modo a eliminar cruzamentos e reduzir o comprimento total [@croes1958method]; movimentos 3-opt e extensões mais complexas, como o algoritmo de Lin–Kernighan, generalizam essa ideia [@lin1973efficient]. Essas heurísticas de melhoria desempenham papel central em muitos algoritmos modernos para TSP, tanto como procedimentos isolados quanto como componentes de meta-heurísticas e algoritmos meméticos.
+Heurísticas de melhoria partem de uma solução inicial e aplicam sucessivos movimentos locais que procuram reduzir seu custo. Entre essas, as chamadas $k$-opt são particularmente influentes: um movimento $2$-opt consiste em remover duas arestas de um tour e reconectar os segmentos resultantes de modo a eliminar cruzamentos e reduzir o comprimento total [@croes1958method];
+>[!caution]
+>2-opt movements really only affect crossings? As long as I know, it does not affect only crosses. Please, better explain this.
+
+movimentos $3$-opt e extensões mais complexas, como o algoritmo de Lin–Kernighan, generalizam essa ideia [@lin1973efficient]. Estas e outras heurísticas de melhoria desempenham papel central em muitos algoritmos modernos para TSP, tanto como procedimentos isolados quanto como componentes de meta-heurísticas, sendo utiliados como procedimentos de busca local.
 
 Neste trabalho, a heurística 2-opt é utilizada como busca local básica acoplada ao Algoritmo Genético, em linha com diversos estudos que combinam heurísticas de construção simples com procedimentos de melhoria mais intensivos para obter soluções de alta qualidade em tempo razoável [@addproperrefs].
 
-### 2.3 Algoritmos genéticos e heurísticas híbridas
+#### 2.3 Algoritmos genéticos e heurísticas híbridas
 
 Algoritmos Genéticos (Genetic Algorithms – GAs) são meta-heurísticas inspiradas em princípios de evolução biológica, nas quais uma população de soluções candidatas é iterativamente modificada por operadores análogos à seleção natural, recombinação e mutação [@goldberg1989genetic; @eiben2015introduction]. Na sua forma mais simples, um AG mantém uma população de indivíduos representando soluções para o problema; em cada geração, indivíduos são selecionados com base em uma função de aptidão (fitness), recombinados por operadores de cruzamento e perturbados por operadores de mutação. A nova população resultante substitui total ou parcialmente a anterior, e o processo se repete até que um critério de parada seja satisfeito.
 
@@ -160,30 +182,28 @@ No contexto do TSP, é comum representar cada solução como uma permutação da
 
 Uma extensão importante dessa ideia é o conceito de algoritmos meméticos, nos quais operadores evolutivos (seleção, cruzamento, mutação) são combinados com heurísticas de busca local aplicadas a indivíduos da população [@larranaga1999genetic]. Em problemas de roteamento, isso resulta em esquemas GA+LS, nos quais um GA guia a exploração global do espaço de soluções e um procedimento de melhoria, como 2-opt ou Lin–Kernighan, refina soluções promissoras. Trabalhos como o de Fujimoto e Tsutsui [@fujimoto2011highly] tiveram uma grande influência na decisão do tema e exploram justamente essa combinação para o TSP em ambientes de computação paralela, motivando a adoção de uma abordagem semelhante neste estudo.
 
-### 2.4 Computação em GPU e paralelização de meta-heurísticas
+#### 2.4 Computação em GPU e paralelização de meta-heurísticas
 
 Processadores gráficos (GPUs) evoluíram, nas últimas décadas, de dispositivos voltados principalmente para renderização gráfica para plataformas de computação de uso geral (GPGPU), amplamente utilizadas em aplicações científicas e de inteligência artificial [@nvidia2024cuda]. O modelo de programação CUDA, por exemplo, organiza o trabalho em grades (*grids*) de blocos de threads, seguindo um paradigma de execução massivamente paralelo próximo ao SIMT (Single Instruction, Multiple Threads), relacionado às classificações de arquiteturas de Flynn [@flynn1972taxonomy; @almasi2002high]. Nessa configuração, milhares de threads executam o mesmo kernel sobre dados distintos, o que é adequado a tarefas com alto grau de paralelismo em dados.
 >[!caution]
 >revisar amanhã
 
-Crainic e Toulouse propuseram uma taxonomia para paralelização de meta-heurísticas que as distingue em três grandes tipos: abordagens que exploram paralelismo em dados (neste trabalho, usadas intercaladamente como *P-Data*), paralelismo em tarefas (neste trabalho, usadas intercaladamente como *P-Tasks*) e esquemas com trajetórias de busca cooperativas [@crainic2003parallel; @crainic2010parallel]. No **tipo 1**, avaliações de soluções, cálculos de custo e procedimentos de busca local, principalmente quando cálculos de matrizes estão envolvidas, são distribuídos entre vários processadores (paralelismo em CPU, por exemplo usando os vários núcleos do processador) ou threads (GPUs, modelo SIMT).No **tipo 2**, diferentes partes ou fases de um mesmo algoritmo são executadas em paralelo; no **tipo 3**, múltiplas execuções (trajetórias) de uma meta-heurística interagem por meio de mecanismos de cooperação, como modelos em ilhas ou memórias compartilhadas.
+Crainic e Toulouse propuseram uma taxonomia para paralelização de meta-heurísticas que as distingue em três grandes tipos: abordagens que exploram paralelismo em dados (neste trabalho, usadas intercaladamente como *P-Data*), paralelismo em tarefas (neste trabalho, usadas intercaladamente como *P-Tasks*) e esquemas com trajetórias de busca cooperativas [@crainic2003parallel; @crainic2010parallel]. No **tipo 1**, avaliações de soluções, cálculos de custo e procedimentos de busca local, principalmente quando cálculos de matrizes estão envolvidas, são distribuídos entre vários processadores (paralelismo em CPU, por exemplo usando os vários núcleos do processador) ou threads (GPUs, modelo SIMT). No **tipo 2**, diferentes partes ou fases de um mesmo algoritmo são executadas em paralelo; no **tipo 3**, múltiplas execuções (trajetórias) de uma meta-heurística interagem por meio de mecanismos de cooperação, como modelos em ilhas ou memórias compartilhadas.
 >[!caution]
 >preciso revisar essa part amanha, sobre os tipos 1,2,3.
 >Parece ir contra o que eu tinha entendido antes.
 
 Aplicações de GPU a meta-heurísticas para o TSP exploram principalmente paralelismo em dados, seja na avaliação em massa de rotas em algoritmos genéticos (através de cálculos de redução), seja aplicando paralelismo a movimentos de vizinhança em heurísticas de melhoria [@schulz2013gpu; @tsp_gpu; @fujimoto2011highly]. Outros trabalhos investigam paralelização de Simulated Annealing, Colônias de Formigas (ACO) e outras meta-heurísticas em GPU, geralmente aproveitando o grande número de threads para explorar múltiplas soluções ou vizinhanças em cada passo da busca [@addproperrefs]. Esses estudos motivam o uso de GPUs como plataforma para acelerar algoritmos meméticos,
 
-```md
-mas também evidenciam desafios relacionados a movimentação de dados entre CPU e GPU, escolha de granularidade adequada de kernels e limitações de memória.
+```markdown
+mas também evidenciam desafios relacionados a movimentação de dados entre CPU e GPU,  
+escolha de granularidade adequada de kernels e limitações de memória.
 ```
 
 >[!caution]
 > adicionar mais informações sobre esses desafios, linkar com o próximo capítulo.
 
->[!note]
-Continuar daqui.
-
-### 2.5 Comparação estatística de algoritmos de otimização
+#### 2.5 Comparação estatística de algoritmos de otimização
 
 Meta-heurísticas estocásticas, como GAs e algoritmos meméticos, produzem resultados que variam de execução para execução devido ao uso de aleatoriedade em diversos pontos (inicialização, seleção, mutação, entre outros). Por esse motivo, a comparação de algoritmos de otimização não pode se basear em uma única execução por instância, tampouco apenas em médias simples sem qualquer análise de variabilidade. A literatura de comparação de algoritmos enfatiza a importância de utilizar múltiplas instâncias de teste, múltiplas repetições por combinação algoritmo–instância e métricas que considerem tanto qualidade da solução quanto tempo de execução [@demsar2006statistical].
 

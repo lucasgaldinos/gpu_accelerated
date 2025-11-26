@@ -542,7 +542,7 @@ Each section includes:
 **Related Documentation:**
 
 - [CUDA Synchronization Levels](cuda_synchronization_levels.md) - Detailed analysis of `__syncthreads()`, grid sync, and PCIe transfer synchronization
-- [First Draft](../../first_draft.md) - Initial implementation design and exploration
+- [First Draft](../../drafts/first_draft.md) - Initial implementation design and exploration
 
 ---
 
@@ -2315,7 +2315,7 @@ Where $G$ = GPU throughput (evals/second). This ratio is **independent of $n_{ci
 > [!warning]
 >
 > - clearly these sections are all messed up and should be better orgazized.
-> - implement the sequential solution for cpu reduction and measure its time, to see how much slower it is than the vectorized one. This can be shown as a comparison of how numpy is already much faster, but with cupy, that scales even more in [first draft](./../../first_draft.md)
+> - implement the sequential solution for cpu reduction and measure its time, to see how much slower it is than the vectorized one. This can be shown as a comparison of how numpy is already much faster, but with cupy, that scales even more in [first draft](../../drafts/first_draft.md)
 
 ### 7.5 When DOES CPU Reduction Become a Bottleneck?
 

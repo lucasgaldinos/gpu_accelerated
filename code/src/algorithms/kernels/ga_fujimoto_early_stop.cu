@@ -125,7 +125,7 @@ extern "C" __global__ void ga_evolution_early_stop(
     int* best_tour,
     float* best_fitness,
     float optimal_cost,       // NEW: Optimal cost for early stopping (-1 to disable)
-    int patience,             // NEW: Stagnation patience (adaptive: 2×√n, passed from host)
+    int patience,             // NEW: Stagnation patience (adaptive: 2.sqrt(n), passed from host)
     int* stopped_generation   // NEW: Output - actual generation stopped at
 ) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -252,11 +252,17 @@ extern "C" __global__ void ga_evolution_early_stop(
                 if (fitness[i] < curr_best) curr_best = fitness[i];
             }
             
-            // Check if optimal cost reached
-            if (optimal_cost > 0 && fabsf(curr_best - optimal_cost) < 1e-6f) {
-                converged = 1;
+            // // Check if optimal cost reached
+            // if (optimal_cost > 0 && fabsf(curr_best - optimal_cost) < 1e-6f) {
+            //     converged = 1;
+            // }
+            // Check if optimal cost reached (within 1 gap)
+            if (optimal_cost > 0) {
+                float gap_percent = (curr_best - optimal_cost) / optimal_cost;
+                if (gap_percent < 0.01f) {  // Within 1 of optimal
+                    converged = 1;
+                }
             }
-            
             // Check for improvement (stagnation detection)
             if (curr_best < prev_best_fitness - 1e-6f) {
                 // Improvement detected

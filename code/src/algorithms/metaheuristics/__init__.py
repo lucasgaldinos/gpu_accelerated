@@ -16,7 +16,9 @@ from .genetic_algorithm_base import GeneticAlgorithmBase
 from .genetic_algorithm_cpu import GeneticAlgorithmCPU
 from .genetic_algorithm_hybrid_naive import GeneticAlgorithmHybridNaive
 from .genetic_algorithm_hybrid_optimized import GeneticAlgorithmHybridOptimized
-from .genetic_algorithm_full_gpu_iso import GeneticAlgorithmFullGPU
+from .genetic_algorithm_full_gpu_early_stop import (
+    GeneticAlgorithmFullGPUEarlyStop as GeneticAlgorithmFullGPU,
+)
 
 __all__ = [
     "GeneticAlgorithmBase",

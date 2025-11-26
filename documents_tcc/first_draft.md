@@ -52,7 +52,7 @@ This work focuses on accelerating heuristics for routing problems, such as the T
       - [2.2.2 Improvement Heuristics](#222-improvement-heuristics)
     - [2.3 Metaheuristic Strategies](#23-metaheuristic-strategies)
       - [2.3.1 Genetic Algorithms (Reference Only)](#231-genetic-algorithms-reference-only)
-      - [2.3.2 Simulated Annealing](#232-simulated-annealing)
+      - [2.3.2 Simulated Annealing (Reference Only)](#232-simulated-annealing-reference-only)
       - [2.3.3 Tabu Search (Reference Only)](#233-tabu-search-reference-only)
     - [2.4 Parallelization Strategies for Metaheuristics](#24-parallelization-strategies-for-metaheuristics)
       - [2.4.0 GPU versus CPU Parallelism Models](#240-gpu-versus-cpu-parallelism-models)
@@ -115,17 +115,17 @@ This work focuses on accelerating heuristics for routing problems, such as the T
       - [3.5.1 Comparison 1: Deterministic Local Search (2-opt)](#351-comparison-1-deterministic-local-search-2-opt)
       - [3.5.2 Comparison 2: Stochastic Metaheuristics (SA vs. GA)](#352-comparison-2-stochastic-metaheuristics-sa-vs-ga)
       - [3.5.3 Statistical Methodology](#353-statistical-methodology)
-      - [3.5.4 Reproducibility Requirements](#354-reproducibility-requirements)
+      - [3.5.4 Reproducibilidade](#354-reproducibilidade)
   - [4. RESULTADOS](#4-resultados)
-    - [4.1 Statistical Test Validation](#41-statistical-test-validation)
-    - [4.2 Analysis 1: 2-opt (Deterministic) Performance](#42-analysis-1-2-opt-deterministic-performance)
-    - [4.3 Analysis 2: Metaheuristic Quality (Fixed-Time Budget)](#43-analysis-2-metaheuristic-quality-fixed-time-budget)
-    - [4.4 Analysis 3: Convergence Speed and Statistical Ranking](#44-analysis-3-convergence-speed-and-statistical-ranking)
+    - [4.1 Validação do Teste Estatístico](#41-validação-do-teste-estatístico)
+    - [4.2 Análise 1: Desempenho 2-opt (Determinístico)](#42-análise-1-desempenho-2-opt-determinístico)
+    - [4.3 Análise 2: Qualidade Metaheurística (Orçamento de Tempo Fixo)](#43-análise-2-qualidade-metaheurística-orçamento-de-tempo-fixo)
+    - [4.4 Análise 3: Velocidade de Convergência e Classificação Estatística](#44-análise-3-velocidade-de-convergência-e-classificação-estatística)
   - [5. DISCUSSÃO E CONSIDERAÇÕES](#5-discussão-e-considerações)
-    - [5.1 Performance Analysis](#51-performance-analysis)
-    - [5.2 Algorithm Comparison](#52-algorithm-comparison)
-    - [5.3 Scalability Observations](#53-scalability-observations)
-    - [5.4 Limitations and Constraints](#54-limitations-and-constraints)
+    - [5.1 Análise de Desempenho](#51-análise-de-desempenho)
+    - [5.2 Comparação de Algoritmos](#52-comparação-de-algoritmos)
+    - [5.3 Observações de Escalabilidade](#53-observações-de-escalabilidade)
+    - [5.4 Limitações e Restrições](#54-limitações-e-restrições)
   - [6. CONCLUSÃO](#6-conclusão)
     - [6.1 Recomendações para Trabalhos Futuros](#61-recomendações-para-trabalhos-futuros)
   - [REFERÊNCIAS](#referências)
@@ -259,11 +259,11 @@ Design, implement, and benchmark a modular framework for solving routing problem
 
 #### 1.2.2 Objetivos Específicos
 
-1.  **Implementar uma heurística de melhoria (2-Opt) e uma meta-heurística (Algoritmo Genético)**, ambas com implementações para CPU (NumPy) e GPU (CuPy), permitindo uma análise de desempenho comparativa.
-2.  **Desenvolver um algoritmo memético (GA+2-Opt)** que combine a busca global do Algoritmo Genético com a intensificação da busca local do 2-Opt, explorando a sinergia entre as duas técnicas.
-3.  **Analisar o desempenho e a qualidade da solução** das implementações em CPU e GPU para os algoritmos 2-Opt, GA e GA+2-Opt, utilizando um conjunto de instâncias de benchmark da TSPLIB e CVRPLIB.
-4.  **Quantificar o ganho de performance obtido com a aceleração por GPU** em relação à CPU para cada algoritmo, analisando como o ganho de desempenho escala com o tamanho do problema.
-5.  **Validar a corretude das implementações** comparando os resultados entre os backends de CPU e GPU e confrontando a qualidade das soluções com os valores ótimos conhecidos da literatura.
+1. **Implementar uma heurística de melhoria (2-Opt) e uma meta-heurística (Algoritmo Genético)**, ambas com implementações para CPU (NumPy) e GPU (CuPy), permitindo uma análise de desempenho comparativa.
+2. **Desenvolver um algoritmo memético (GA+2-Opt)** que combine a busca global do Algoritmo Genético com a intensificação da busca local do 2-Opt, explorando a sinergia entre as duas técnicas.
+3. **Analisar o desempenho e a qualidade da solução** das implementações em CPU e GPU para os algoritmos 2-Opt, GA e GA+2-Opt, utilizando um conjunto de instâncias de benchmark da TSPLIB e CVRPLIB.
+4. **Quantificar o ganho de performance obtido com a aceleração por GPU** em relação à CPU para cada algoritmo, analisando como o ganho de desempenho escala com o tamanho do problema.
+5. **Validar a corretude das implementações** comparando os resultados entre os backends de CPU e GPU e confrontando a qualidade das soluções com os valores ótimos conhecidos da literatura.
 
 O escopo deste TCC é ambicioso. Ambas as contribuições — o design modular e a aceleração por GPU — são importantes. No entanto, dado o cronograma limitado, **o foco principal deve ser a aceleração por GPU**. A arquitetura modular é um meio para atingir esse fim, permitindo uma comparação limpa e justa entre CPU e GPU. A modularidade será uma característica da implementação, mas a análise dos resultados se concentrará nos ganhos de desempenho da GPU.
 
@@ -330,7 +330,7 @@ Construction heuristics generate initial feasible solutions, while improvement h
 
 **Nearest Neighbor** heuristic provides fast initial solution construction through greedy nearest-city selection [cite: foundational TSP papers]. While simple, it demonstrates O(n²) complexity patterns relevant to GPU optimization analysis.
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > **Other construction methods (literature context only, not implemented):**
 >
 > - Clarke-Wright Savings: Route merging for CVRP [cite]
@@ -341,7 +341,7 @@ Construction heuristics generate initial feasible solutions, while improvement h
 
 **2-opt local search** removes edge crossings through systematic edge pair exchanges [cite: 2-opt original paper]. Its O(n²) neighborhood size and independent move evaluation make it ideal for GPU vectorization.
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > **Implementation focus:**
 >
 > - 2-opt provides clear demonstration of GPU parallelization benefits
@@ -361,14 +361,14 @@ Construction heuristics generate initial feasible solutions, while improvement h
 ### 2.3 Metaheuristic Strategies
 
 Metaheuristics guide the search process to escape local optima through acceptance criteria, memory structures, or population-based evolution. This work implements Simulated Annealing as a representative trajectory-based metaheuristic suitable for GPU-accelerated local search integration.
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > Since this is the bibliographica review, it should not be too extense
 
 #### 2.3.1 Genetic Algorithms (Reference Only)
 
 Population-based evolutionary search using crossover, mutation, and selection operators [cite: GA surveys, routing-specific implementations]. While highly parallelizable, implementation complexity exceeds TCC scope.
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > **GA parallelization potential (future work):**
 >
 > - Population evaluation: Highly parallel (evaluate N individuals simultaneously)
@@ -379,7 +379,7 @@ Population-based evolutionary search using crossover, mutation, and selection op
 
 Probabilistic acceptance of worse solutions enables escape from local optima through temperature-controlled exploration [cite: Kirkpatrick et al. 1983]. Acceptance probability follows $P(\Delta E, T) = e^{-\Delta E / T}$ with geometric or adaptive cooling schedules [cite: SA parameter tuning surveys].
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > **SA parameter tuning guidelines from literature:**
 >
 > - Initial temperature selection: Accept ~80-90% of random moves initially [cite]
@@ -395,17 +395,16 @@ Probabilistic acceptance of worse solutions enables escape from local optima thr
 
 #### 2.3.3 Tabu Search (Reference Only)
 
-
 Memory-based search preventing cycling through short-term tabu lists and aspiration criteria [cite: Glover, TS for routing]. Complex memory management adds implementation overhead with marginal GPU benefit for TCC scope.
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > **TS described for completeness in literature review, not implemented in TCC.**
 
 ---
 
 ### 2.4 Parallelization Strategies for Metaheuristics
 
-> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../gpu_accelerated/documentation/refs.bib))
+> [!warning] The citations should be here for the papers. (must cite who implemented it and the article from [refs.bib](../documentation/refs.bib))
 > This is NOT bibliographical review. This is a methodology introduction or something.
 
 The design and implementation of parallel metaheuristic algorithms requires careful consideration of the relationship between parallel execution models, hardware constraints, and solution quality. This section examines GPU and CPU parallelism models, analyzes three fundamental parallelization patterns, discusses GPU memory constraints for routing problems, and addresses the performance trade-offs inherent in parallel metaheuristic implementations.
@@ -1307,7 +1306,7 @@ This architecture prioritizes S-Task implementation to establish algorithmic cor
 >
 > - Why? this heuristic was chosen, importance, etc.
 > - How? was this heuristic built
-> - Citing the proper references from [`refs.bib`](./documentation/refs.bib)
+> - Citing the proper references from [`refs.bib`](../documentation/refs.bib)
 > - Choose only 2 for construction heuristic: less important for the project
 > - Implement the 4 bin packing algorithms:
 >   - BFD and FFD
@@ -1965,8 +1964,10 @@ Esta seção apresenta os resultados validados estatisticamente do design experi
 - **Procedimento:** O teste de Shapiro-Wilk foi aplicado às distribuições de tempo e qualidade **000** coletadas (n=30) para testar a normalidade no nível de significância $\alpha = 0.05$.
 - **Resultado:** Para **000** de **000** distribuições (por exemplo, tempos de execução para `d2103`), os dados (p < 0.05) violaram a suposição de normalidade.
 - **Conclusão:** Consequentemente, o teste não paramétrico **Wilcoxon signed-rank test** e o **teste de Kruskal-Wallis** são usados para todas as análises subsequentes, pois fornecem conclusões robustas sem assumir uma distribuição normal.
+
 >[!warning]
 > As referências toda cagadas. Isso é um documento acadêmico.
+>
 ### 4.2 Análise 1: Desempenho 2-opt (Determinístico)
 
 - **Objetivo:** Quantificar a velocidade de convergência do 2-opt.
