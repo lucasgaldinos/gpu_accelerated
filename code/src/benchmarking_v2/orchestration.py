@@ -47,7 +47,7 @@ except ImportError:
     CUPY_AVAILABLE = False
 
 from src.loaders.database_loader import DatabaseLoader
-from src.benchmarking.statistics import StatisticalAnalyzer
+from src.benchmarking_v2.statistics import StatisticalAnalyzer
 
 from src.benchmarking_v2.config_loader import (
     load_all_configs,
@@ -113,7 +113,7 @@ def _log_benchmark_configuration(
     logging.info(f"  Population size: {ga_params.population_size}")
     logging.info(f"  Mutation rate: {ga_params.mutation_rate}")
     logging.info(f"  Tournament size: {ga_params.tournament_size}")
-    logging.info(f"  Early stop patience: {benchmark_config.patience} generations")
+    logging.info(f"  Early stop patience: Adaptive (2×√n generations)")
     logging.info("")
 
 

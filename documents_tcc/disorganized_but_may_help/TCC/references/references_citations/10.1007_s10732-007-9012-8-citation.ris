@@ -1,0 +1,16 @@
+TY  - JOUR
+AU  - Lewis, Rhyd
+PY  - 2007
+DA  - 2007/08/01
+TI  - Metaheuristics can solve sudoku puzzles
+JO  - Journal of Heuristics
+SP  - 387
+EP  - 401
+VL  - 13
+IS  - 4
+AB  - In this paper we present, to our knowledge, the first application of a metaheuristic technique to the very popular and NP-complete puzzle known as ‘sudoku’. We see that this stochastic search-based algorithm, which uses simulated annealing, is able to complete logic-solvable puzzle-instances that feature daily in many of the UK’s national newspapers. We also introduce a new method for producing sudoku problem instances (that are not necessarily logic-solvable) and use this together with the proposed SA algorithm to try and discover for what types of instances this algorithm is best suited. Consequently we notice the presence of an ‘easy-hard-easy’ style phase-transition similar to other problems encountered in operational research.
+SN  - 1572-9397
+UR  - https://doi.org/10.1007/s10732-007-9012-8
+DO  - 10.1007/s10732-007-9012-8
+ID  - Lewis2007
+ER  - 

@@ -1,0 +1,217 @@
+\documentclass[
+    openany,
+    12pt,
+    a4paper,
+    twoside,
+    english,
+    brazil, sumario=tradicional
+]{/home/lucas_galdino/Desktop/TCC/planning/abntex2/abntex2}
+
+\usepackage{lmodern}			% Usa a fonte Latin Modern			
+\usepackage[T1]{fontenc}		% Selecao de codigos de fonte.
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{microtype} 			% para melhorias de justificação
+
+\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{/home/lucas_galdino/Desktop/TCC/planning/abntex2/abntex2cite}	% Citações padrão ABNT
+
+% my own changes
+\usepackage{/home/lucas_galdino/Desktop/TCC/planning/abntex2/my_changes}
+
+\titulo{Avaliação N1}
+% \titlehead{{\centering\includegraphics[width=6cm]{../assets/ufsc-logo.png}}}
+\autor{Lucas Eduardo Galdino Silva}
+\local{Brasil}
+\data{Outubro, 2024}
+\instituicao{%
+  Universidade Federal de Santa Catarina -- UFSC
+  \par
+  Engenharia Mecânica
+}
+\tipotrabalho{Avaliação N1}
+% O preambulo deve conter o tipo do trabalho, o objetivo, 
+% o nome da instituição e a área de concentração 
+\preambulo{Avaliação N1 para conclusão da matéria Planejamento de Trabalho de Curso\\
+}%  \imprimirorientadorRotulo~\imprimirorientador}
+
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+    %pagebackref=true,
+		pdftitle={\@title}, 
+		pdfauthor={\@author},
+    pdfsubject={\imprimirpreambulo},
+	  pdfcreator={\@author},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{trabalho acadêmico}, 
+		bookmarksdepth=4
+}
+% let chapter start in any page
+\@openrightfalse
+\makeatother
+
+\renewcommand{\cleardoublepage}{}
+
+% Makes abntex2 number the chapters with roman numbers
+\AtBeginDocument{\aliaspagestyle{chapter}{plain}}
+
+% Makes abntex2 do not start a new page before each chapter
+\let\oldchapter\chapter
+\renewcommand{\chapter}{\clearpage\oldchapter}
+
+\usepackage{titlesec}
+
+% Redefine the \chapter command to not start on a new page
+\titleformat{\chapter}[hang]
+  {\normalfont\huge\bfseries} % Format for chapter title
+  {\thechapter} % Chapter number
+  {20pt} % Space between number and title
+  {\huge} % Format for chapter title text
+
+\titlespacing*{\chapter}{0pt}{0pt}{20pt} % Adjust spacing before and after
+
+
+
+\begin{document}
+
+\selectlanguage{brazil}
+
+\imprimircapa
+
+\imprimirfolhaderosto*
+
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents
+\cleardoublepage
+
+\cleardoublepage
+\textual
+
+
+
+\chapter{Introdução}
+
+O Problema de Roteamento de Veículos (VRP) é um problema de otimização combinatória que envolve a determinação de rotas eficientes para um conjunto de veículos, 
+com o objetivo de minimizar a distância total percorrida ou o tempo total gasto. 
+Esse problema é amplamente estudado na literatura de pesquisa operacional e ciência da computação, 
+e tem aplicações em diversas áreas, como logística, transporte, entrega de mercadorias, coleta de lixo, serviços de emergência e muito mais.\\
+
+É um problema NP-difícil, 
+o que significa que não há uma solução eficiente conhecida para encontrar a solução ótima em tempo polinomial. 
+
+É um braço de pesquisa do Problema do Caixeiro Viajante (TSP-Traveling Salesman Problem), problema clássico de análise combinatória 
+e otimização, que teve suas primeiras pesquisas com esse nome em 1930, mas que foi formalizado e popularizado em 1956 por George Dantzig, 
+Richard Bellman e Fulkerson. 
+
+Durante seu livro, COOK (In Pursuit Of The Travelling Salesman, \citeyear{pursuit_travelling_salesman}) relata que o TSP é ainda um braço da teoria dos grafos,
+ que é um ramo da matemática responsável por estudar estruturas 
+abstratas chamadas grafos, que consistem em um conjunto de vértices (pontos) e um conjunto de arestas (linhas) que conectam esses vértices. O TSP vem do 
+estudo de ciclos hamiltonianos. Eles possuem este nome devido ao matemático irlandês William Rowan Hamilton, que inventou o jogo icosiano, que consiste em buscar 
+a uma maneira de visitar todos os vértices de um grafo, sem repetir nenhum, e retornar ao vértice de origem.
+
+O projeto consiste em desenvolver e avaliar uma solução computacional avançada para otimização de rotas de caminhões de entrega, 
+com foco na aplicação de métodos de aceleração por GPU (Unidade de processamento gráfico). \\
+O objetivo principal é explorar a eficiência de algoritmos de roteamento de veículos em ambientes de alta complexidade, envolvendo múltiplos 
+fatores que tornam o problema mais realista e aplicável ao mundo 
+real. Essa solução busca resolver uma variante do Problema de Roteamento de Veículos (VRP), chamada Problema de Roteamento de Veículos com frota variada, 
+com entrega e retirada e janelas de tempo ou HFVRPPDTW (Heterogeneous Fleet 
+Vehicle Routing Problem with Pickup and Delivery and Time Windows), que apresenta restrições adicionais, como a diversidade das frotas, 
+a existência de janelas de tempo para entrega e a necessidade de gerenciar tanto coleta quanto entrega em diferentes locais.
+
+Essa versão específica do problema do VRP exige uma abordagem robusta para minimizar a distância total percorrida pela frota 
+e, simultaneamente, maximizar o número de pedidos entregues dentro do prazo. Em um cenário de transporte logístico, o uso de 
+frota heterogênea implica que cada veículo tem características e capacidades distintas, demandando um algoritmo que possa determinar 
+não apenas quais rotas são mais curtas, mas também quais veículos devem ser alocados para cada trajeto, considerando tanto as restrições 
+de tempo quanto a localização dos pontos de coleta e entrega.
+
+Para explorar as vantagens da aceleração por GPU, a linguagem principal será \texttt{Python}, utilizando bibliotecas como \texttt{Numba} e 
+\texttt{PyCUDA}, que facilitam a execução de operações intensivas em paralelo na GPU. O projeto também poderá integrar implementações em \texttt{C++} 
+e \texttt{CUDA}, a fim de comparar o desempenho e a escalabilidade das soluções desenvolvidas em diferentes linguagens e abordagens de programação 
+paralela. O uso dessas tecnologias permite que o projeto lide com a elevada demanda computacional imposta por grandes volumes de dados e múltiplas 
+variáveis envolvidas na roteirização otimizada de veículos.
+
+O armazenamento e processamento de dados poderão ser suportados por bancos de dados como \texttt{Dask} e \texttt{SQLite3}, selecionados por suas capacidades
+de lidar com grandes volumes de dados em tempo real. Esses bancos de dados também poderão fornecer suporte para Sistemas de Informação Geográfica (GIS), 
+essenciais para processar as coordenadas geoespaciais dos pontos de entrega e coleta, bem como para construir mapas e rotas que permitam uma visualização 
+clara dos resultados.
+
+A escolha pelo uso de softwares de código aberto (utilizando software livres sempre que possível) é outro aspecto importante do projeto. Além de contribuir para a democratização das tecnologias, 
+permitindo que outros pesquisadores e desenvolvedores repliquem e ampliem os resultados, essa abordagem promove a inovação e a colaboração, 
+possibilitando o acesso e a modificação do código para adaptação a diferentes cenários e necessidades específicas.
+
+
+\chapter{Motivação}
+
+% Fazer um for loop para uma função latex que gere lista de siglas automaticamente
+A relevância do problema reside em sua aplicabilidade prática em diversos setores, como transporte, logística, distribuição de mercadorias e serviços,
+podendo, a depender do setor e nível tecnológico de uma empresa, realizar uma diferença enorme. Além disso, o problema é um desafio computacional
+significativo, com múltiplas restrições e variáveis que tornam a solução ótima uma tarefa complexa.
+
+Sua ampla aplicabilidade prática em diversos setores, como transporte, logística, 
+distribuição de mercadorias e prestação de serviços. Esses setores são pilares de operação para inúmeras empresas, e a 
+otimização de rotas de entrega pode trazer melhorias significativas em termos de custos, tempo de entrega e sustentabilidade 
+ambiental. Por exemplo, em uma cadeia de suprimentos moderna, onde as empresas competem para reduzir prazos de entrega e minimizar 
+despesas, uma solução de roteamento eficiente pode reduzir o número de veículos necessários, otimizar o consumo de combustível e, 
+consequentemente, diminuir as emissões de carbono. Dependendo do setor específico e do nível de maturidade tecnológica de uma empresa, 
+esse tipo de solução pode fazer uma enorme diferença em termos de competitividade, qualidade de serviço e sustentabilidade. Em cenários 
+onde há diversas restrições, como horários de entrega rígidos, rotas limitadas e veículos com capacidades diferentes, a otimização de 
+rotas passa a ser um diferencial estratégico.
+
+Além disso, o problema do roteamento de veículos é um desafio computacional significativo. Trata-se de um problema de 
+otimização com múltiplas variáveis e restrições que tornam a obtenção de uma solução ótima uma tarefa complexa e demorada. 
+Este problema pertence à classe dos problemas NP-difíceis, o que significa que o tempo de cálculo aumenta exponencialmente 
+com o número de locais e veículos envolvidos. As variáveis são inúmeras: horários de atendimento em cada ponto, capacidades 
+dos veículos, diferentes tipos de carga e até fatores externos, como o tráfego e condições climáticas, que precisam ser 
+considerados para que a solução final seja eficaz. Assim, o desenvolvimento de algoritmos e técnicas de otimização para 
+esse tipo de problema representa não apenas um avanço teórico, mas também uma oportunidade para soluções que possam transformar 
+o setor de transporte e logística.
+
+O objetivo principal deste trabalho é testar e comparar o desempenho das soluções para o problema de roteamento de veículos, 
+utilizando diferentes técnicas de cálculo paralelo. Em particular, serão utilizadas plataformas de computação paralela como 
+processadores gráficos (GPUs) e processadores de múltiplos núcleos (CPUs) para explorar e avaliar a eficiência dos métodos 
+propostos. O uso de GPUs permite que cálculos intensivos sejam distribuídos entre milhares de núcleos de processamento, acelerando
+operações complexas que seriam inviáveis com um único núcleo. Da mesma forma, a utilização de CPUs com múltiplos núcleos 
+permite o processamento simultâneo de várias tarefas, o que é vantajoso para algoritmos que necessitam manipular grandes 
+volumes de dados. A comparação entre essas tecnologias permitirá avaliar a escalabilidade e a adaptabilidade das soluções 
+propostas, além de identificar as vantagens e os desafios associados a cada plataforma de cálculo paralelo. A análise dessas 
+variáveis é essencial, pois permitirá uma compreensão mais profunda sobre o tipo de hardware que melhor se adapta a problemas 
+complexos de roteamento de veículos.
+
+A escolha do problema de roteamento de veículos (PRV) como objeto deste trabalho vai além de uma mera curiosidade pelo tema. 
+Observando os ambientes em que já trabalhei, percebi que a falta de uma solução eficiente para esse tipo de problema é uma limitação 
+para muitas empresas, tanto em termos de custo quanto de eficiência operacional. Este projeto representa uma oportunidade de colocar 
+em prática os conhecimentos adquiridos durante e fora da graduação, especialmente nas áreas de computação de alto desempenho (HPC), 
+algoritmos de otimização, programação paralela e utilização de ferramentas amplamente utilizadas no mercado. O projeto me permitirá 
+aprofundar habilidades nessas áreas, com foco na aplicação prática e no uso de tecnologias de código aberto, sempre que possível. A 
+escolha por ferramentas de código aberto reforça o compromisso com a acessibilidade e a democratização do conhecimento, permitindo 
+que outros pesquisadores e profissionais possam beneficiar-se dos avanços realizados e aplicá-los em seus próprios contextos.
+
+A experimentação com GPUs e CPUs também me permitirá uma compreensão mais aprofundada sobre a escolha de ferramentas adequadas 
+para diferentes tipos de problemas de otimização, contribuindo para meu crescimento acadêmico e profissional.
+
+\chapter{Objetivo}
+
+O trabalho será desenvolvido com foco em uma solução de baixo custo e que possa ser replicada e testada por outros interessados, 
+de modo a promover o avanço colaborativo e acessível na área de roteamento de veículos. Para isso, o projeto será iniciado no meu computador pessoal,
+aproveitando-se de uma imagem em Docker, que facilitará a configuração do ambiente de desenvolvimento 
+e permitirá a criação de um ambiente controlado e portátil. Esta abordagem tem a vantagem de garantir que o projeto possa ser executado 
+em diferentes máquinas sem a necessidade de ajustes complexos, permitindo que outras pessoas reproduzam e validem os resultados de 
+forma simples.
+
+Após essa etapa inicial, o próximo passo será avaliar a viabilidade e explorar maneiras de transferir a execução do projeto para ambientes em cloud. 
+Isso permitirá que o projeto se beneficie de recursos computacionais extras, através de clusters, que são especialmente úteis para o processamento de 
+grandes volumes de dados e execução de operações intensivas, comuns em problemas de otimização de rotas. Ao testar o projeto nesses ambientes, 
+será possível avaliar a escalabilidade das soluções desenvolvidas, verificando se o desempenho melhora proporcionalmente à medida que mais recursos 
+de hardware são disponibilizados.
+
+Além disso, caso viável, a adaptação para ambientes em nuvem permitirá a análise de diferentes configurações de hardware e software, possibilitando 
+identificar quais fatores impactam o desempenho em cenários reais. Isso inclui investigar o impacto de diferentes arquiteturas de processadores. 
+Com essas análises, o trabalho busca contribuir para a definição de melhores práticas e diretrizes para a execução de problemas de roteamento e implementações no setor de logística e transporte.
+
+\bibliography{refs.bib}
+
+
+\end{document}

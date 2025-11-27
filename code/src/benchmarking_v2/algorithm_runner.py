@@ -221,7 +221,7 @@ def run_single_algorithm(
             f"from {existing_runs} to {total_runs_after} runs"
         )
         logging.info(
-            f"    Backend: {backend} | Early stopping: {patience} gen patience | "
+            f"    Backend: {backend} | Early stopping: patience={patience} (adaptive: 2×√{problem_size}) | "
             f"New repetitions: {repetitions}"
         )
 

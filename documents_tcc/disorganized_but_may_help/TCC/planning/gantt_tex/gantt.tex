@@ -1,0 +1,272 @@
+\documentclass[12pt]{article}
+
+\usepackage{pgfgantt}
+\usepackage{rotating}
+\usepackage{tikz}
+
+\newgantttimeslotformat{YearAndDay}{ %from the official documentation for pgfgantt
+    \def\decomposeYearAndDay##1.##2\relax{
+        \def\myYear{##1}\def\myDay{##2}
+    }
+    \decomposeYearAndDay#1\relax
+    \pgfcalendardatetojulian{\myYear-01-01}{#2}%
+    \advance#2 by-1\relax
+    \advance#2 by\myDay\relax
+}
+
+\begin{document}
+
+\section*{title}
+
+\begin{figure}[h]
+    \begin{center}
+      \begin{ganttchart}[
+        y unit title=0.4cm,
+        y unit chart=0.5cm,
+        vgrid,
+        % hgrid, 
+        title label anchor/.style={below=-1.6ex},
+        title left shift=.05,
+        title right shift=-.05,
+        title height=1,
+        progress label text={},
+        bar height=0.7,
+        group right shift=0,
+        group top shift=.6,
+        group height=.3
+        time slot format=star
+        ]{1}{24}
+  
+        % labels
+        \gantttitle{Week}{24} \\
+        \gantttitle{Monday}{4}
+        \gantttitle{Tuesday}{4}
+        \gantttitle{Wednesday}{4}
+        \gantttitle{Thursday}{4} 
+        \gantttitle{Friday}{4} 
+        \gantttitle{Saturday}{4} \\
+  
+        % tasks
+        \ganttbar{first task}{1}{2} \\
+        \ganttbar{task 2}{3}{8} \\
+        \ganttbar{task 3}{9}{10} \\
+        \ganttbar{task 4}{11}{15} \\
+        \ganttbar[progress=33]{task 5}{20}{22} \\
+        \ganttbar{task 6}{18}{19} \\
+        \ganttbar{task 7}{16}{18} \\
+        \ganttbar[progress=0]{task 8}{21}{24}
+  
+        % relations 
+        \ganttlink{elem0}{elem1} 
+        \ganttlink{elem0}{elem3} 
+        \ganttlink{elem1}{elem2} 
+        \ganttlink{elem3}{elem4} 
+        \ganttlink{elem1}{elem5} 
+        \ganttlink{elem3}{elem5} 
+        \ganttlink{elem2}{elem6} 
+        \ganttlink{elem3}{elem6} 
+        \ganttlink{elem5}{elem7} 
+      \end{ganttchart}
+    \end{center}
+    \caption{Gantt Chart}
+  \end{figure}
+
+\pagebreak
+
+\section{rotated gantt}
+
+\begin{figure}[h!]
+    \begin{center}
+        \begin{sideways}
+        
+      \begin{ganttchart}[
+        x unit = 0.6cm,
+        y unit title=0.4cm,
+        y unit chart=0.5cm,
+        vgrid,
+        % hgrid, 
+        title label anchor/.style={below=-1ex},
+        title left shift=.05,
+        title right shift=-.05,
+        title height=1,
+        progress label text={},
+        bar height=0.7,
+        group right shift=0,
+        group top shift=.6,
+        group height=.3
+        time slot format=star
+        ]{1}{24}
+  
+        % labels
+        \gantttitle{Week}{24} \\
+        \gantttitle{Monday}{4}
+        \gantttitle{Tuesday}{4}
+        \gantttitle{Wednesday}{4}
+        \gantttitle{Thursday}{4} 
+        \gantttitle{Friday}{4} 
+        \gantttitle{Saturday}{4} \\
+  
+        % tasks
+        \ganttbar{first task}{1}{2} \\
+        \ganttbar{task 2}{3}{8} \\
+        \ganttbar{task 3}{9}{10} \\
+        \ganttbar{task 4}{11}{15} \\
+        \ganttbar[progress=33]{task 5}{20}{22} \\
+        \ganttbar{task 6}{18}{19} \\
+        \ganttbar{task 7}{16}{18} \\
+        \ganttbar[progress=0]{task 8}{21}{24}
+  
+        % relations 
+        \ganttlink{elem0}{elem1} 
+        \ganttlink{elem0}{elem3} 
+        \ganttlink{elem1}{elem2} 
+        \ganttlink{elem3}{elem4} 
+        \ganttlink{elem1}{elem5} 
+        \ganttlink{elem3}{elem5} 
+        \ganttlink{elem2}{elem6} 
+        \ganttlink{elem3}{elem6} 
+        \ganttlink{elem5}{elem7} 
+    \end{ganttchart}
+\end{sideways}
+\end{center}
+    \caption{Gantt Chart}
+  
+\end{figure}
+
+
+\begin{figure}
+\begin{sideways}
+\begin{ganttchart}[
+    x unit = 0.1cm,
+    hgrid,
+    vgrid=,
+    time slot format=YearAndDay
+    ]{2024.337}{2025.110}
+    \gantttitlecalendar{year,  month} \\
+\end{ganttchart}
+\end{sideways}
+\end{figure}
+
+\begin{figure}
+    \begin{sideways}
+    \begin{ganttchart}[
+        x unit = 0.1cm,
+        hgrid,
+        vgrid=,
+        time slot format=isodate-yearmonth
+        ]{2024-11}{2025-3}
+        \gantttitlecalendar{year,  month} \\
+    \end{ganttchart}
+    \end{sideways}
+    \end{figure}
+
+\begin{figure}[h!]
+    \begin{sideways}
+\begin{ganttchart}[
+    x unit = 0.4cm,
+    y unit chart=0.8cm,
+    vgrid={*{6}, dashed},
+    hgrid,
+    title/.style={draw=none, fill=none},
+    title label font=\bfseries\footnotesize,
+    title label anchor/.style={below=-1.6ex},
+    include title in canvas=false,
+    bar/.style={fill=blue!50},
+    bar height=0.6,
+    group/.style={fill=blue!30},
+    milestone/.style={fill=red!50},
+    link/.style={-latex, thick}
+]{1}{24} % 6 meses dividido em semanas (aproximadamente 4 semanas por mês)
+
+  % Titulos das semanas
+  \gantttitle{Mês 1}{4} 
+  \gantttitle{Mês 2}{4}
+  \gantttitle{Mês 3}{4}
+  \gantttitle{Mês 4}{4}
+  \gantttitle{Mês 5}{4}
+  \gantttitle{Mês 6}{4} \\
+  
+  % Tarefas
+  \ganttgroup{Planejamento e Revisão Bibliográfica}{1}{4} \\
+  \ganttbar{Definição do problema e objetivos}{1}{2} \\
+  \ganttbar{Leitura de referências}{3}{4} \\
+  
+  \ganttgroup{Definição Metodológica e Design}{5}{8} \\
+  \ganttbar{Escolha das metodologias e algoritmos}{5}{6} \\
+  \ganttbar{Design dos algoritmos e estrutura do código}{7}{8} \\
+  
+  \ganttgroup{Implementação Inicial}{9}{12} \\
+  \ganttbar{Desenvolvimento dos algoritmos em Python}{9}{12} \\
+  
+  \ganttgroup{Implementação Paralela}{13}{16} \\
+  \ganttbar{Adaptação para GPU e CPU}{13}{14} \\
+  \ganttbar{Integração em CUDA C/C++}{15}{16} \\
+  
+  \ganttgroup{Testes e Validação}{17}{20} \\
+  \ganttbar{Testes com conjuntos de dados}{17}{18} \\
+  \ganttbar{Análise de resultados}{19}{20} \\
+  
+  \ganttgroup{Redação Final}{21}{24} \\
+  \ganttbar{Redação dos capítulos finais}{21}{23} \\
+  \ganttbar{Preparação para a defesa}{24}{24} \\
+  
+\end{ganttchart}
+\end{sideways}
+\end{figure}
+
+
+\begin{figure}[h!]
+\begin{sideways}
+\begin{ganttchart}[
+    x unit = 0.4cm,
+    y unit chart=0.8cm,
+    vgrid={*3{draw=none}, {red}},
+    hgrid,
+    title/.style={draw=none, fill=none},
+    title label font=\bfseries\footnotesize,
+    title label anchor/.style={below=-1.6ex},
+    include title in canvas=false,
+    bar/.style={fill=blue!50},
+    bar height=0.6,
+    group/.style={fill=blue!30},
+    milestone/.style={fill=red!50},
+    link/.style={-latex, thick}
+]{1}{24} % 6 meses dividido em semanas (aproximadamente 4 semanas por mês)
+
+  % Titulos das semanas
+  \gantttitle{Mês 1}{4} 
+  \gantttitle{Mês 2}{4}
+  \gantttitle{Mês 3}{4}
+  \gantttitle{Mês 4}{4}
+  \gantttitle{Mês 5}{4}
+  \gantttitle{Mês 6}{4} \\
+  
+  % Tarefas
+  \ganttgroup{Planejamento e Revisão Bibliográfica}{1}{4} \\
+  \ganttbar{Definição do problema e objetivos}{1}{2} \\
+  \ganttbar{Leitura de referências}{3}{4} \\
+  
+  \ganttgroup{Definição Metodológica e Design}{5}{8} \\
+  \ganttbar{Escolha das metodologias e algoritmos}{5}{6} \\
+  \ganttbar{Design dos algoritmos e estrutura do código}{7}{8} \\
+  
+  \ganttgroup{Implementação Inicial}{9}{12} \\
+  \ganttbar{Desenvolvimento dos algoritmos em Python}{9}{12} \\
+  
+  \ganttgroup{Implementação Paralela}{13}{16} \\
+  \ganttbar{Adaptação para GPU e CPU}{13}{14} \\
+  \ganttbar{Integração em CUDA C/C++}{15}{16} \\
+  
+  \ganttgroup{Testes e Validação}{17}{20} \\
+  \ganttbar{Testes com conjuntos de dados}{17}{18} \\
+  \ganttbar{Análise de resultados}{19}{20} \\
+  
+  \ganttgroup{Redação Final}{21}{24} \\
+  \ganttbar{Redação dos capítulos finais}{21}{23} \\
+  \ganttbar{Preparação para a defesa}{24}{24} \\
+  
+\end{ganttchart}
+\end{sideways}
+\end{figure}
+
+\end{document}

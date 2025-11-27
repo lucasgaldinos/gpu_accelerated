@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "create_todo",
+			"type": "shell",
+			"command": "echo \"Creating TODO list\""
+		}
+	]
+}

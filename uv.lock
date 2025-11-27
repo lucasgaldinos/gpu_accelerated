@@ -777,6 +777,7 @@ dependencies = [
     { name = "networkx" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "pandoc-mermaid-filter" },
     { name = "pillow" },
     { name = "plotly" },
     { name = "pymupdf4llm" },
@@ -807,6 +808,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "pandas", specifier = ">=2.3.2" },
+    { name = "pandoc-mermaid-filter", specifier = ">=0.1.0" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "plotly", specifier = ">=6.3.1" },
     { name = "pymupdf4llm", specifier = ">=0.0.27" },
@@ -2063,6 +2065,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/1e/1bac1a839d12e6a82ec6cb40cda2edde64a2013a66963293696bbf31fbbb/pandas-2.3.3-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2e3ebdb170b5ef78f19bfb71b0dc5dc58775032361fa188e814959b74d726dd5", size = 12121582, upload-time = "2025-09-29T23:30:43.391Z" },
     { url = "https://files.pythonhosted.org/packages/44/91/483de934193e12a3b1d6ae7c8645d083ff88dec75f46e827562f1e4b4da6/pandas-2.3.3-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:d051c0e065b94b7a3cea50eb1ec32e912cd96dba41647eb24104b6c6c14c5788", size = 12699963, upload-time = "2025-09-29T23:31:10.009Z" },
     { url = "https://files.pythonhosted.org/packages/70/44/5191d2e4026f86a2a109053e194d3ba7a31a2d10a9c2348368c63ed4e85a/pandas-2.3.3-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:3869faf4bd07b3b66a9f462417d0ca3a9df29a9f6abd5d0d0dbab15dac7abe87", size = 13202175, upload-time = "2025-09-29T23:31:59.173Z" },
+]
+
+[[package]]
+name = "pandoc-mermaid-filter"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pandocfilters" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/99/27b5e980963c678c0fc2be4bbfe699aede864b7f4da14bd72d3b84b8a75c/pandoc-mermaid-filter-0.1.0.tar.gz", hash = "sha256:ad475b77e5b7506a0d68011af89fc6103ef2044fe0e4379249c4f6a0628ccff1", size = 2806, upload-time = "2018-04-02T14:16:11.418Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/08/3c277633e92b73bf38e8bd64c55f0464debc04b4ae201f1ca5212c34145f/pandoc_mermaid_filter-0.1.0-py2.py3-none-any.whl", hash = "sha256:c4f08d65449ab4f242889c17fdb934dd33a15b32cf11e09d4dc21cec656d430f", size = 2427, upload-time = "2018-04-02T14:16:10.456Z" },
 ]
 
 [[package]]

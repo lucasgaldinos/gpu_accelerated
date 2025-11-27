@@ -15,7 +15,7 @@ Extracted from chapter4_validation.py lines 702-870.
 
 Usage:
     from src.benchmarking_v2.problem_statistics import perform_statistical_analysis
-    from src.benchmarking.statistics import StatisticalAnalyzer
+    from src.benchmarking_v2.statistics import StatisticalAnalyzer
     
     analyzer = StatisticalAnalyzer()
     results = {
@@ -40,7 +40,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 
-from src.benchmarking.statistics import StatisticalAnalyzer
+from src.benchmarking_v2.statistics import StatisticalAnalyzer
 
 
 # =============================================================================

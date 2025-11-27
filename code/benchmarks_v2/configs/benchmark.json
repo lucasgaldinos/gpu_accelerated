@@ -1,6 +1,6 @@
 {
 	"repetitions": 15,
-	"patience": 50,
+	"patience": null,
 	"cpu_size_threshold": 100,
 	"skip_cpu_default": false,
 	"incremental_runs": false,

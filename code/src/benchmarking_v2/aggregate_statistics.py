@@ -21,7 +21,7 @@ Usage:
     from src.benchmarking_v2.aggregate_statistics import (
         perform_cross_problem_analysis_stratified
     )
-    from src.benchmarking.statistics import StatisticalAnalyzer
+    from src.benchmarking_v2.statistics import StatisticalAnalyzer
 
     analyzer = StatisticalAnalyzer()
     all_results = {
@@ -46,7 +46,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 
-from src.benchmarking.statistics import StatisticalAnalyzer
+from src.benchmarking_v2.statistics import StatisticalAnalyzer
 from src.benchmarking_v2.config_loader import ProblemConfig
 
 

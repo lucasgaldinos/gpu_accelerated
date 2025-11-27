@@ -1,0 +1,89 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Benaini e Berrajaa 2018]{benaini2018genetic}
+\abntrefinfo{Benaini e Berrajaa}{BENAINI; BERRAJAA}{2018}
+{BENAINI, A.; BERRAJAA, A. Genetic algorithm for large dynamic vehicle routing problem on gpu. In:  IEEE. \emph{2018 4th International Conference on Logistics Operations Management (GOL)}. [S.l.], 2018. p.~1--9.}
+
+\bibitem[Benaini, Berrajaa e Daoudi 2015]{benaini2015gpu}
+\abntrefinfo{Benaini, Berrajaa e Daoudi}{BENAINI; BERRAJAA; DAOUDI}{2015}
+{BENAINI, A.; BERRAJAA, A.; DAOUDI, E.~M. Gpu implementation of the multi depot vehicle routing problem. In:  IEEE. \emph{2015 IEEE/ACS 12th International Conference of Computer Systems and Applications (AICCSA)}. [S.l.], 2015. p.~1--7.}
+
+\bibitem[Choi e Tcha 2007]{choi2007columngeneration}
+\abntrefinfo{Choi e Tcha}{CHOI; TCHA}{2007}
+{CHOI, E.; TCHA, D.-W. A column generation approach to the heterogeneous fleet vehicle routing problem.
+\emph{Computers \& Operations Research}, v.~34, n.~7, p. 2080--2095, 2007.
+ISSN 0305-0548.
+Dispon{\'\i}vel em: \url{https://www.sciencedirect.com/science/article/pii/S0305054805002650}.}
+
+\bibitem[Cook 2014]{pursuit_travelling_salesman}
+\abntrefinfo{Cook}{COOK}{2014}
+{COOK, W. \emph{In Pursuit of the Traveling Salesman: Mathematics at the Limits of Computation}.
+[S.l.], 2014.}
+
+\bibitem[Fujimoto e Tsutsui 2011]{fujimoto2011highly}
+\abntrefinfo{Fujimoto e Tsutsui}{FUJIMOTO; TSUTSUI}{2011}
+{FUJIMOTO, N.; TSUTSUI, S. A highly-parallel tsp solver for a gpu computing platform. In:  SPRINGER. \emph{Numerical Methods and Applications: 7th International Conference, NMA 2010, Borovets, Bulgaria, August 20-24, 2010. Revised Papers 7}. [S.l.], 2011. p. 264--271.}
+
+\bibitem[Gendreau et al. 1999]{gendreau1993tabu}
+\abntrefinfo{Gendreau et al.}{GENDREAU et al.}{1999}
+{GENDREAU, M. et al. A tabu search heuristic for the heterogeneous fleet vehicle routing problem.
+\emph{Computers \& Operations Research}, v.~26, n.~12, p. 1153--1173, 1999.
+ISSN 0305-0548.
+Dispon{\'\i}vel em: \url{https://www.sciencedirect.com/science/article/pii/S0305054898001002}.}
+
+\bibitem[Hornstra et al. 2020]{hornstra2020simultaneous}
+\abntrefinfo{Hornstra et al.}{HORNSTRA et al.}{2020}
+{HORNSTRA, R.~P. et al. The vehicle routing problem with simultaneous pickup and delivery and handling costs.
+\emph{Computers \& Operations Research}, v.~115, p. 104858, 2020.
+ISSN 0305-0548.
+Dispon{\'\i}vel em: \url{https://www.sciencedirect.com/science/article/pii/S0305054819303004}.}
+
+\bibitem[Mayerle, Figueiredo e Chiroli 2022]{mayerle2022longhaul}
+\abntrefinfo{Mayerle, Figueiredo e Chiroli}{MAYERLE; FIGUEIREDO; CHIROLI}{2022}
+{MAYERLE, S.~F.; FIGUEIREDO, J.~a.~N. de; CHIROLI, D.~M. D.~G. Using state-space shortest-path heuristics to solve the long-haul point-to-point vehicle routing and driver scheduling problem subject to hours-of-service regulatory constraints.
+\emph{Journal of Heuristics}, Kluwer Academic Publishers, USA, v.~28, n.~1, p. 23–59, fev. 2022.
+ISSN 1381-1231.
+Dispon{\'\i}vel em: \url{https://doi.org/10.1007/s10732-021-09489-7}.}
+
+\bibitem[Nazari et al. 2018]{nazari2018reinforcement}
+\abntrefinfo{Nazari et al.}{NAZARI et al.}{2018}
+{NAZARI, M. et al. Reinforcement learning for solving the vehicle routing problem.
+\emph{Advances in neural information processing systems}, v.~31, 2018.}
+
+\bibitem[Reinelt 1991]{tsplib_ref}
+\abntrefinfo{Reinelt}{REINELT}{1991}
+{REINELT, G. \emph{TSPLIB—A Traveling Salesman Problem Library}.
+[S.l.], 1991.}
+
+\bibitem[Rey et al. 2018]{rey2018cpu}
+\abntrefinfo{Rey et al.}{REY et al.}{2018}
+{REY, A. et al. A cpu-gpu parallel ant colony optimization solver for the vehicle routing problem. In:  SPRINGER. \emph{Applications of Evolutionary Computation: 21st International Conference, EvoApplications 2018, Parma, Italy, April 4-6, 2018, Proceedings 21}. [S.l.], 2018. p. 653--667.}
+
+\bibitem[Simchi-Levi et al. 2005]{simchi2005logic}
+\abntrefinfo{Simchi-Levi et al.}{SIMCHI-LEVI et al.}{2005}
+{SIMCHI-LEVI, D. et al. The logic of logistics.
+\emph{Theory, algorithms, and applications for logistics and supply chain management}, Springer, 2005.}
+
+\bibitem[Tan e Yeh 2021]{tan2021vehicle}
+\abntrefinfo{Tan e Yeh}{TAN; YEH}{2021}
+{TAN, S.-Y.; YEH, W.-C. The vehicle routing problem: State-of-the-art classification and review.
+\emph{Applied Sciences}, MDPI, v.~11, n.~21, p. 10295, 2021.}
+
+\bibitem[Voudouris e Tsang 1999]{voudouris1999tsp}
+\abntrefinfo{Voudouris e Tsang}{VOUDOURIS; TSANG}{1999}
+{VOUDOURIS, C.; TSANG, E. Guided local search and its application to the traveling salesman problem.
+\emph{European Journal of Operational Research}, v.~113, n.~2, p. 469--499, 1999.
+ISSN 0377-2217.
+Dispon{\'\i}vel em: \url{https://www.sciencedirect.com/science/article/pii/S037722179800099X}.}
+
+\bibitem[Wang et al. 2015]{wang2015parallel}
+\abntrefinfo{Wang et al.}{WANG et al.}{2015}
+{WANG, C. et al. A parallel simulated annealing method for the vehicle routing problem with simultaneous pickup--delivery and time windows.
+\emph{Computers \& Industrial Engineering}, Elsevier, v.~83, p. 111--122, 2015.}
+
+\end{thebibliography}

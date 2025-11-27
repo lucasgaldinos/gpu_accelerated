@@ -1,0 +1,13 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Pereira 2017]{tcc_vitorhp}
+\abntrefinfo{Pereira}{PEREIRA}{2017}
+{PEREIRA, V.~H. \emph{Desenvolvimento de método computacional para defini{\c c}{\~a}o de rotas baseadas no uso do sistema de transporte coletivo}.
+[S.l.], 2017. Dispon{\'\i}vel em: \url{https://repositorio.ufsc.br/handle/123456789/182018?show=full}. Acesso em: 2024-09-22.}
+
+\end{thebibliography}

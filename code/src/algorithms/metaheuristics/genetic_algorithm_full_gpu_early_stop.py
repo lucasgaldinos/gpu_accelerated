@@ -73,11 +73,7 @@ class GeneticAlgorithmFullGPUEarlyStop(GeneticAlgorithmBase):
             "ga_fujimoto_early_stop.cu", "ga_evolution_early_stop", __file__
         )
 
-        logging.info(
-            f"GeneticAlgorithmFullGPUEarlyStop initialized: "
-            f"pop_size={population_size}, mutation_rate={mutation_rate}, "
-            f"tournament_k={tournament_size}, 2opt_iters={two_opt_iterations}"
-        )
+        # Base class already logs initialization, just log kernel loading
         logging.info("Loaded Fujimoto GA kernel with early stopping support")
 
     def evolve(

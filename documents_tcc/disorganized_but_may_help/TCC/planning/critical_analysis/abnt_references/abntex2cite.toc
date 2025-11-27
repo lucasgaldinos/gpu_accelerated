@@ -1,0 +1,61 @@
+\babel@toc {brazil}{}\relax 
+\contentsline {section}{\numberline {1}Escopo}{3}{section.1}%
+\contentsline {section}{\numberline {2}Créditos aos autores originais}{3}{section.2}%
+\contentsline {section}{\numberline {3}O novo pacote \textsf {biblatex-abnt}}{3}{section.3}%
+\contentsline {section}{\numberline {4}Considerações iniciais}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Se puder, evite a `norma' ANBT NBR 6023}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Cuidado: normas nebulosas!}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Até que ponto este estilo \textsf {bibtex} cumpre a `norma' 6023?}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}O \textsf {abntex2cite} está em conformidade com a ABNT NBR 6023:2002?}{5}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Em que ambiente foram desenvolvidos os estilos?}{5}{subsection.4.5}%
+\contentsline {section}{\numberline {5}Uso de \textsf {abntex2cite}}{6}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Seleção dos estilos}{6}{subsection.5.1}%
+\contentsline {subsubsection}{\numberline {5.1.1}Citação numérica \tt {[num]}}{6}{subsubsection.5.1.1}%
+\contentsline {subsubsection}{\numberline {5.1.2}A citação no texto}{6}{subsubsection.5.1.2}%
+\contentsline {subsubsection}{\numberline {5.1.3}Conteúdo da referência bibliográfica}{7}{subsubsection.5.1.3}%
+\contentsline {subsubsection}{\numberline {5.1.4}Alteração do estilo de chamada \texttt {[num]}}{7}{subsubsection.5.1.4}%
+\contentsline {subsubsection}{\numberline {5.1.5}Citação alfabética por autor-data [\texttt {alf}]}{8}{subsubsection.5.1.5}%
+\contentsline {subsection}{\numberline {5.2}Cuidados com a acentuação}{8}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Siglas e letras maiúsculas nos títulos das referências}{8}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Autor com sobrenome composto}{9}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}URLs longas}{9}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Utilização da citação por sistema autor-data \texttt {[alf]}}{10}{section.6}%
+\contentsline {section}{\numberline {7}Alteração dinâmica das opções do estilo \texttt {[citeoption]}}{10}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Como proceder}{11}{subsection.7.1}%
+\contentsline {subsubsection}{\numberline {7.1.1}Usando \textsf {abntex2cite} e \texttt {citeoption}}{11}{subsubsection.7.1.1}%
+\contentsline {subsubsection}{\numberline {7.1.2}Sem usar \textsf {abntex2cite} nem \texttt {citeoption}}{11}{subsubsection.7.1.2}%
+\contentsline {subsubsection}{\numberline {7.1.3}Como agrupar várias opções}{11}{subsubsection.7.1.3}%
+\contentsline {subsubsection}{\numberline {7.1.4}Cuidados a serem tomados com opções}{12}{subsubsection.7.1.4}%
+\contentsline {subsection}{\numberline {7.2}Quando começa a valer a opção?}{12}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}Sistema numérico [\texttt {num}]}{12}{subsubsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.2}Sistema alfabético por autor-data [\texttt {alf}]}{12}{subsubsection.7.2.2}%
+\contentsline {subsection}{\numberline {7.3}Comandos controlados por \texttt {citeoption}}{12}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Opções agrupadas}{18}{subsection.7.4}%
+\contentsline {section}{\numberline {8}Novos campos}{19}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Endereços de internet (url)}{19}{subsection.8.1}%
+\contentsline {section}{\numberline {9}Novas entradas .bib}{19}{section.9}%
+\contentsline {subsection}{\numberline {9.1}\texttt {@ABNT-option} --- Mudança no estilo ABNT}{23}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}\texttt {@hidden} --- Entrada escondida}{23}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}\texttt {@ISO-option} --- Mudança de estilo ISO}{23}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}\texttt {@journalpart} --- Partes de periódicos }{23}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}\texttt {@monography} --- Monografias}{23}{subsection.9.5}%
+\contentsline {subsection}{\numberline {9.6}\texttt {@patent} --- Patentes}{23}{subsection.9.6}%
+\contentsline {subsection}{\numberline {9.7}\texttt {@thesis} --- Teses de modo geral}{23}{subsection.9.7}%
+\contentsline {section}{Referências}{23}{lstnumber.-26.1}%
+\contentsline {section}{\numberline {A}Questões específicas da `norma' 6023 e sua implementação}{24}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}A `norma' em contradição com ela mesma}{24}{subsection.A.1}%
+\contentsline {paragraph}{Abreviação de nomes:}{24}{section*.3}%
+\contentsline {subsection}{\numberline {A.2}Elementos essenciais e complementares}{24}{subsection.A.2}%
+\contentsline {paragraph}{Comentário:}{24}{section*.4}%
+\contentsline {subsection}{\numberline {A.3}Partes de coletâneas [\texttt {incollection}] e livros [\texttt {inbook}]}{24}{subsection.A.3}%
+\contentsline {paragraph}{O que ainda precisa ser feito:}{24}{section*.5}%
+\contentsline {subsection}{\numberline {A.4}Eventos, Anais, Proceedings}{25}{subsection.A.4}%
+\contentsline {subsection}{\numberline {A.5}Nomes pessoais [\texttt {author}]}{25}{subsection.A.5}%
+\contentsline {subsubsection}{\numberline {A.5.1}Comentário:}{25}{subsubsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.6}Título (\texttt {title}) e subtítulo (\texttt {subtitle})}{26}{subsection.A.6}%
+\contentsline {subsubsection}{\numberline {A.6.1}Comentário:}{26}{subsubsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.7}Ausência de local (\texttt {address}) e editora (\texttt {publisher})}{26}{subsection.A.7}%
+\contentsline {subsubsection}{\numberline {A.7.1}Comentário:}{26}{subsubsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.8}Teses, Dissertações, Monografias}{27}{subsection.A.8}%
+\contentsline {subsubsection}{\numberline {A.8.1}Comentário}{27}{subsubsection.A.8.1}%
+\contentsline {section}{\numberline {B}Referências segundo o tipo de entrada \textsf {bibtex}}{27}{appendix.B}%
