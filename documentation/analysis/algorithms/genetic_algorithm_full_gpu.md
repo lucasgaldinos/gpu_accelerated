@@ -61,7 +61,7 @@ the Template Method pattern**:
 | `population_size` | 256 | μ = λ (parent and offspring size) |
 | `mutation_rate` | 0.02 | Per-individual swap mutation probability |
 | `tournament_size` | 5 | *k*-tournament selection pressure |
-| `two_opt_iterations` | 50 | 2-opt passes per individual per generation (device-side) |
+| `two_opt_iterations` | 10 (constructor) / 50 (kernel) | Constructor default is 10, but kernel hardcodes 50 in `two_opt_device()` call |
 | `threads_per_block` | 256 | CUDA block size (= population size) |
 | `elite_size` | 0 | Elitism disabled (ISO-algorithmic) |
 | `seed` | 42 | Deterministic random seed |
@@ -529,7 +529,7 @@ flowchart TD
             end
 
             subgraph TwoOpt["2-opt Local Search (Device Function)"]
-                TO1["two_opt_device(offspring, n, distances, 50)"]
+                TO1["two_opt_device(offspring, n, distances, 50)<br/>(50 is hardcoded in kernel, not from constructor param)"]
                 TO2["For each pair of edges (i,i+1) and (j,j+1):"]
                 TO3["  If removing crossing saves distance:<br/>    Reverse segment [i+1..j]"]
                 TO4["Repeat up to 50 iterations<br/>or until no improvement found"]
@@ -865,7 +865,7 @@ Overhead reduction: ~53.5ms / ~41μs ≈ 1,305× less overhead
 | **Adaptive early stopping**: in-kernel convergence detection | **Fixed population size**: must match CUDA block size (256) |
 | **Lowest transfer volume**: only distance matrix in, tour out | **Single-block execution**: limited to 256 individuals |
 | **All genetic operators in CUDA C**: faster than Python | **Debug difficulty**: entire evolution is opaque to host |
-| **Scales with GPU clock, not PCIe bandwidth** | **Stack arrays limited**: 2048 max cities (kernel `#define`) |
+| **Scales with GPU clock, not PCIe bandwidth** | **Stack arrays limited**: `MAX_CITIES=2048` (defined in kernel `#define` at top of `.cu` file) |
 
 ### Convergence History — Interpolation Limitation
 
