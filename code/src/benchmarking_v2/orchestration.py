@@ -573,7 +573,7 @@ def run_comprehensive_benchmark(
     # Step 6: Generate Result Tables
     # =========================================================================
 
-    tables_dir = Path("results_v2/tables")
+    tables_dir = Path("results_v3/tables")
     tables_dir.mkdir(parents=True, exist_ok=True)
     generate_result_tables(
         all_results=problem_results,

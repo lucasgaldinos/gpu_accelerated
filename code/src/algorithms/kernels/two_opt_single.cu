@@ -31,14 +31,14 @@
 extern "C" __global__
 void two_opt_kernel(
     int *tour,
-    const double *dist,
+    const float *dist,
     int n,
     int tour_idx
 ) {
-    extern __shared__ double shared_mem[];
+    extern __shared__ float shared_mem[];
     
     // Partition shared memory
-    double *s_deltas = shared_mem;
+    float *s_deltas = shared_mem;
     int *s_swap_i = (int*)&s_deltas[blockDim.x];
     int *s_swap_j = (int*)&s_swap_i[blockDim.x];
     int *s_tour = (int*)&s_swap_j[blockDim.x];
@@ -52,10 +52,10 @@ void two_opt_kernel(
     }
     __syncthreads();
     
-    // Initialize shared memory for this thread
-    s_deltas[tid] = 0.0;
-    s_swap_i[tid] = -1;
-    s_swap_j[tid] = -1;
+    // Initialize this thread's best delta
+    float my_delta = 0.0f;
+    int my_swap_i = -1;
+    int my_swap_j = -1;
     
     // Each thread evaluates a subset of i positions
     for (int i = tid; i < n - 2; i += block_size) {
@@ -68,20 +68,25 @@ void two_opt_kernel(
             int node_j1 = s_tour[(j + 1) % n];
             
             // Calculate delta (new - old: negative = improvement)
-            double old_dist = dist[node_i * n + node_i1] + 
+            float old_dist = dist[node_i * n + node_i1] + 
                            dist[node_j * n + node_j1];
-            double new_dist = dist[node_i * n + node_j] + 
+            float new_dist = dist[node_i * n + node_j] + 
                            dist[node_i1 * n + node_j1];
-            double delta = new_dist - old_dist;  // Negative = improvement
+            float delta = new_dist - old_dist;  // Negative = improvement
             
             // Update best for this thread (delta < 0 means improvement)
-            if (delta < s_deltas[tid]) {
-                s_deltas[tid] = delta;
-                s_swap_i[tid] = i;
-                s_swap_j[tid] = j;
+            if (delta < my_delta) {
+                my_delta = delta;
+                my_swap_i = i;
+                my_swap_j = j;
             }
         }
     }
+    
+    // Store thread's best in shared memory for reduction
+    s_deltas[tid] = my_delta;
+    s_swap_i[tid] = my_swap_i;
+    s_swap_j[tid] = my_swap_j;
     __syncthreads();
     
     // Parallel reduction to find minimum delta (most negative = best improvement)

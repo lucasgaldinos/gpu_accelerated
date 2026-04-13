@@ -17,7 +17,7 @@ Usage:
     from src.benchmarking_v2.report_generator import generate_result_tables
     from pathlib import Path
 
-    output_dir = Path("results_v2/tables")
+    output_dir = Path("results_v3/tables")
     generate_result_tables(
         all_results=results_dict,
         problem_configs=configs,

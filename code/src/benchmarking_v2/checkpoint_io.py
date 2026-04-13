@@ -59,8 +59,8 @@ class CheckpointManager:
 
     def __init__(
         self,
-        checkpoint_dir: str | Path = "results_v2/checkpoints",
-        problem_stats_dir: str | Path = "results_v2/problem_statistics",
+        checkpoint_dir: str | Path = "results_v3/checkpoints",
+        problem_stats_dir: str | Path = "results_v3/problem_statistics",
     ):
         """
         Initialize checkpoint manager with directory paths.
@@ -456,8 +456,8 @@ def is_valid_checkpoint(filepath: Path, expected_reps: int = 30) -> bool:
 
 
 def ensure_checkpoint_dirs(
-    checkpoint_dir: str | Path = "results_v2/checkpoints",
-    problem_stats_dir: str | Path = "results_v2/problem_statistics",
+    checkpoint_dir: str | Path = "results_v3/checkpoints",
+    problem_stats_dir: str | Path = "results_v3/problem_statistics",
 ) -> tuple[Path, Path]:
     """
     Create checkpoint directories if they don't exist.

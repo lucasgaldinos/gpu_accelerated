@@ -27,12 +27,12 @@
 extern "C" __global__
 void cost_calculator_kernel(
     const int *tours,       // Flattened: num_tours * n (WITHOUT duplicate depot)
-    const double *distances, // n * n distance matrix
-    double *costs,          // Output: num_tours costs
+    const float *distances, // n * n distance matrix
+    float *costs,          // Output: num_tours costs
     int n,                  // Number of nodes per tour (without duplicate depot)
     int num_tours           // Number of tours in batch
 ) {
-    extern __shared__ double s_partials[];
+    extern __shared__ float s_partials[];
     
     int tour_idx = blockIdx.x;  // Which tour this block processes
     int tid = threadIdx.x;
@@ -47,7 +47,7 @@ void cost_calculator_kernel(
     const int *tour = tours + (tour_idx * n);
     
     // Initialize partial sum for this thread
-    double partial_cost = 0.0;
+    float partial_cost = 0.0f;
     
     // Each thread sums a subset of edges
     // Edge i connects tour[i] to tour[(i+1) % n]

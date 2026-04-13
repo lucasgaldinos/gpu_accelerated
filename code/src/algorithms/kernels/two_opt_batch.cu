@@ -37,14 +37,14 @@
 extern "C" __global__
 void two_opt_batch_kernel(
     int *tours,          // Flattened: num_tours * n
-    const double *dist,  // n * n distance matrix
+    const float *dist,  // n * n distance matrix
     int n,               // Number of nodes per tour
     int num_tours        // Number of tours
 ) {
-    extern __shared__ double shared_mem[];
+    extern __shared__ float shared_mem[];
     
     // Partition shared memory (per-block)
-    double *s_deltas = shared_mem;
+    float *s_deltas = shared_mem;
     int *s_swap_i = (int*)&s_deltas[blockDim.x];
     int *s_swap_j = (int*)&s_swap_i[blockDim.x];
     int *s_tour = (int*)&s_swap_j[blockDim.x];
@@ -63,7 +63,7 @@ void two_opt_batch_kernel(
     __syncthreads();
     
     // Initialize shared memory for this thread
-    s_deltas[tid] = 0.0;
+    s_deltas[tid] = 0.0f;
     s_swap_i[tid] = -1;
     s_swap_j[tid] = -1;
     
@@ -78,11 +78,11 @@ void two_opt_batch_kernel(
             int node_j1 = s_tour[(j + 1) % n];
             
             // Calculate delta
-            double old_dist = dist[node_i * n + node_i1] + 
+            float old_dist = dist[node_i * n + node_i1] + 
                            dist[node_j * n + node_j1];
-            double new_dist = dist[node_i * n + node_j] + 
+            float new_dist = dist[node_i * n + node_j] + 
                            dist[node_i1 * n + node_j1];
-            double delta = new_dist - old_dist;
+            float delta = new_dist - old_dist;
             
             // Update best for this thread
             if (delta < s_deltas[tid]) {
@@ -124,7 +124,7 @@ void two_opt_batch_kernel(
     __syncthreads();
     
     // Apply best swap (Thread 0 only)
-    if (tid == 0 && s_deltas[0] < 0.0) {
+    if (tid == 0 && s_deltas[0] < 0.0f) {
         int swap_i = s_swap_i[0];
         int swap_j = s_swap_j[0];
         

@@ -116,7 +116,7 @@ class GeneticAlgorithmCPU(GeneticAlgorithmBase):
         Returns:
             Fitness values (costs), shape (population_size,)
         """
-        costs = np.zeros(self.population_size, dtype=np.float64)
+        costs = np.zeros(self.population_size, dtype=np.float32)
 
         for i in range(self.population_size):
             tour = population[i]

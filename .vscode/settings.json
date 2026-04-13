@@ -20,15 +20,6 @@
             }
         ]
     },
-    "chat.mcp.serverSampling": {
-        "gpu_accelerated/.vscode/mcp.json: markitdown": {
-            "allowedModels": [
-                "copilot/gemini-2.5-pro",
-                "copilot/gpt-5-mini",
-                "copilot/o3-mini"
-            ]
-        }
-    },
     "markdown.extension.toc.orderedList": false,
     "markdown.extension.toc.levels": "1..6",
     "markdown.extension.toc.updateOnSave": true,
@@ -65,6 +56,10 @@
     "mermaidChart.aiVendor": "copilot",
     "github.copilot.chat.claudeSonnet45AlternatePrompt": "You're an expert software architect, you know everything about design patters, engineering and architechting full solutions solutions, with correct selection of system design and design patterns. You know cupy, numpy and always follow the instructions, prioritizing process over speed.",
     "github.copilot.chat.responsesApiReasoningEffort": "high",
+    "chat.agentFilesLocations": {
+        "~/.copilot/agents": false,
+        ".claude/agents": false
+    },
     // "notebook.output.wordWrap": false,
     // "html.format.wrapAttributes": "preserve-aligned",
     // "html.format.wrapLineLength": 0echo "no, I don't

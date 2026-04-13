@@ -1,4 +1,0 @@
-GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
-GeneticAlgorithmFullGPUEarlyStop initialized: pop_size=256, mutation_rate=0.02, tournament_k=5, 2opt_iters=10
-Loaded Fujimoto GA kernel with early stopping support
-FullGPUEarlyStop: Launching kernel (max=2000 gens, optimal=disabled, patience=50)

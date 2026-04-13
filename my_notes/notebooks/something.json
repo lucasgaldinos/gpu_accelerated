@@ -1,0 +1,489 @@
+{
+	"cells": [
+		{
+			"cell_type": "markdown",
+			"id": "header",
+			"metadata": {},
+			"source": [
+				"# Chapter 4: Comprehensive V2 Benchmark Analysis\n",
+				"\n",
+				"**Objective**: Rigorous statistical validation of GPU-accelerated GA variants against CPU baselines.\n",
+				"\n",
+				"**Dataset**: 38 TSPLIB instances (Size 51 to 1002).\n",
+				"**Algorithms**:\n",
+				"1. `GeneticAlgorithmCPU` (Baseline, $N \\le 100$)\n",
+				"2. `GeneticAlgorithmHybridNaive` (Hybrid Baseline)\n",
+				"3. `GeneticAlgorithmHybridOptimized` (Batched GPU)\n",
+				"4. `GeneticAlgorithmFullGPU` (Fully Resident GPU)\n",
+				"\n",
+				"**Analysis Sections**:\n",
+				"1. **Global Performance**: Aggregated metrics and scaling behavior.\n",
+				"2. **Speedup Analysis**: Deep dive into acceleration factors ($S = T_{base}/T_{algo}$).\n",
+				"3. **Pareto Efficiency**: Time vs. Quality trade-offs.\n",
+				"4. **Distribution & Stability**: Violin plots and Coefficient of Variation.\n",
+				"5. **Statistical Significance**: Friedman Ranks and Cohen's d Effect Sizes.\n",
+				"6. **Multi-Criteria Evaluation**: Radar charts balancing Speed, Quality, and Stability."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "imports",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"import json\n",
+				"import sys\n",
+				"from pathlib import Path\n",
+				"import numpy as np\n",
+				"import pandas as pd\n",
+				"from scipy import stats\n",
+				"import matplotlib.pyplot as plt\n",
+				"import seaborn as sns\n",
+				"from math import pi\n",
+				"\n",
+				"# Project setup\n",
+				"project_root = Path.cwd().parent.parent\n",
+				"sys.path.insert(0, str(project_root / \"code\"))\n",
+				"\n",
+				"# Config\n",
+				"RESULTS_DIR = project_root / \"results_v2\"\n",
+				"PROBLEM_STATS_DIR = RESULTS_DIR / \"problem_statistics\"\n",
+				"FIGURES_DIR = RESULTS_DIR / \"figures\"\n",
+				"FIGURES_DIR.mkdir(exist_ok=True)\n",
+				"\n",
+				"ALGORITHMS = [\"GeneticAlgorithmCPU\", \"GeneticAlgorithmHybridNaive\", \"GeneticAlgorithmHybridOptimized\", \"GeneticAlgorithmFullGPU\"]\n",
+				"SHORT_NAMES = {\n",
+				"    \"GeneticAlgorithmCPU\": \"CPU\",\n",
+				"    \"GeneticAlgorithmHybridNaive\": \"HybridNaive\",\n",
+				"    \"GeneticAlgorithmHybridOptimized\": \"HybridOpt\",\n",
+				"    \"GeneticAlgorithmFullGPU\": \"FullGPU\"\n",
+				"}\n",
+				"COLORS = {\"CPU\": \"#e74c3c\", \"HybridNaive\": \"#3498db\", \"HybridOpt\": \"#2ecc71\", \"FullGPU\": \"#9b59b6\"}\n",
+				"MARKERS = {\"CPU\": \"o\", \"HybridNaive\": \"s\", \"HybridOpt\": \"^\", \"FullGPU\": \"D\"}\n",
+				"\n",
+				"plt.style.use(\"seaborn-v0_8-whitegrid\")\n",
+				"sns.set_palette(\"colorblind\")\n",
+				"print(\"✓ Setup Complete\")"
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "data_loading",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"# Load Data into DataFrame\n",
+				"records = []\n",
+				"\n",
+				"for stats_file in sorted(PROBLEM_STATS_DIR.glob(\"*_stats.json\")):\n",
+				"    with open(stats_file) as f:\n",
+				"        data = json.load(f)\n",
+				"        problem = data[\"problem_info\"][\"name\"]\n",
+				"        size = data[\"problem_info\"][\"size\"]\n",
+				"        \n",
+				"        for algo_full, metrics in data[\"algorithms\"].items():\n",
+				"            if metrics[\"mean_time\"] > 0: # Filter failed runs\n",
+				"                algo_short = SHORT_NAMES.get(algo_full, algo_full)\n",
+				"                records.append({\n",
+				"                    \"Problem\": problem,\n",
+				"                    \"Size\": size,\n",
+				"                    \"Algorithm\": algo_short,\n",
+				"                    \"Time\": metrics[\"mean_time\"],\n",
+				"                    \"Gap\": metrics[\"mean_gap\"] * 100, # Convert to %\n",
+				"                    \"Generations\": metrics[\"mean_generations\"],\n",
+				"                    \"StdTime\": metrics[\"std_time\"],\n",
+				"                    \"StdGap\": metrics[\"std_gap\"]\n",
+				"                })\n",
+				"\n",
+				"df = pd.DataFrame(records)\n",
+				"df[\"Category\"] = pd.cut(df[\"Size\"], bins=[0, 100, 500, 2000], labels=[\"Small\", \"Medium\", \"Large\"])\n",
+				"print(f\"✓ Loaded {len(df)} records across {df['Problem'].nunique()} problems.\")\n",
+				"display(df.head())"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "global_overview",
+			"metadata": {},
+			"source": [
+				"## 1. Global Performance Overview\n",
+				"Aggregated metrics across all problem sizes."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "global_table",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"summary = df.groupby(\"Algorithm\").agg({\n",
+				"    \"Time\": [\"mean\", \"std\"],\n",
+				"    \"Gap\": [\"mean\", \"std\"],\n",
+				"    \"Generations\": \"mean\",\n",
+				"    \"Problem\": \"count\"\n",
+				"}).round(2)\n",
+				"print(\"Global Performance Summary:\")\n",
+				"display(summary)"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "speedup_analysis",
+			"metadata": {},
+			"source": [
+				"## 2. Speedup Analysis\n",
+				"**Baseline**: `HybridNaive` (available for all problem sizes).\n",
+				"**Metric**: $S = T_{HybridNaive} / T_{Variant}$."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "speedup_plots",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"# Calculate Speedup vs HybridNaive\n",
+				"baseline_times = df[df[\"Algorithm\"] == \"HybridNaive\"].set_index(\"Problem\")[\"Time\"]\n",
+				"df[\"Speedup\"] = df.apply(lambda x: baseline_times.get(x[\"Problem\"], np.nan) / x[\"Time\"] if x[\"Time\"] > 0 else np.nan, axis=1)\n",
+				"\n",
+				"# Filter for GPU variants\n",
+				"df_speedup = df[df[\"Algorithm\"].isin([\"HybridOpt\", \"FullGPU\"])]\n",
+				"\n",
+				"fig, axes = plt.subplots(1, 2, figsize=(18, 7))\n",
+				"\n",
+				"# 1. Scatter Plot: Speedup vs Size (Log-Log)\n",
+				"sns.scatterplot(data=df_speedup, x=\"Size\", y=\"Speedup\", hue=\"Algorithm\", style=\"Algorithm\", s=100, palette=COLORS, ax=axes[0])\n",
+				"axes[0].set_xscale(\"log\")\n",
+				"axes[0].set_yscale(\"log\")\n",
+				"axes[0].axhline(1.0, color='k', linestyle='--', label=\"Baseline (HybridNaive)\")\n",
+				"axes[0].set_title(\"Speedup Scaling vs Problem Size (Log-Log)\", fontsize=14)\n",
+				"axes[0].grid(True, which=\"both\", alpha=0.3)\n",
+				"\n",
+				"# 2. Bar Chart: Avg Speedup by Category\n",
+				"sns.barplot(data=df_speedup, x=\"Category\", y=\"Speedup\", hue=\"Algorithm\", palette=COLORS, errorbar=(\"ci\", 95), ax=axes[1])\n",
+				"axes[1].set_title(\"Average Speedup by Problem Category\", fontsize=14)\n",
+				"axes[1].axhline(1.0, color='k', linestyle='--')\n",
+				"axes[1].set_yscale(\"log\")\n",
+				"\n",
+				"plt.tight_layout()\n",
+				"plt.savefig(FIGURES_DIR / \"speedup_analysis_comprehensive.png\")\n",
+				"plt.show()"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"metadata": {
+				"language": "markdown"
+			},
+			"source": [
+				"### 2.1 Speedup relative to CPU baseline ($n \\leq 100$)\\n",
+				"\\n",
+				"In this subsection we compute speedups using the **CPU** as baseline on the small problems where it is available ($n \\leq 100$). For each GPU algorithm we plot:\\n",
+				"- **Speedup vs problem size**: $S^{CPU}_{p,a} = T_{CPU,p} / T_{a,p}$.\\n",
+				"- **Distribution of speedups** across all small problems.\\n",
+				"\\n",
+				"A value of $S^{CPU}_{p,a} = 2$ means that the GPU algorithm is twice as fast as the CPU on problem $p$. Values below 1 indicate that the GPU algorithm is slower than the CPU.\\n"
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"metadata": {
+				"language": "python"
+			},
+			"outputs": [],
+			"source": [
+				"# Compute speedups relative to CPU on small problems (n <= 100)\\n",
+				"df_small = df[df[\"Size\"] <= 100].copy()\\n",
+				"\\n",
+				"# Extract CPU times per problem (only where CPU is present)\\n",
+				"cpu_times = df_small[df_small[\"Algorithm\"] == \"CPU\"].set_index(\"Problem\")[\"Time\"]\\n",
+				"\\n",
+				"def compute_cpu_speedup(row):\\n",
+				"    if row[\"Algorithm\"] == \"CPU\":\\n",
+				"        return 1.0\\n",
+				"    t_cpu = cpu_times.get(row[\"Problem\"], np.nan)\\n",
+				"    return t_cpu / row[\"Time\"] if (not np.isnan(t_cpu) and row[\"Time\"] > 0) else np.nan\\n",
+				"\\n",
+				"df_small[\"SpeedupCPU\"] = df_small.apply(compute_cpu_speedup, axis=1)\\n",
+				"gpu_small = df_small[df_small[\"Algorithm\"].isin([\"HybridNaive\", \"HybridOpt\", \"FullGPU\"]) & df_small[\"SpeedupCPU\"].notna()]\\n",
+				"\\n",
+				"fig, axes = plt.subplots(1, 2, figsize=(18, 7))\\n",
+				"\\n",
+				"# 1. Speedup vs Size (CPU baseline)\\n",
+				"sns.scatterplot(data=gpu_small, x=\"Size\", y=\"SpeedupCPU\", hue=\"Algorithm\", style=\"Algorithm\",\\n",
+				"                s=100, palette=COLORS, ax=axes[0])\\n",
+				"axes[0].axhline(1.0, color=\"k\", linestyle=\"--\", label=\"No speedup vs CPU\")\\n",
+				"axes[0].set_xlabel(\"Problem size (n)\")\\n",
+				"axes[0].set_ylabel(\"Speedup vs CPU\")\\n",
+				"axes[0].set_title(\"Speedup vs CPU on small problems (n <= 100)\")\\n",
+				"axes[0].grid(True, alpha=0.3)\\n",
+				"\\n",
+				"# 2. Distribution of speedups (CPU baseline)\\n",
+				"sns.boxplot(data=gpu_small, x=\"Algorithm\", y=\"SpeedupCPU\", palette=COLORS, ax=axes[1])\\n",
+				"axes[1].axhline(1.0, color=\"k\", linestyle=\"--\")\\n",
+				"axes[1].set_ylabel(\"Speedup vs CPU\")\\n",
+				"axes[1].set_title(\"Distribution of speedups vs CPU (n <= 100)\")\\n",
+				"\\n",
+				"plt.tight_layout()\\n",
+				"plt.savefig(FIGURES_DIR / \"speedup_vs_cpu_small_problems.png\")\\n",
+				"plt.show()\\n"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "pareto_analysis",
+			"metadata": {},
+			"source": [
+				"## 3. Pareto Efficiency (Time vs Quality)\n",
+				"Visualizing the trade-off between execution speed and solution quality. Ideally, we want points in the bottom-left corner (Low Time, Low Gap)."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "pareto_plot",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"plt.figure(figsize=(12, 8))\n",
+				"sns.scatterplot(data=df, x=\"Time\", y=\"Gap\", hue=\"Algorithm\", style=\"Category\", size=\"Size\", sizes=(50, 400), palette=COLORS, alpha=0.7)\n",
+				"plt.xscale(\"log\")\n",
+				"plt.title(\"Pareto Frontier: Solution Quality vs Execution Time\", fontsize=16)\n",
+				"plt.xlabel(\"Mean Execution Time (s) [Log Scale]\", fontsize=12)\n",
+				"plt.ylabel(\"Optimality Gap (%)\", fontsize=12)\n",
+				"plt.grid(True, which=\"both\", alpha=0.3)\n",
+				"plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')\n",
+				"plt.tight_layout()\n",
+				"plt.savefig(FIGURES_DIR / \"pareto_frontier.png\")\n",
+				"plt.show()"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"metadata": {
+				"language": "markdown"
+			},
+			"source": [
+				"### 3.1 Quality–Speed Tradeoff per Problem\\n",
+				"\\n",
+				"The Pareto plot above mixes all algorithms together. Here we make the tradeoff more explicit by:\\n",
+				"- Choosing a **baseline algorithm** per problem (HybridNaive by default).\\n",
+				"- Computing, for each algorithm and problem,\\n",
+				"  - the change in mean gap $\\Delta \\bar g_{p,a}$ relative to the baseline, and\\n",
+				"  - the speedup $S_{p,a} = T_{base,p} / T_{a,p}$.\\n",
+				"\\n",
+				"Each point in the scatter below corresponds to one (problem, algorithm) pair and can be read as follows:\\n",
+				"- **x-axis**: How much better/worse the quality is compared to the baseline (negative = better).\\n",
+				"- **y-axis**: How many times faster/slower we are compared to the baseline (above 1 = faster).\\n",
+				"\\n",
+				"The quadrants help interpret the tradeoff:\\n",
+				"- Top-left: **better quality and faster** (ideal).\\n",
+				"- Top-right: **worse quality but faster** (pure speedup with quality loss).\\n",
+				"- Bottom-left: **better quality but slower** (quality premium).\\n",
+				"- Bottom-right: **worse and slower** (dominated; should be avoided).\\n"
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"metadata": {
+				"language": "python"
+			},
+			"outputs": [],
+			"source": [
+				"# Quality vs speed tradeoff relative to HybridNaive baseline per problem\\n",
+				"baseline = df[df[\"Algorithm\"] == \"HybridNaive\"][['Problem', 'Gap', 'Time']].rename(\\n",
+				"    columns={\"Gap\": \"Gap_base\", \"Time\": \"Time_base\"}\\n",
+				")\\n",
+				"df_trade = df.merge(baseline, on=\"Problem\", how=\"inner\")\\n",
+				"df_trade[\"DeltaGap\"] = df_trade[\"Gap\"] - df_trade[\"Gap_base\"]\\n",
+				"df_trade[\"SpeedupHN\"] = df_trade[\"Time_base\"] / df_trade[\"Time\"]\\n",
+				"\\n",
+				"plt.figure(figsize=(10, 8))\\n",
+				"sns.scatterplot(\\n",
+				"    data=df_trade, x=\"DeltaGap\", y=\"SpeedupHN\", hue=\"Algorithm\", style=\"Algorithm\",\\n",
+				"    palette=COLORS, s=80, alpha=0.8\\n",
+				")\\n",
+				"plt.axvline(0.0, color=\"k\", linestyle=\"--\", alpha=0.5)  # no quality change\\n",
+				"plt.axhline(1.0, color=\"k\", linestyle=\"--\", alpha=0.5)  # no speedup\\n",
+				"plt.xlabel(\"Change in mean gap vs HybridNaive (percentage points)\")\\n",
+				"plt.ylabel(\"Speedup vs HybridNaive (S_{p,a})\")\\n",
+				"plt.title(\"Quality vs Speed Tradeoff per Problem (HybridNaive baseline)\")\\n",
+				"plt.grid(True, alpha=0.3)\\n",
+				"plt.tight_layout()\\n",
+				"plt.savefig(FIGURES_DIR / \"quality_vs_speed_tradeoff_hybridnaive.png\")\\n",
+				"plt.show()\\n"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "dist_analysis",
+			"metadata": {},
+			"source": [
+				"## 4. Distribution & Stability Analysis\n",
+				"Using **Violin Plots** to see the full shape of the data distributions and **CV** to measure stability."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "violin_cv",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"fig, axes = plt.subplots(2, 2, figsize=(18, 12))\n",
+				"\n",
+				"# Violin: Time\n",
+				"sns.violinplot(data=df, x=\"Algorithm\", y=\"Time\", hue=\"Algorithm\", ax=axes[0,0], palette=COLORS, legend=False)\n",
+				"axes[0,0].set_yscale(\"log\")\n",
+				"axes[0,0].set_title(\"Runtime Distribution (Log Scale)\")\n",
+				"\n",
+				"# Violin: Gap\n",
+				"sns.violinplot(data=df, x=\"Algorithm\", y=\"Gap\", hue=\"Algorithm\", ax=axes[0,1], palette=COLORS, legend=False)\n",
+				"axes[0,1].set_title(\"Optimality Gap Distribution\")\n",
+				"\n",
+				"# Scatter: CV vs Size\n",
+				"df[\"CV\"] = df[\"StdTime\"] / df[\"Time\"]\n",
+				"sns.scatterplot(data=df, x=\"Size\", y=\"CV\", hue=\"Algorithm\", style=\"Algorithm\", palette=COLORS, ax=axes[1,0])\n",
+				"axes[1,0].set_xscale(\"log\")\n",
+				"axes[1,0].set_title(\"Runtime Stability (CV) vs Problem Size\")\n",
+				"axes[1,0].set_ylabel(\"Coefficient of Variation (Std/Mean)\")\n",
+				"\n",
+				"# Boxplot: Generations\n",
+				"sns.boxplot(data=df, x=\"Algorithm\", y=\"Generations\", hue=\"Algorithm\", palette=COLORS, ax=axes[1,1])\n",
+				"axes[1,1].set_title(\"Generations to Convergence\")\n",
+				"\n",
+				"plt.tight_layout()\n",
+				"plt.savefig(FIGURES_DIR / \"distribution_stability_dashboard.png\")\n",
+				"plt.show()"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "stats_sig",
+			"metadata": {},
+			"source": [
+				"## 5. Statistical Significance (Effect Sizes)\n",
+				"**Cohen's d Heatmap**: Quantifies the magnitude of difference between algorithm pairs.\n",
+				"- $|d| < 0.2$: Negligible\n",
+				"- $|d| > 0.8$: Large Effect"
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "cohens_heatmap",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"def calculate_cohens_d(group1, group2):\n",
+				"    n1, n2 = len(group1), len(group2)\n",
+				"    if n1 < 2 or n2 < 2: return 0\n",
+				"    var1, var2 = np.var(group1, ddof=1), np.var(group2, ddof=1)\n",
+				"    pooled_std = np.sqrt(((n1 - 1) * var1 + (n2 - 1) * var2) / (n1 + n2 - 2))\n",
+				"    return (np.mean(group1) - np.mean(group2)) / pooled_std if pooled_std > 0 else 0\n",
+				"\n",
+				"algos_comp = [\"HybridNaive\", \"HybridOpt\", \"FullGPU\"]\n",
+				"matrix_time = np.zeros((len(algos_comp), len(algos_comp)))\n",
+				"matrix_gap = np.zeros((len(algos_comp), len(algos_comp)))\n",
+				"\n",
+				"for i, a1 in enumerate(algos_comp):\n",
+				"    for j, a2 in enumerate(algos_comp):\n",
+				"        d1 = df[df[\"Algorithm\"] == a1]\n",
+				"        d2 = df[df[\"Algorithm\"] == a2]\n",
+				"        matrix_time[i, j] = calculate_cohens_d(d1[\"Time\"], d2[\"Time\"])\n",
+				"        matrix_gap[i, j] = calculate_cohens_d(d1[\"Gap\"], d2[\"Gap\"])\n",
+				"\n",
+				"fig, axes = plt.subplots(1, 2, figsize=(14, 5))\n",
+				"sns.heatmap(matrix_time, annot=True, xticklabels=algos_comp, yticklabels=algos_comp, cmap=\"RdBu_r\", center=0, ax=axes[0])\n",
+				"axes[0].set_title(\"Cohen's d: Runtime (Red = Row Slower)\")\n",
+				"\n",
+				"sns.heatmap(matrix_gap, annot=True, xticklabels=algos_comp, yticklabels=algos_comp, cmap=\"RdBu_r\", center=0, ax=axes[1])\n",
+				"axes[1].set_title(\"Cohen's d: Gap (Red = Row Worse)\")\n",
+				"\n",
+				"plt.tight_layout()\n",
+				"plt.savefig(FIGURES_DIR / \"cohens_d_heatmap.png\")\n",
+				"plt.show()"
+			]
+		},
+		{
+			"cell_type": "markdown",
+			"id": "radar_chart",
+			"metadata": {},
+			"source": [
+				"## 6. Multi-Criteria Evaluation (Radar Chart)\n",
+				"Balancing **Speed** (Normalized Speedup), **Quality** (1 - Gap/100), and **Stability** (1 - CV)."
+			]
+		},
+		{
+			"cell_type": "code",
+			"execution_count": null,
+			"id": "radar_plot",
+			"metadata": {},
+			"outputs": [],
+			"source": [
+				"# Prepare Metrics\n",
+				"radar_data = []\n",
+				"for algo in [\"HybridNaive\", \"HybridOpt\", \"FullGPU\"]:\n",
+				"    d = df[df[\"Algorithm\"] == algo]\n",
+				"    # Normalize metrics to [0, 1]\n",
+				"    speed_score = min(1.0, d[\"Speedup\"].mean() / 100) # Cap at 100x for visualization\n",
+				"    quality_score = max(0, 1 - (d[\"Gap\"].mean() / 100))\n",
+				"    cv = (d[\"StdTime\"] / d[\"Time\"]).mean()\n",
+				"    stability_score = max(0, 1 - cv)\n",
+				"    \n",
+				"    radar_data.append({\"Algorithm\": algo, \"Speed\": speed_score, \"Quality\": quality_score, \"Stability\": stability_score})\n",
+				"\n",
+				"df_radar = pd.DataFrame(radar_data)\n",
+				"\n",
+				"# Plot Radar\n",
+				"categories = [\"Speed\", \"Quality\", \"Stability\"]\n",
+				"N = len(categories)\n",
+				"angles = [n / float(N) * 2 * pi for n in range(N)]\n",
+				"angles += angles[:1]\n",
+				"\n",
+				"fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={'projection': 'polar'})\n",
+				"\n",
+				"for i, row in df_radar.iterrows():\n",
+				"    values = row[categories].values.flatten().tolist()\n",
+				"    values += values[:1]\n",
+				"    ax.plot(angles, values, linewidth=2, linestyle='solid', label=row[\"Algorithm\"], color=COLORS[row[\"Algorithm\"]])\n",
+				"    ax.fill(angles, values, alpha=0.1, color=COLORS[row[\"Algorithm\"]])\n",
+				"\n",
+				"ax.set_xticks(angles[:-1])\n",
+				"ax.set_xticklabels(categories, fontsize=12)\n",
+				"ax.set_ylim(0, 1)\n",
+				"plt.title(\"Algorithm Balance: Speed vs Quality vs Stability\", fontsize=16)\n",
+				"plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))\n",
+				"plt.savefig(FIGURES_DIR / \"radar_chart.png\")\n",
+				"plt.show()"
+			]
+		}
+	],
+	"metadata": {
+		"kernelspec": {
+			"display_name": "gpu-accelerated",
+			"language": "python",
+			"name": "python3"
+		},
+		"language_info": {
+			"codemirror_mode": {
+				"name": "ipython",
+				"version": 3
+			},
+			"file_extension": ".py",
+			"mimetype": "text/x-python",
+			"name": "python",
+			"nbconvert_exporter": "python",
+			"pygments_lexer": "ipython3",
+			"version": "3.10.16"
+		}
+	},
+	"nbformat": 4,
+	"nbformat_minor": 5
+}

@@ -60,7 +60,7 @@ def compute_distance_matrix(
             the same problem, this can save 500-1000ms of transfer overhead.
 
     Returns:
-        Distance matrix, shape (n, n), dtype float64
+        Distance matrix, shape (n, n), dtype float32
         - For TSP/CVRP: Symmetric matrix (distances[i,j] == distances[j,i])
         - Diagonal is always zero (distance to self)
         - Array type matches backend (NumPy ndarray or CuPy ndarray)
@@ -225,5 +225,5 @@ def compute_distance_matrix(
             f"For EXPLICIT types, use edge_weight_matrices table."
         )
 
-    # Convert to float64 for compatibility with existing code
-    return distances.astype(xp.float64)
+    # Convert to float32 for optimal GPU performance and ISO-algorithmic consistency
+    return distances.astype(xp.float32)

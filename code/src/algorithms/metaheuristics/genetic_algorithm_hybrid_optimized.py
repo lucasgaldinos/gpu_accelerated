@@ -116,22 +116,22 @@ class GeneticAlgorithmHybridOptimized(GeneticAlgorithmBase):
 
         # Transfer distance matrix (once per generation)
         if not hasattr(self, "_distances_gpu_cached"):
-            self._distances_gpu_cached = cp.asarray(distances, dtype=cp.float64)
+            self._distances_gpu_cached = cp.asarray(distances, dtype=cp.float32)
             self.h2d_bytes += distances.nbytes
         distances_gpu = self._distances_gpu_cached
 
         # Allocate costs on GPU
-        costs_gpu = cp.zeros(batch_size, dtype=cp.float64)
+        costs_gpu = cp.zeros(batch_size, dtype=cp.float32)
 
         # Calculate shared memory
         block_size = min(self.threads_per_block, n - 2)
         two_opt_shared = (
-            self.threads_per_block * 8  # s_deltas
+            self.threads_per_block * 4  # s_deltas (float32)
             + self.threads_per_block * 4  # s_swap_i
             + self.threads_per_block * 4  # s_swap_j
             + n * 4  # s_tour
         )
-        cost_shared = self.threads_per_block * 8  # s_partials
+        cost_shared = self.threads_per_block * 4  # s_partials (float32)
 
         # Batch 2-opt improvement
         for iteration in range(self.two_opt_iterations):

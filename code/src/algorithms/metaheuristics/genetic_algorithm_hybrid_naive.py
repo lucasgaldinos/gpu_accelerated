@@ -86,12 +86,12 @@ class GeneticAlgorithmHybridNaive(GeneticAlgorithmBase):
         n = offspring.shape[1]
 
         # Transfer distance matrix once (shared across all tours)
-        distances_gpu = cp.asarray(distances, dtype=cp.float64)
+        distances_gpu = cp.asarray(distances, dtype=cp.float32)
         self.h2d_bytes += distances.nbytes
 
         threads_per_block = min(256, n - 2)
         shared_mem = (
-            threads_per_block * 8  # s_deltas (double)
+            threads_per_block * 4  # s_deltas (float32)
             + threads_per_block * 4  # s_swap_i (int)
             + threads_per_block * 4  # s_swap_j (int)
             + n * 4  # s_tour (int)
