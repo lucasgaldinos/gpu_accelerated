@@ -759,7 +759,7 @@ flowchart LR
 | **H2D transfers per gen** | 257 (1 dist + 256 tours) | 1 (batch) + 0 (dist cached) | **257× fewer** |
 | **D2H transfers per gen** | 256 (individual tours) | 2 (costs + tours batch) | **128× fewer** |
 | **Total transfers per gen** | 513 | 3 | **171× fewer** |
-| **Kernel launches per gen** | 2,560 (256 × 10) | 11 (10 + 1) | **~233× fewer** |
+| **Kernel launches per gen** | 2,560 (256 × 10) | 11 (10 + 1) | **~233× fewer** (2,560 / 11) |
 | **H2D bytes per gen (gen 2+)** | n²×4 + 256×n×4 | 256×n×4 | **n²×4 bytes saved** |
 | **D2H bytes per gen** | 256×n×4 | 256×4 + 256×n×4 | Similar total, but 128× fewer calls |
 | **Distance matrix transfers** | Every generation | Once (cached) | **G× fewer** (G = total generations) |
@@ -847,7 +847,7 @@ The Optimized variant's 77 μs overhead is negligible at any problem size.
 | **Total kernel launches (500 gens)** | 1,280,000 | 5,500 | **233× fewer** |
 | **Transfer overhead (500 gens)** | ~2.57 seconds | ~0.015 seconds | **171× less** |
 | **Launch overhead (500 gens)** | ~8.96 seconds | ~0.039 seconds | **230× less** |
-| **Combined fixed overhead** | **~11.5 seconds** | **~0.054 seconds** | **~213× less** |
+| **Combined fixed overhead** | **~11.5 seconds** | **~0.054 seconds** | **~215× less** |
 | Distance matrix H2D (total run) | 500 × 4 MB = 2 GB | 1 × 4 MB = 4 MB | **500× less** |
 
 ### Memory per Generation Summary (n=1,000)
@@ -857,8 +857,8 @@ Naive:     ~6 MB transferred in 513 calls + 2,560 kernel launches
 Optimized: ~2 MB transferred in   3 calls +    11 kernel launches
 
 Memory reduction:   ~3× fewer bytes, ~171× fewer transfers
-Kernel reduction:   ~233× fewer launches
-Overhead reduction: ~213× less fixed overhead
+Kernel reduction:   ~233× fewer launches (2,560 / 11)
+Overhead reduction: ~215× less fixed overhead
 ```
 
 ### Why the Hybrid Optimized Variant Is the Production Choice
