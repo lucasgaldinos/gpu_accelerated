@@ -1,6 +1,6 @@
 ---
-title: "GPU-Accelerated Memetic Algorithm for the Traveling Salesman Problem"
-subtitle: "An Iso-Algorithmic Comparison of Parallelization Strategies"
+title: "Algoritmo Memético Acelerado por GPU para o Problema do Caixeiro Viajante"
+subtitle: "Comparação Isoalgorítmica de Estratégias de Paralelização"
 author: "Lucas Galdino"
 date: 2025
 institute: "Universidade Federal de Santa Catarina — Engenharia Mecânica"
@@ -12,6 +12,9 @@ aspectratio: 169
 lang: pt-BR
 toc: true
 toc-title: "Roteiro"
+bibliography: documents_tcc/refs.bib
+link-citations: true
+reference-section-title: "Referências"
 header-includes:
   - \usepackage{booktabs}
   - \usepackage{graphicx}
@@ -28,16 +31,16 @@ header-includes:
 
 ### O Problema do Caixeiro Viajante (TSP)
 
-- Um dos problemas mais estudados em otimização combinatória
+- Um dos problemas mais estudados em otimização combinatória [@cook2012pursuit]
 - **Objetivo:** encontrar o menor ciclo hamiltoniano — visitar todas as cidades e retornar
 - Classificado como **NP-difícil**: sem solução eficiente conhecida para grandes instâncias
 - Estrutura fundamental para problemas reais de logística e roteamento
 
 ### Aplicações práticas
 
-- Roteirização de veículos (VRP)
+- Roteirização de veículos (VRP) e suas variantes [@tan2021vehicle]
 - Localização de instalações (p-medianos)
-- Manufatura (perfuração de circuitos, *job scheduling*)
+- Manufatura (perfuração de circuitos, escalonamento de tarefas)
 - Aeronáutica (otimização de trajetórias — ex.: modeFRONTIER)
 
 ---
@@ -46,19 +49,19 @@ header-includes:
 
 ### Computação em GPU
 
-- GPUs modernas oferecem **milhares de núcleos** de execução paralela
+- GPUs modernas oferecem **milhares de núcleos** de execução paralela [@nvidia2024cuda]
 - Arquitetura SIMT (*Single Instruction, Multiple Threads*)
 - Ideal para algoritmos populacionais: avaliar ou melhorar **muitas soluções simultaneamente**
 
 ### O desafio
 
 - Migrar para GPU **não garante** ganho automático
-- Transferências CPU $\leftrightarrow$ GPU podem **anular** o ganho de paralelismo
-- Comparações na literatura frequentemente comparam **algoritmos diferentes** em plataformas diferentes
+- Transferências CPU $\leftrightarrow$ GPU podem **reduzir** o ganho de paralelismo
+- Comparações na literatura frequentemente comparam **algoritmos diferentes** em plataformas diferentes [@schulz2013gpu; @van2013gpu]
 
-### Nossa proposta
+### Proposta deste trabalho
 
-> Comparar de forma **justa e controlada** o impacto de diferentes estratégias de paralelização em GPU, mantendo o algoritmo **idêntico** em todas as variantes.
+> Implementar e comparar de forma **justa e controlada** quatro variantes isoalgorítmicas de um algoritmo memético (GA+2-opt) para o TSP, diferindo apenas na estratégia de paralelização em GPU, a fim de isolar o impacto da plataforma de execução sobre o desempenho.
 
 ---
 
@@ -89,10 +92,10 @@ Investigar e quantificar o impacto de diferentes estratégias de paralelização
 ### Objetivos Específicos
 
 1. Implementar **4 variantes isoalgorítmicas** do GA+2-opt
-2. Selecionar instâncias TSPLIB de diferentes tamanhos
+2. Selecionar instâncias TSPLIB [@reinelt1991tsplib] de diferentes tamanhos
 3. Definir protocolo experimental reprodutível
-4. Aplicar testes estatísticos adequados (Demšar, 2006)
-5. Analisar trade-offs entre velocidade e qualidade
+4. Aplicar testes estatísticos adequados [@demsar2006statistical]
+5. Analisar compromissos entre velocidade e qualidade
 
 ---
 
@@ -102,20 +105,21 @@ Investigar e quantificar o impacto de diferentes estratégias de paralelização
 
 ### Algoritmo Genético (GA)
 
-- **Meta-heurística** baseada em evolução biológica
+- **Meta-heurística** baseada em evolução biológica [@goldberg1989genetic; @larranaga1999genetic]
 - Mantém uma **população** de soluções candidatas
 - Operadores: **seleção**, **cruzamento**, **mutação**
 - Exploração global do espaço de busca
 
 ### Busca Local 2-opt
 
-- Heurística de **melhoria** para rotas
-- Troca sistematicamente pares de arestas para reduzir custo
-- Exploração local intensiva
+- Heurística de **melhoria** para rotas [@croes1958method]
+- Em cada iteração, avalia sistematicamente pares de arestas $(i, i+1)$ e $(j, j+1)$
+- Se a reconexão cruzada reduz o custo ($\Delta C < 0$), a troca é aplicada e o segmento entre $i+1$ e $j$ é invertido
+- Truncada a 10 iterações por indivíduo para controlar custo computacional
 
-### Algoritmo Memético
+### Algoritmo Memético — inspirado em Fujimoto e Tsutsui
 
-- **Combinação** de GA (global) com 2-opt (local)
+- **Combinação** de GA (exploração global) com 2-opt (intensificação local) [@fujimoto2011highly]
 - Cada indivíduo é melhorado por 2-opt a cada geração
 - Equilíbrio entre **diversificação** e **intensificação**
 
@@ -123,42 +127,47 @@ Investigar e quantificar o impacto de diferentes estratégias de paralelização
 
 ## Paralelização em GPU: Taxonomia de Crainic--Toulouse
 
-### Tipo 1 — Paralelismo de Dados (Baixo nível)
+A taxonomia de @crainic2003parallel classifica estratégias de paralelização de meta-heurísticas:
 
-- Paraleliza operações *dentro* de uma única solução
-- Exemplo: avaliar movimentos 2-opt em paralelo para um indivíduo
+### Tipo 1 — Paralelismo de Baixo Nível (Decomposição de Dados)
 
-### Tipo 2 — Decomposição de Domínio
+- Paraleliza tarefas intensivas **dentro** de uma iteração da meta-heurística
+- Fluxo de controle do algoritmo permanece **centralizado**
+- Ideal para arquiteturas **SIMD/SIMT (GPUs)**
+- Ex.: @tsp_gpu avaliam movimentos 2-opt em paralelo; cada thread calcula o ganho de uma troca de arestas
 
-- Paraleliza *entre* soluções
-- Exemplo: processar população inteira em lote na GPU
+### Tipo 2 — Decomposição do Domínio
+
+- **Particiona** variáveis de decisão em subconjuntos otimizados independentemente
+- Mais adequado para **MIMD** (clusters, CPUs multicore) — subproblemas com tempos distintos causam divergência em GPUs
 
 ### Tipo 3 — Múltiplas Trajetórias
 
-- Todo o algoritmo reside na GPU
-- Mínima comunicação com CPU
+- **Múltiplas instâncias** da meta-heurística exploram o espaço simultaneamente
+- Independentes (*multi-start*) ou cooperativas (*island models*) [@luong2013gpu]
 
 \begin{alertblock}{Neste trabalho}
-As 4 variantes representam progressão do Tipo 0 (CPU) ao Tipo 3 (FullGPU).
+Todas as 4 variantes enquadram-se predominantemente no \textbf{Tipo 1}: paralelismo de dados na avaliação de vizinhança 2-opt e nos operadores genéticos via GPU.
 \end{alertblock}
 
 ---
 
-## Gargalo CPU $\leftrightarrow$ GPU
+## Gargalo de Comunicação CPU $\leftrightarrow$ GPU
 
 ### Largura de banda
 
 | Interface | Largura de Banda |
 |:----------|:----------------:|
-| Memória interna GPU | ~112 GB/s |
-| Barramento PCIe | ~16 GB/s |
+| Memória interna GPU | aprox. 112 GB/s |
+| Barramento PCIe | aprox. 16 GB/s |
 
 ### Implicação
 
 $$T_{total} = T_{cpu} + T_{gpu} + T_{transf}$$
 
-- Se $T_{transf}$ for grande, **anula** o ganho de $T_{gpu}$
-- Minimizar transferências é **crítico**
+- Se $T_{transf}$ for grande, **reduz** o ganho de $T_{gpu}$
+- Minimizar transferências é **crítico** para desempenho
+- A forma como dados são transferidos (**padrão** de transferência) diferencia as variantes, conforme detalhado nos slides seguintes
 
 ---
 
@@ -176,14 +185,14 @@ $$T_{total} = T_{cpu} + T_{gpu} + T_{transf}$$
 | **SO** | Linux |
 | **Linguagem** | Python 3.10 |
 | **Backend CPU** | NumPy |
-| **Backend GPU** | CuPy + CUDA kernels customizados |
+| **Backend GPU** | CuPy + kernels CUDA customizados |
 | **Estatística** | SciPy, scikit-posthocs |
 
 ### Nota sobre o hardware
 
 - GPU de **entrada** (arquitetura Pascal, 2016)
 - Diferenças de eficiência tornam-se **mais evidentes** em hardware limitado
-- Contraste CPU capaz $\times$ GPU modesta acentua desafios de *offloading*
+- Contraste entre CPU relativamente capaz e GPU modesta acentua desafios de delegação de processamento à GPU
 
 ---
 
@@ -191,16 +200,16 @@ $$T_{total} = T_{cpu} + T_{gpu} + T_{transf}$$
 
 ### Parâmetros Fixos
 
-| Parâmetro | Valor |
-|:----------|:-----:|
-| Representação | Permutação de inteiros |
-| $n_{pop}$ (população) | $2 \times n_{coords}$ |
-| Seleção | Torneio |
-| Cruzamento | *Order Crossover* (OX) |
-| Mutação | *Swap Mutation* |
-| Iterações 2-opt | 10 (truncado) |
-| Paciência | $2 \times \sqrt{n_{coords}}$ |
-| Max gerações | $2 \times n_{coords} \times \sqrt{n_{coords}}$ |
+| Parâmetro | Valor | Referência |
+|:----------|:-----:|:----------:|
+| Representação | Permutação de inteiros | @larranaga1999genetic |
+| $n_{pop}$ (população) | $2 \times n_{coords}$ | @eiben2015introduction |
+| Seleção | Torneio | @goldberg1989genetic |
+| Cruzamento | *Order Crossover* (OX) | @larranaga1999genetic |
+| Mutação | *Swap Mutation* | @eiben2015introduction |
+| Iterações 2-opt | 10 (truncado) | @fujimoto2011highly |
+| Paciência | $2 \times \sqrt{n_{coords}}$ | Configuração experimental |
+| Max gerações | $2 \times n_{coords} \times \sqrt{n_{coords}}$ | Configuração experimental |
 
 ### Critérios de parada
 
@@ -214,69 +223,76 @@ $$T_{total} = T_{cpu} + T_{gpu} + T_{transf}$$
 
 ### 1. GeneticAlgorithmCPU (Baseline)
 
-- Tudo na CPU com NumPy
+- Tudo na CPU com NumPy; 2-opt vetorizado com instruções SIMD do processador
 - Processamento **sequencial** dos indivíduos
 - Referência para instâncias pequenas ($n \le 100$)
 
 ### 2. GeneticAlgorithmHybridNaive (Híbrido Ingênuo)
 
 - Operadores genéticos na CPU
-- 2-opt na GPU, mas **indivíduo a indivíduo**
+- **Apenas 2-opt** executado na GPU, mas **indivíduo a indivíduo** (um kernel por tour)
 - Transferência H2D e D2H para **cada** indivíduo, **cada** geração
+- Nota: o cálculo de aptidão (*fitness*) permanece na CPU. Transferi-lo individualmente para GPU introduziria ainda mais latência de comunicação, agravando o gargalo
 
 ### 3. GeneticAlgorithmHybridOptimized (Híbrido Otimizado)
 
 - Operadores genéticos na CPU
-- 2-opt e fitness na GPU **em lote** (*batch*)
-- População inteira transferida de **uma só vez**
+- 2-opt **e** cálculo de aptidão na GPU **em lote**, encadeados em sequência (sem transferência intermediária)
+- Matriz de distâncias armazenada em cache na GPU; população inteira transferida de uma só vez
+- Retorna **apenas o vetor de custos** para a CPU (aprox. 2 KB para 256 tours)
 
-### 4. GeneticAlgorithmFullGPU (Totalmente em GPU)
+### 4. GeneticAlgorithmFullGPU (Totalmente em GPU) — inspirado em @fujimoto2011highly
 
-- **Tudo** reside na GPU durante a evolução
-- Transferência única no início e no fim
-- Operadores genéticos + 2-opt executados via kernel CUDA monolítico
+- **Tudo** reside na GPU durante a evolução: população, operadores genéticos, 2-opt e aptidão
+- Transferência única no início (população e distâncias) e no fim (melhor solução)
+- Kernel CUDA monolítico com barreiras de sincronização (`__syncthreads()`)
 
 ---
 
 ## Padrão de Transferência por Variante
 
-\begin{center}
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Métrica} & \textbf{CPU} & \textbf{Naive} & \textbf{Otimizado} & \textbf{FullGPU} \\
-\midrule
-Kernel launches/ger. & 0 & 2.560 & 11 & 0* \\
-Transf. H2D/ger. & 0 & $\sim$8 MB & $\sim$1 MB & 0 \\
-Transf. D2H/ger. & 0 & $\sim$1 MB & $\sim$1 MB & 0 \\
-Total transf./ger. & 0 & $\sim$10 MB & $\sim$2 MB & 0 \\
-\bottomrule
-\multicolumn{5}{l}{\scriptsize *FullGPU: 3 kernel launches no total (independente de gerações)}
-\end{tabular}
-\end{center}
+| Métrica | CPU | Naive | Otimizado | FullGPU |
+|:--------|:---:|:-----:|:---------:|:-------:|
+| Lançamentos de kernel/ger. | 0 | aprox. 2.560 | aprox. 11 | 0* |
+| Transf. H2D/ger. | 0 | aprox. 8 MB | aprox. 1 MB | 0 |
+| Transf. D2H/ger. | 0 | aprox. 1 MB | aprox. 2 KB | 0 |
+| Total transf./ger. | 0 | aprox. 9 MB | aprox. 1 MB | 0 |
 
-### Observação-chave
+\* FullGPU: 3 lançamentos de kernel no total (independente do número de gerações).
 
-A variante **Naive** transfere ~20 MB por geração ($n=1000$), enquanto a FullGPU transfere ~8 MB no **total** — uma redução de **2.500$\times$**.
+### Implicação no tempo
+
+- Na variante **Naive**, a sobrecarga de aprox. 9 MB/geração no barramento PCIe (aprox. 16 GB/s) domina o tempo total, especialmente em instâncias pequenas e médias
+- Na **Otimizada**, o encadeamento de kernels reduz a transferência em ~$9\times$ vs Naive, resultando em ganho médio de $5{,}54\times$
+- Na **FullGPU**, a ausência de transferências por geração elimina o gargalo de comunicação — porém o kernel monolítico pode ter menor eficiência computacional que kernels especializados
 
 ---
 
 ## Arquitetura do Framework
 
-### Padrão Template Method
+### Padrão *Template Method*
 
-\begin{center}
-\begin{tabular}{ll}
-\toprule
-\textbf{Métodos Fixos (Base)} & \textbf{Métodos Variáveis (Variantes)} \\
-\midrule
-Inicialização de população & \texttt{\_improve\_population()} \\
-Seleção por torneio & \texttt{\_evaluate\_population()} \\
-Cruzamento (OX) & \\
-Mutação (Swap) & \\
-Seleção de sobrevivência ($\mu+\lambda$) & \\
-\bottomrule
-\end{tabular}
-\end{center}
+```mermaid
+classDiagram
+    class GeneticAlgorithmBase {
+        <<Abstract>>
+        +evolve()
+        #_initialize_population()
+        #_select_parents()
+        #_create_offspring()
+        #_survival_selection()
+        #_improve_population()*
+        #_evaluate_population()*
+    }
+    class CPU { #_improve_population(); #_evaluate_population() }
+    class HybridNaive { #_improve_population(); #_evaluate_population() }
+    class HybridOptimized { #_improve_population(); #_evaluate_population() }
+    class FullGPU { #_improve_population(); #_evaluate_population() }
+    GeneticAlgorithmBase <|-- CPU
+    GeneticAlgorithmBase <|-- HybridNaive
+    GeneticAlgorithmBase <|-- HybridOptimized
+    GeneticAlgorithmBase <|-- FullGPU
+```
 
 ### Princípio
 
@@ -288,7 +304,7 @@ Seleção de sobrevivência ($\mu+\lambda$) & \\
 
 ## Instâncias de Teste
 
-### TSPLIB — 38 instâncias selecionadas
+### TSPLIB — 38 instâncias selecionadas [@reinelt1991tsplib]
 
 | Categoria | Faixa ($n_{coords}$) | Quantidade | Exemplos |
 |:----------|:---------------------:|:----------:|:---------|
@@ -306,12 +322,12 @@ Seleção de sobrevivência ($\mu+\lambda$) & \\
 
 ## Protocolo Estatístico
 
-### Metodologia (Demšar, 2006)
+### Metodologia [@demsar2006statistical]
 
 1. **Normalidade:** Shapiro-Wilk
 2. **2 algoritmos:** Teste t pareado (normal) ou Wilcoxon (não-normal)
 3. **$\ge$ 3 algoritmos:** Teste de Friedman
-4. **Post-hoc:** Nemenyi (pares significativos)
+4. **Pós-teste:** Nemenyi (pares significativos)
 5. **Correção múltipla:** Holm-Bonferroni
 6. **Tamanho de efeito:** $d$ de Cohen
 
@@ -327,26 +343,19 @@ Sem testes estatísticos, diferenças observadas podem ser fruto do acaso. Com 3
 
 ### Instâncias Pequenas
 
-\begin{center}
-\begin{tabular}{llrrr}
-\toprule
-\textbf{Instância} & \textbf{Algoritmo} & \textbf{Tempo (s)} & \textbf{Gap (\%)} & \textbf{Ganho} \\
-\midrule
-berlin52 & CPU & 25.14 & 0.00 & 1.00$\times$ \\
-         & HybridNaive & 1.85 & 0.00 & 13.59$\times$ \\
-         & HybridOptimized & 0.11 & 0.00 & \textbf{228.55$\times$} \\
-         & FullGPU & 0.45 & 0.00 & 55.87$\times$ \\
-\midrule
-kroA100  & CPU & 142.30 & 0.02 & 1.00$\times$ \\
-         & HybridNaive & 6.50 & 0.02 & 21.89$\times$ \\
-         & HybridOptimized & 0.35 & 0.15 & \textbf{406.57$\times$} \\
-         & FullGPU & 1.20 & 0.00 & 118.58$\times$ \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Instância | Algoritmo | Tempo (s) | Gap (%) | Ganho |
+|:----------|:----------|----------:|--------:|------:|
+| berlin52 | CPU | 25,14 | 0,00 | $1{,}00\times$ |
+| | HybridNaive | 1,85 | 0,00 | $13{,}59\times$ |
+| | HybridOptimized | 0,11 | 0,00 | $228{,}55\times$ |
+| | FullGPU | 0,45 | 0,00 | $55{,}87\times$ |
+| kroA100 | CPU | 142,30 | 0,02 | $1{,}00\times$ |
+| | HybridNaive | 6,50 | 0,02 | $21{,}89\times$ |
+| | HybridOptimized | 0,35 | 0,15 | $406{,}57\times$ |
+| | FullGPU | 1,20 | 0,00 | $118{,}58\times$ |
 
-- Ganhos de **até 400$\times$** para HybridOptimized vs CPU
-- FullGPU atinge **gap 0.00%** em kroA100
+- Ganhos de até $400\times$ para HybridOptimized vs CPU
+- FullGPU atinge **gap 0,00%** em kroA100
 
 ---
 
@@ -354,23 +363,18 @@ kroA100  & CPU & 142.30 & 0.02 & 1.00$\times$ \\
 
 ### Instância Grande: pr1002 (1002 cidades)
 
-\begin{center}
-\begin{tabular}{llrrr}
-\toprule
-\textbf{Instância} & \textbf{Algoritmo} & \textbf{Tempo (s)} & \textbf{Gap (\%)} & \textbf{Ganho} \\
-\midrule
-pr1002 & HybridNaive & 696.12 & 1.85 & 1.00$\times$ \\
-       & HybridOptimized & 374.25 & 2.10 & 1.86$\times$ \\
-       & FullGPU & 758.40 & \textbf{1.15} & 0.92$\times$ \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Instância | Algoritmo | Tempo (s) | Gap (%) | Ganho |
+|:----------|:----------|----------:|--------:|------:|
+| pr1002 | HybridNaive | 696,12 | 1,85 | $1{,}00\times$ |
+| | HybridOptimized | 374,25 | 2,10 | $1{,}86\times$ |
+| | FullGPU | 758,40 | **1,15** | $0{,}92\times$ |
 
 ### Observações
 
-- HybridOptimized continua **mais rápida** (1.86$\times$)
-- FullGPU é a **melhor em qualidade** (1.15% vs 2.10%)
-- Trade-off claro: **velocidade** vs **qualidade**
+- HybridOptimized continua **mais rápida** ($1{,}86\times$)
+- FullGPU é a **melhor em qualidade** (1,15% vs 2,10%)
+- Compromisso claro: **velocidade** vs **qualidade**
+- Nota: para instâncias grandes, a variante Naive ainda permite execução viável — o gargalo de comunicação reduz o ganho, mas não inviabiliza a variante
 
 ---
 
@@ -378,23 +382,18 @@ pr1002 & HybridNaive & 696.12 & 1.85 & 1.00$\times$ \\
 
 ### Médias Gerais
 
-\begin{center}
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Algoritmo} & \textbf{Tempo Médio (s)} & \textbf{Gap Médio (\%)} & \textbf{Ganho (vs Naive)} \\
-\midrule
-HybridNaive & 47.20 & 1.30 & 1.00$\times$ \\
-HybridOptimized & 18.94 & 1.30 & \textbf{5.54$\times$} \\
-FullGPU & 43.51 & \textbf{0.88} & 1.21$\times$ \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Algoritmo | Tempo Médio (s) | Gap Médio (%) | Ganho (vs Naive) |
+|:----------|----------------:|--------------:|-----------------:|
+| HybridNaive | 47,20 | 1,30 | $1{,}00\times$ |
+| HybridOptimized | 18,94 | 1,30 | $5{,}54\times$ |
+| FullGPU | 43,51 | **0,88** | $1{,}21\times$ |
 
-### Conclusões fundamentais
+### Observações principais
 
-1. **HybridOptimized** = campeã de velocidade (**5.54$\times$** mais rápida)
-2. **FullGPU** = campeã de qualidade (**0.88%** gap — 32% melhor que os demais)
-3. **HybridNaive** $\approx$ CPU em tempo — transferências anulam ganho GPU
+1. **HybridOptimized** é a mais rápida ($5{,}54\times$ vs Naive) com mesma qualidade
+2. **FullGPU** apresenta menor gap médio (**0,88%** — 32% inferior aos demais)
+3. **HybridNaive** apresenta desempenho próximo à CPU em instâncias pequenas, mas permanece funcional para instâncias maiores
+4. Nota: os desvios-padrão entre repetições são relativamente pequenos, mas serão formalmente avaliados nos testes estatísticos a seguir
 
 ---
 
@@ -402,68 +401,51 @@ FullGPU & 43.51 & \textbf{0.88} & 1.21$\times$ \\
 
 ### Critério: menor gap (qualidade)
 
-\begin{center}
-\begin{tabular}{llr}
-\toprule
-\textbf{Categoria} & \textbf{Melhor Algoritmo} & \textbf{Gap Médio} \\
-\midrule
-Pequeno ($n \le 100$) & \textbf{FullGPU} & 0.00\% \\
-Médio ($100 < n \le 400$) & \textbf{FullGPU} & 0.65\% \\
-Grande ($n > 400$) & \textbf{FullGPU} & 1.85\% \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Categoria | Melhor Algoritmo | Gap Médio |
+|:----------|:-----------------|----------:|
+| Pequeno ($n \le 100$) | **FullGPU** | 0,00% |
+| Médio ($100 < n \le 400$) | **FullGPU** | 0,65% |
+| Grande ($n > 400$) | **FullGPU** | 1,85% |
 
 \begin{alertblock}{Resultado-chave}
-FullGPU \textbf{domina} a qualidade em \textbf{todas} as categorias de tamanho. Para instâncias pequenas, encontra soluções ótimas em 100\% dos casos.
+FullGPU apresenta os menores gaps em \textbf{todas} as categorias de tamanho. Para instâncias pequenas, encontra soluções ótimas em 100\% dos casos.
 \end{alertblock}
 
 ---
 
 ## Análise Estatística: Resultados
 
-### Friedman Test — Comparação Múltipla
+### Teste de Friedman — Comparação Múltipla
 
-\begin{center}
-\begin{tabular}{lrl}
-\toprule
-\textbf{Estrato} & \textbf{p-valor} & \textbf{Resultado} \\
-\midrule
-Pequenas + todos os alg. & $0.07$ & Inconclusivo (poder baixo) \\
-Todas + GPU-only & $< 0.001$ & \textbf{Significativo} \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Estrato | p-valor | Resultado |
+|:--------|--------:|:----------|
+| Pequenas + todos os alg. | $0{,}07$ | Inconclusivo (poder estatístico baixo) |
+| Todas + apenas GPU | $< 0{,}001$ | **Significativo** |
 
-### Nemenyi Post-Hoc (GPU-only)
+### Pós-teste de Nemenyi (variantes GPU)
 
-- **FullGPU > Híbridos** — diferença estatisticamente significativa
-- Confirmado por **$d$ de Cohen** (tamanho de efeito prático)
-- Speedup do HybridOptimized é **significativo** após correção de Holm-Bonferroni
+- Diferença entre FullGPU e variantes híbridas é **estatisticamente significativa**
+- Confirmado por **$d$ de Cohen** (tamanho de efeito prático relevante)
+- Ganho do HybridOptimized é **significativo** após correção de Holm-Bonferroni
+- Ressalva: para instâncias pequenas, as diferenças de qualidade entre variantes são reduzidas e o teste de Friedman não rejeita $H_0$ — o que pode refletir tanto semelhança real quanto poder estatístico insuficiente
 
 ---
 
-## Trade-off: Velocidade vs Qualidade
+## Compromisso: Velocidade vs Qualidade
 
 ### Cenários de uso
 
-\begin{center}
-\begin{tabular}{lll}
-\toprule
-\textbf{Se você precisa...} & \textbf{Use} & \textbf{Por quê} \\
-\midrule
-Prototipagem rápida & HybridOptimized & 5.54$\times$ mais rápido \\
-Melhor solução possível & FullGPU & 32\% melhor gap \\
-Simplicidade & CPU Baseline & Sem overhead GPU \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Se você precisa... | Use | Por quê |
+|:-------------------|:----|:--------|
+| Iteração rápida / muitas execuções | HybridOptimized | $5{,}54\times$ mais rápido |
+| Melhor solução possível | FullGPU | 32% melhor gap |
+| Simplicidade / instâncias pequenas | CPU Baseline | Sem complexidade de GPU |
 
 ### Por que essa diferença?
 
-- **Naive**: transferências individuais saturam o barramento PCIe
-- **Otimizado**: processamento em lote elimina gargalo $\rightarrow$ **máxima velocidade**
-- **FullGPU**: dados residentes na GPU $\rightarrow$ 2-opt explora mais eficientemente $\rightarrow$ **máxima qualidade**
+- **Naive**: transferências individuais (uma por tour) introduzem latência de comunicação PCIe que domina o tempo total
+- **Otimizado**: processamento em lote com encadeamento de kernels elimina o gargalo de comunicação $\rightarrow$ **maior velocidade**
+- **FullGPU**: dados residentes na GPU eliminam transferências; porém o kernel monolítico (que executa seleção, cruzamento, mutação e 2-opt em uma única chamada) pode ser menos eficiente computacionalmente do que kernels especializados da versão otimizada — isso explica por que FullGPU é **mais lento** que HybridOptimized apesar de não ter custo de comunicação
 
 ---
 
@@ -473,18 +455,18 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
 
 ### GPU acelera — mas a estratégia importa
 
-- "Usar GPU" não é solução mágica
+- "Usar GPU" não é solução automática
 - A **forma** de comunicação CPU $\leftrightarrow$ GPU define o resultado
 
-### Lição 1: Transferências em lote são obrigatórias
+### Lição 1: Transferências em lote são essenciais
 
-- A abordagem **Naive** (indivíduo por indivíduo) **não traz ganho** real
-- Processamento em **batch** é requisito mínimo para benefício
+- A abordagem **Naive** (indivíduo por indivíduo) resulta em ganho inferior ao esperado
+- Processamento em **lote** é requisito mínimo para obter benefício significativo
 
 ### Lição 2: Residência em GPU favorece qualidade
 
 - Manter dados na GPU permite exploração mais **eficiente** do espaço de busca
-- A ausência de overhead de comunicação permite que o algoritmo "gaste" tempo de forma **produtiva**
+- A hipótese é que a ausência de interrupções de transferência permite que o algoritmo explore melhor a vizinhança 2-opt dentro do mesmo orçamento de gerações
 
 ### Lição 3: Não existe "melhor" universal
 
@@ -498,19 +480,19 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
 
 ### Contexto
 
-- Muitos estudos comparam CPU vs GPU usando **algoritmos diferentes**
+- Muitos estudos comparam CPU vs GPU usando **algoritmos diferentes** [@schulz2013gpu; @benaini2018genetic]
 - Isso confunde o efeito da **plataforma** com o efeito do **algoritmo**
 
 ### Contribuição deste trabalho
 
 - Comparação **isoalgorítmica**: mesma lógica em todas as variantes
-- Diferenças observadas são atribuíveis **apenas** à estratégia de paralelização
-- Um dos poucos estudos com este nível de controle experimental
+- Diferenças observadas são atribuíveis **predominantemente** à estratégia de paralelização
+- Ressalva importante: a implementação GPU, embora isoalgorítmica, poderia potencialmente ser otimizada para melhor desempenho — as diferenças refletem não apenas a estratégia de paralelização, mas também a maturidade da implementação em cada plataforma
 
 ### Alinhamento com a taxonomia de Crainic-Toulouse
 
-- Progressão clara: Tipo 0 (CPU) $\rightarrow$ Tipo 1 (Naive) $\rightarrow$ Tipo 2 (Batch) $\rightarrow$ Tipo 3 (FullGPU)
-- Confirma que paralelismo de **nível superior** (Tipo 2/3) traz maiores benefícios
+- Todas as variantes GPU deste trabalho enquadram-se no **Tipo 1** (paralelismo de dados): paralelizam a avaliação de vizinhança 2-opt e/ou operadores genéticos via GPU
+- A variação entre as variantes está no **grau e na forma** de explorar esse paralelismo de dados, não no tipo de paralelismo
 
 ---
 
@@ -522,7 +504,7 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
 
 - GPU de entrada (GTX 1050 Mobile, 640 cores)
 - GPUs mais potentes (RTX 3000/4000) amplificariam os ganhos
-- VRAM de 4 GB limita instâncias a ~13.000 cidades
+- VRAM de 4 GB limita instâncias a aprox. 13.000 cidades
 
 ### Metodológicas
 
@@ -531,6 +513,7 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
   - Grafos dirigidos requerem **3-opt** ou métodos adaptados
 - Apenas uma busca local testada (2-opt)
 - Apenas um tipo de problema (TSP)
+- A implementação GPU pode não estar totalmente otimizada — diferenças de desempenho podem refletir tanto a estratégia quanto detalhes de implementação
 
 ---
 
@@ -545,12 +528,13 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
 2. **Instâncias maiores** (5.000+ cidades)
    - Explorar como vantagens GPU escalam com tamanho
 
-3. **Multi-GPU**
-   - Distribuir população entre múltiplas GPUs
+3. **Múltiplas trajetórias em GPU** (Tipo 3 de Crainic-Toulouse)
+   - Manter diversas populações evoluindo em paralelo na GPU (*island model*)
+   - Distribuir entre múltiplas GPUs para problemas de grande porte
 
 4. **Outros problemas combinatórios**
-   - VRP (Vehicle Routing Problem)
-   - Job scheduling
+   - VRP (Problema de Roteirização de Veículos)
+   - Escalonamento de tarefas
    - Localização de instalações
 
 5. **GPUs modernas** (RTX 3000/4000)
@@ -564,23 +548,17 @@ Simplicidade & CPU Baseline & Sem overhead GPU \\
 
 ### Resposta à pergunta de pesquisa
 
-A estratégia de paralelização em GPU **influencia drasticamente** o trade-off entre tempo e qualidade:
+A estratégia de paralelização em GPU **influencia significativamente** o compromisso entre tempo e qualidade:
 
-\begin{center}
-\begin{tabular}{lcr}
-\toprule
-\textbf{Variante} & \textbf{Speedup} & \textbf{Gap Médio} \\
-\midrule
-HybridOptimized & \textbf{5.54$\times$} & 1.30\% \\
-FullGPU & 1.21$\times$ & \textbf{0.88\%} \\
-\bottomrule
-\end{tabular}
-\end{center}
+| Variante | Ganho de Performance | Gap Médio |
+|:---------|:--------------------:|----------:|
+| HybridOptimized | $5{,}54\times$ | 1,30% |
+| FullGPU | $1{,}21\times$ | **0,88%** |
 
 ### Contribuições
 
 1. **Framework isoalgorítmico** — comparação justa e reprodutível
-2. **Evidência estatística** — 30 reps $\times$ 38 instâncias $\times$ 4 variantes com testes formais
+2. **Evidência estatística** — 30 repetições $\times$ 38 instâncias $\times$ 4 variantes com testes formais
 3. **Guia prático** — quando usar cada estratégia de paralelização
 4. **Código aberto** — reprodutibilidade total
 
@@ -607,3 +585,7 @@ Engenharia Mecânica \\
 \vspace{1em}
 Código disponível no repositório do projeto
 \end{center}
+
+---
+
+## Referências {.allowframebreaks}
