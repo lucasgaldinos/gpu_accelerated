@@ -346,13 +346,13 @@ Sem testes estatísticos, diferenças observadas podem ser fruto do acaso. Com 3
 | Instância | Algoritmo | Tempo (s) | Gap (%) | Ganho |
 |:----------|:----------|----------:|--------:|------:|
 | berlin52 | CPU | 25,14 | 0,00 | $1{,}00\times$ |
-| | HybridNaive | 1,85 | 0,00 | $13{,}59\times$ |
-| | HybridOptimized | 0,11 | 0,00 | $228{,}55\times$ |
-| | FullGPU | 0,45 | 0,00 | $55{,}87\times$ |
+| berlin52 | HybridNaive | 1,85 | 0,00 | $13{,}59\times$ |
+| berlin52 | HybridOptimized | 0,11 | 0,00 | $228{,}55\times$ |
+| berlin52 | FullGPU | 0,45 | 0,00 | $55{,}87\times$ |
 | kroA100 | CPU | 142,30 | 0,02 | $1{,}00\times$ |
-| | HybridNaive | 6,50 | 0,02 | $21{,}89\times$ |
-| | HybridOptimized | 0,35 | 0,15 | $406{,}57\times$ |
-| | FullGPU | 1,20 | 0,00 | $118{,}58\times$ |
+| kroA100 | HybridNaive | 6,50 | 0,02 | $21{,}89\times$ |
+| kroA100 | HybridOptimized | 0,35 | 0,15 | $406{,}57\times$ |
+| kroA100 | FullGPU | 1,20 | 0,00 | $118{,}58\times$ |
 
 - Ganhos de até $400\times$ para HybridOptimized vs CPU
 - FullGPU atinge **gap 0,00%** em kroA100
@@ -366,8 +366,8 @@ Sem testes estatísticos, diferenças observadas podem ser fruto do acaso. Com 3
 | Instância | Algoritmo | Tempo (s) | Gap (%) | Ganho |
 |:----------|:----------|----------:|--------:|------:|
 | pr1002 | HybridNaive | 696,12 | 1,85 | $1{,}00\times$ |
-| | HybridOptimized | 374,25 | 2,10 | $1{,}86\times$ |
-| | FullGPU | 758,40 | **1,15** | $0{,}92\times$ |
+| pr1002 | HybridOptimized | 374,25 | 2,10 | $1{,}86\times$ |
+| pr1002 | FullGPU | 758,40 | **1,15** | $0{,}92\times$ |
 
 ### Observações
 
@@ -445,7 +445,7 @@ FullGPU apresenta os menores gaps em \textbf{todas} as categorias de tamanho. Pa
 
 - **Naive**: transferências individuais (uma por tour) introduzem latência de comunicação PCIe que domina o tempo total
 - **Otimizado**: processamento em lote com encadeamento de kernels elimina o gargalo de comunicação $\rightarrow$ **maior velocidade**
-- **FullGPU**: dados residentes na GPU eliminam transferências; porém o kernel monolítico (que executa seleção, cruzamento, mutação e 2-opt em uma única chamada) pode ser menos eficiente computacionalmente do que kernels especializados da versão otimizada — isso explica por que FullGPU é **mais lento** que HybridOptimized apesar de não ter custo de comunicação
+- **FullGPU**: dados residentes na GPU eliminam transferências. Porém, o kernel monolítico executa todas as operações (seleção, cruzamento, mutação e 2-opt) em uma única chamada, o que pode ser menos eficiente computacionalmente do que os kernels especializados da versão otimizada. Isso explica por que FullGPU é **mais lento** que HybridOptimized apesar de não ter custo de comunicação
 
 ---
 
